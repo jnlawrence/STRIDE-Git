@@ -403,7 +403,6 @@ output$STRIDE2 <- renderUI({
               inputId = "selected_metrics",
               label = "Select metrics to display:",
               choices = metric_choices,
-              selected = "TotalEnrolment",
               multiple = TRUE, # Allow multiple selections
               options = list(
                 `actions-box` = TRUE,  # Adds "Select All" and "Deselect All"
@@ -411,8 +410,48 @@ output$STRIDE2 <- renderUI({
                 `live-search` = TRUE,   # <-- Adds the search bar
                 `live-search-style` = 'contains'
               )
-            )
-          ),
+            ),
+            # --- NEW PRESET BUTTONS ---
+            # In your UI definition (e.g., in a bslib::sidebar)
+            
+            # ... (Your pickerInput for 'selected_metrics' goes here)
+            
+            tags$h5("Metric Presets", style = "margin-top: 20px;"),
+            
+            # --- NEW: Updated to Toggle Checkboxes ---
+            
+            # Preset 1: Teacher Focus
+            shinyWidgets::awesomeCheckbox(
+              inputId = "preset_teacher",
+              label = tags$div(
+                # Use flex for alignment
+                style = "display: flex; align-items: center;", 
+                # Use a span for better inline text behavior
+                tags$span("Teacher Focus", style = "margin-left: 10px; font-size: 1.1rem;") 
+              ),
+              value = FALSE # Start as OFF
+            ),
+            
+            tags$div(style = "margin-top: 5px;"), # Spacer
+            
+            # Preset 2: Demographic Focus
+            shinyWidgets::awesomeCheckbox(
+              inputId = "preset_school",
+              label = tags$div(
+                style = "display: flex; align-items: center;", 
+                tags$span("School Focus", style = "margin-left: 10px; font-size: 1.1rem;")
+              ),
+              value = FALSE # Start as OFF
+            ),
+            shinyWidgets::awesomeCheckbox(
+              inputId = "preset_classroom",
+              label = tags$div(
+                style = "display: flex; align-items: center;", 
+                tags$span("Infrastructure Focus", style = "margin-left: 10px; font-size: 1.1rem;")
+              ),
+              value = FALSE # Start as OFF
+            )),
+            # --- END OF NEW CHECKBOXES ---),
           uiOutput("dashboard_grid")
         )
       ),

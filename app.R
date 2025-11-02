@@ -126,11 +126,26 @@ overall_totals <- dfGMIS %>%
 
 # end of dfGMIS data
 
-metric_choices <- c("Total Teachers" = "TotalTeachers",
-                    "Total Classrooms" = "TotalClassrooms",
+metric_choices <- c("Teachers" = "TotalTeachers",
+                    "Teacher Shortage" = "Total.Shortage",
+                    "Teacher Excess" = "Total.Excess",
+                    "Enrolment" = "TotalEnrolment",
+                    "Classrooms" = "Instructional.Rooms.2023.2024",
+                    "Classroom Requirement" =  "Classroom.Requirement",
+                    "Buildings",
+                    "Shifting",
+                    "Classroom Shortage" = "Est.CS",
+                    "Major Repairs Needed" = "Major.Repair.2023.2024",
+                    "Total Seats Available" = "Total.Seats.2023.2024",
+                    "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024",
                     "Curricular Offering" = "Modified.COC",
-                    "Size Typology" = "School.Size.Typology")
-
+                    "Size Typology" = "School.Size.Typology",
+                    "School Head" = "SH.Position",
+                    "Ownership Type" = "OwnershipType",
+                    "Electricity Source" = "ElectricitySource",
+                    "Water Source" = "WaterSource",
+                    "Buildable Space" = "Buidable_space")
+                    
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
   password = c("deped123", "stride123"), # In a real app, use hashed passwords

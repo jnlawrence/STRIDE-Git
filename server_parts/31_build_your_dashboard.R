@@ -40,6 +40,155 @@ observeEvent(input$selected_metrics, {
   
 }, ignoreNULL = FALSE) # ignoreNULL=FALSE ensures it runs even when cleared
 
+
+# --- *** UPDATED: OBSERVER TO SYNC PICKER -> TOGGLES *** ---
+# This observes the pickerInput. If the user manually removes
+# metrics, this will uncheck the corresponding toggle.
+observeEvent(input$selected_metrics, {
+  
+  current_selection <- input$selected_metrics
+  # Handle empty selection
+  if (is.null(current_selection)) {
+    current_selection <- character(0)
+  }
+  
+  # --- *** FIXED: Use the SAME metric lists as the toggle observers *** ---
+  teacher_metrics <- c("TotalTeachers", "Total.Shortage","Total.Excess")
+  classroom_metrics <- c("Instructional.Rooms.2023.2024","Classroom.Requirement","Buildings","Shifting") 
+  school_metrics <- c("School.Size.Typology","Modified.COC") 
+  
+  
+  # Check if ALL metrics for a group are selected
+  all_teacher_selected <- all(teacher_metrics %in% current_selection)
+  all_school_selected <- all(school_metrics %in% current_selection)
+  all_classroom_selected <- all(classroom_metrics %in% current_selection)
+  
+  # --- *** START OF FIX *** ---
+  # Only send an update if the toggle's current value is
+  # DIFFERENT from the value we want to set. This breaks the loop.
+  
+  if (isolate(input$preset_teacher) != all_teacher_selected) {
+    
+    # We still use freezeReactiveValue for safety
+    freezeReactiveValue(input, "preset_teacher") 
+    shinyWidgets::updateAwesomeCheckbox(
+      session,
+      "preset_teacher",
+      value = all_teacher_selected
+    )
+  }
+  
+  if (isolate(input$preset_school) != all_school_selected) {
+    
+    freezeReactiveValue(input, "preset_school")
+    shinyWidgets::updateAwesomeCheckbox(
+      session,
+      "preset_school",
+      value = all_school_selected
+    )
+  }
+  
+  if (isolate(input$preset_classroom) != all_classroom_selected) {
+    
+    freezeReactiveValue(input, "preset_classroom")
+    shinyWidgets::updateAwesomeCheckbox(
+      session,
+      "preset_classroom",
+      value = all_classroom_selected
+    )
+  }
+  # --- *** END OF FIX *** ---
+  
+}, ignoreNULL = FALSE, ignoreInit = TRUE) # <-- Added ignoreInit = TRUE
+
+
+# --- *** UPDATED: PRESET TOGGLE OBSERVERS *** ---
+# These observers now ADD or REMOVE metrics based on the toggle state.
+
+# Preset 1: Teacher Focus Toggle
+observeEvent(input$preset_teacher, {
+  # 1. Get the metrics that are *already* selected
+  current_selection <- isolate(input$selected_metrics)
+  
+  # 2. Define the metrics for *this* preset
+  teacher_metrics <- c("TotalTeachers", "Total.Shortage","Total.Excess")
+  
+  # 3. Add or Remove based on the checkbox value
+  if (input$preset_teacher == TRUE) {
+    # Add metrics: union() merges and removes duplicates
+    new_selection <- union(current_selection, teacher_metrics)
+  } else {
+    # Remove metrics: setdiff() keeps items in 'current_selection'
+    # that are NOT in 'teacher_metrics'
+    new_selection <- setdiff(current_selection, teacher_metrics)
+  }
+  
+  # 4. Update the picker input
+  shinyWidgets::updatePickerInput(
+    session, 
+    "selected_metrics", 
+    selected = new_selection
+  )
+})
+
+# Preset 2: Categorical/Demographic Focus Toggle
+observeEvent(input$preset_classroom, {
+  
+  # 1. Get the metrics that are *already* selected
+  current_selection <- isolate(input$selected_metrics)
+  
+  # 2. Define the metrics for *this* preset
+  classroom_metrics <- c("Instructional.Rooms.2023.2024","Classroom.Requirement","Buildings","Shifting") 
+  
+  # 3. Add or Remove based on the checkbox value
+  if (input$preset_classroom == TRUE) {
+    # Add metrics
+    new_selection <- union(current_selection, classroom_metrics)
+  } else {
+    # Remove metrics
+    new_selection <- setdiff(current_selection, classroom_metrics)
+  }
+  
+  # 4. Update the picker input
+  shinyWidgets::updatePickerInput(
+    session, 
+    "selected_metrics", 
+    selected = new_selection
+  )
+})
+
+observeEvent(input$preset_school, {
+  
+  # 1. Get the metrics that are *already* selected
+  current_selection <- isolate(input$selected_metrics)
+  
+  # 2. Define the metrics for *this* preset
+  school_metrics <- c("School.Size.Typology","Modified.COC") 
+  
+  # 3. Add or Remove based on the checkbox value
+  if (input$preset_school == TRUE) {
+    # Add metrics
+    new_selection <- union(current_selection, school_metrics)
+  } else {
+    # Remove metrics
+    new_selection <- setdiff(current_selection, school_metrics)
+  }
+  
+  # 4. Update the picker input
+  shinyWidgets::updatePickerInput(
+    session, 
+    "selected_metrics", 
+    selected = new_selection
+  )
+})
+
+
+# --- *** DELETED THE DUPLICATE SYNC OBSERVER *** ---
+# The old, buggy 'observeEvent(input$selected_metrics, ...)'
+# that was here has been REMOVED to prevent the loop.
+# --- *** DELETED THE DUPLICATE SYNC OBSERVER *** ---
+
+
 # --- Back Button Logic (Unchanged) ---
 # --- Back Button Logic (Updated) ---
 # --- Back Button Logic (Updated for Dynamic Label) ---
@@ -79,7 +228,12 @@ output$back_button_ui <- renderUI({
   
   # --- Render the button only if one of the conditions was met ---
   if (show_button) { 
-    actionButton("back_button", button_label, icon = icon("undo")) # Changed icon
+    
+    # --- UPDATED: Added class = "btn-danger" to make the button red ---
+    actionButton("back_button", 
+                 button_label, 
+                 icon = icon("undo"), 
+                 class = "btn-danger") # <-- THIS IS THE CHANGE
   }
 })
 
@@ -191,7 +345,7 @@ filtered_data <- reactive({
   } else if (state$level == "Legislative.District") {
     req(state$region, state$division)
     temp_data <- temp_data %>% 
-      filter(Region == state$region, Division == state$division)
+      filter(Region == astate$region, Division == state$division)
   }
   
   # --- 2. NEW: Categorical filters ---
