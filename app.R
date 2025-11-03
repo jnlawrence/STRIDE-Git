@@ -209,7 +209,7 @@ ui <- page_fluid(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  source("server_parts/01_tutorial_section.R", local = TRUE)
+  # source("server_parts/01_tutorial_section.R", local = TRUE)
   source("server_parts/02_dashboard_back_button.R", local = TRUE)
   source("server_parts/03_authentication.R", local = TRUE)
   source("server_parts/04_gmis_dashboard.R", local = TRUE)
@@ -228,7 +228,7 @@ server <- function(input, output, session) {
   source("server_parts/17_efd_infra_dashboard.R", local = TRUE)
   source("server_parts/18_hrod_databuilder.R", local = TRUE)
   source("server_parts/19_third_level_db.R", local = TRUE)
-  source("server_parts/21_welcome_modal_UI.R", local = TRUE)
+  # source("server_parts/21_welcome_modal_UI.R", local = TRUE)
   source("server_parts/22_quick_school_search.R", local = TRUE)
   source("server_parts/23_plantilla_dynamic_db.R", local = TRUE)
   source("server_parts/24_renderleaflet_resource_mapping.R", local = TRUE)

@@ -348,7 +348,15 @@ output$STRIDE2 <- renderUI({
         }
       "))
       ),
-      
+      # --- STRIDE Banner Section ---
+      div(
+        class = "stride-banner",
+        div(class = "stride-banner-content",
+            h1("STRIDE: Strategic Inventory for Deployment Efficiency"),
+            p("Empowering DepEd with data-driven insights to strengthen education systems, 
+            optimize resources, and promote informed decision-making nationwide.")
+        )
+      ),
       # --- Carousel Section ---
       div(
         class = "home-carousel-container",
@@ -371,6 +379,10 @@ output$STRIDE2 <- renderUI({
             div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
         ),
         
+        # Arrows
+        tags$button(class = "carousel-nav prev-slide", "<"),
+        tags$button(class = "carousel-nav next-slide", ">")
+      ),
         # # --- Go to Dashboard Button (unchanged) ---
         # div(
         #   style = "text-align:center;",
@@ -404,6 +416,7 @@ output$STRIDE2 <- renderUI({
       });
     "))
       )
+      
     ),
     # ==========================================================
     # --- END HOME PANEL ---
