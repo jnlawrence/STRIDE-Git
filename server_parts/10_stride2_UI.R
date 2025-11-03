@@ -347,35 +347,28 @@ output$STRIDE2 <- renderUI({
           .slide-caption { font-size: 1rem; }
         }
       "))
+      ),
+      
+      # --- Carousel Section ---
+      div(
+        class = "home-carousel-container",
+        
+        # Slide 1
+        div(class = "home-slide active",
+            tags$img(src = "1.png"),
+            div(class = "slide-caption", "STRIDE promotes data-driven education reform initiatives.")
         ),
         
-        # --- STRIDE Banner Section ---
-        div(
-          class = "stride-banner",
-          div(class = "stride-banner-content",
-              h1("STRIDE: Strategic Inventory for Deployment Efficiency"),
-              p("Empowering DepEd with data-driven insights to strengthen education systems, 
-            optimize resources, and promote informed decision-making nationwide.")
-          )
+        # Slide 2
+        div(class = "home-slide",
+            tags$img(src = "3.png"),
+            div(class = "slide-caption", "Empowering regions through strategic information dashboards.")
         ),
         
-        # --- Carousel Section (Unchanged) ---
-        div(
-          class = "home-carousel-container",
-          div(class = "home-slide active",
-              tags$img(src = "stride1.jpg"),
-              div(class = "slide-caption", "STRIDE promotes data-driven education reform initiatives.")
-          ),
-          div(class = "home-slide",
-              tags$img(src = "stride2.jpg"),
-              div(class = "slide-caption", "Empowering regions through strategic information dashboards.")
-          ),
-          div(class = "home-slide",
-              tags$img(src = "stride3.jpg"),
-              div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
-          ),
-          tags$button(class = "carousel-nav prev-slide", "<"),
-          tags$button(class = "carousel-nav next-slide", ">")
+        # Slide 3
+        div(class = "home-slide",
+            tags$img(src = "2.png"),
+            div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
         ),
         
         # # --- Go to Dashboard Button (unchanged) ---
