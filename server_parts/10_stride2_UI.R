@@ -328,19 +328,19 @@ output$STRIDE2 <- renderUI({
         
         # Slide 1
         div(class = "home-slide active",
-            tags$img(src = "stride1.jpg"),
+            tags$img(src = "1.png"),
             div(class = "slide-caption", "STRIDE promotes data-driven education reform initiatives.")
         ),
         
         # Slide 2
         div(class = "home-slide",
-            tags$img(src = "stride2.jpg"),
+            tags$img(src = "3.png"),
             div(class = "slide-caption", "Empowering regions through strategic information dashboards.")
         ),
         
         # Slide 3
         div(class = "home-slide",
-            tags$img(src = "stride3.jpg"),
+            tags$img(src = "2.png"),
             div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
         ),
         
