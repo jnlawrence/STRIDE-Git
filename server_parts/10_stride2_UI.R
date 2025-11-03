@@ -205,8 +205,190 @@ output$STRIDE2 <- renderUI({
   #       ) # End Main Layout Div
   #     ) # End tagList for Home content
   #   ), # End of Home nav_panel - COMMA is correct here
-    
-    nav_menu(
+  # ==========================================================
+  # --- HOME PANEL (NEWS STYLE CAROUSEL) ---
+  # ==========================================================
+  nav_panel(
+    title = tags$b("Home"),
+    icon = bs_icon("house-door-fill"),
+    value = "home_tab",
+    tagList(
+      useShinyjs(),
+      
+      # --- Inline CSS (Scoped only to Home Panel) ---
+      tags$head(
+        tags$style(HTML("
+        /* ================================
+           STRIDE HOME NEWS CAROUSEL
+        ================================ */
+        .home-carousel-container {
+          position: relative;
+          width: 100%;
+          max-width: 1000px;
+          margin: 60px auto;
+          overflow: hidden;
+          border-radius: 15px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+          background: #fff;
+        }
+
+        .home-slide {
+          display: none;
+          text-align: center;
+          position: relative;
+        }
+
+        .home-slide img {
+          width: 100%;
+          height: 500px;
+          object-fit: cover;
+          border-radius: 15px;
+        }
+
+        .home-slide.active {
+          display: block;
+          animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        /* Caption Overlay */
+        .slide-caption {
+          position: absolute;
+          bottom: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 51, 102, 0.75);
+          color: #fff;
+          padding: 15px 25px;
+          border-radius: 8px;
+          font-size: 1.2rem;
+          font-weight: 500;
+          max-width: 80%;
+        }
+
+        /* Navigation Arrows */
+        .carousel-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background-color: rgba(0,0,0,0.5);
+          color: #fff;
+          font-size: 2rem;
+          font-weight: bold;
+          border: none;
+          padding: 10px 15px;
+          cursor: pointer;
+          border-radius: 50%;
+          transition: background 0.3s ease;
+        }
+
+        .carousel-nav:hover {
+          background-color: rgba(0,0,0,0.7);
+        }
+
+        .prev-slide { left: 15px; }
+        .next-slide { right: 15px; }
+
+        /* Go to Dashboard Button */
+        .go-dashboard-btn {
+          display: inline-block;
+          margin: 40px auto;
+          padding: 14px 36px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          background-color: #003366;
+          color: #fff !important;
+          border-radius: 8px;
+          border: none;
+          transition: all 0.3s ease;
+          text-decoration: none;
+        }
+
+        .go-dashboard-btn:hover {
+          background-color: #FFB81C;
+          color: #003366 !important;
+          transform: translateY(-3px);
+          box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+          .home-slide img { height: 320px; }
+          .slide-caption { font-size: 1rem; }
+        }
+      "))
+      ),
+      
+      # --- Carousel Section ---
+      div(
+        class = "home-carousel-container",
+        
+        # Slide 1
+        div(class = "home-slide active",
+            tags$img(src = "stride1.jpg"),
+            div(class = "slide-caption", "STRIDE promotes data-driven education reform initiatives.")
+        ),
+        
+        # Slide 2
+        div(class = "home-slide",
+            tags$img(src = "stride2.jpg"),
+            div(class = "slide-caption", "Empowering regions through strategic information dashboards.")
+        ),
+        
+        # Slide 3
+        div(class = "home-slide",
+            tags$img(src = "stride3.jpg"),
+            div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
+        ),
+        
+        # Arrows
+        tags$button(class = "carousel-nav prev-slide", "<"),
+        tags$button(class = "carousel-nav next-slide", ">")
+      ),
+      
+      # --- Go to Dashboard Button ---
+      div(
+        style = "text-align:center;",
+        tags$a(
+          href = "#",
+          class = "go-dashboard-btn",
+          onclick = "document.querySelector('[data-bs-value=\"build_dashboard_tab\"]').click();",
+          "Go to Dashboard"
+        )
+      ),
+      
+      # --- Inline JS for Carousel Navigation ---
+      tags$script(HTML("
+      let currentSlide = 0;
+      const slides = document.querySelectorAll('.home-slide');
+
+      function showSlide(index) {
+        slides.forEach((slide, i) => {
+          slide.classList.remove('active');
+          if (i === index) slide.classList.add('active');
+        });
+      }
+
+      document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('next-slide')) {
+          currentSlide = (currentSlide + 1) % slides.length;
+          showSlide(currentSlide);
+        } else if (e.target.classList.contains('prev-slide')) {
+          currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+          showSlide(currentSlide);
+        }
+      });
+    "))
+    )
+  ),
+  # ==========================================================
+  # --- END HOME PANEL ---
+  # ==========================================================
+  
+  nav_menu(
       title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
       value = "dashboard_menu",
       # Assuming this is inside a larger page_navbar structure
@@ -393,11 +575,12 @@ output$STRIDE2 <- renderUI({
       #                 card_header(strong("GMIS Data")),
       #                 dataTableOutput("GMISTable1")),
       #               col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
-      # --- PLANTILLA POSITIONS PANEL ---
+      
       nav_panel("Build your Dashboard",
                 layout_sidebar(
                   sidebar = sidebar(
                     title = "Dashboard Controls",
+                    value = "build_dashboard_tab",
                     uiOutput("back_button_ui"),
                     
                     # --- Your original controls (unchanged) ---
