@@ -5,136 +5,239 @@ global_drill_state <- reactiveVal(list(
   level = "Region", 
   region = NULL,    
   division = NULL,
+  municipality = NULL,         
+  legislative_district = NULL, 
   coc_filter = NULL,      
   typology_filter = NULL, 
-  shifting_filter = NULL  # <-- NEW: To store the Shifting filter
+  shifting_filter = NULL,
+  outlier_filter = NULL,
+  clustering_filter = NULL
 ))
 global_trigger <- reactiveVal(0) 
 
 # --- Observer Lifecycle Manager ---
 drilldown_observers <- reactiveVal(list())
 
-# --- NEW: Selection Order Tracker ---
-# This reactiveVal tracks the *click order* of metrics,
-# because input$selected_metrics (from a standard selectInput) does not.
-selection_order <- reactiveVal(character(0))
-
-observeEvent(input$selected_metrics, {
-  current_selection <- input$selected_metrics
-  # Use isolate() to compare the new value to the old value
-  old_selection <- isolate(selection_order())
-  
-  # 1. Find items that were *added*
-  # (items in the new list that weren't in the old one)
-  newly_added <- setdiff(current_selection, old_selection)
-  
-  # 2. Find items that were *kept*
-  # We filter the *old* list to preserve its order
-  kept_items <- old_selection[old_selection %in% current_selection]
-  
-  # 3. The new order is the kept items, plus the new items at the end
-  new_order <- c(kept_items, newly_added)
-  
-  # 4. Save the new, correctly-ordered list
-  selection_order(new_order)
-  
-}, ignoreNULL = FALSE) # ignoreNULL=FALSE ensures it runs even when cleared
+# --- *** NEW: Reactive to store SchoolID from map or table click *** ---
+reactive_selected_school_id <- reactiveVal(NULL)
 
 
-# --- *** UPDATED: OBSERVER TO SYNC PICKER -> TOGGLES *** ---
-# This observes the pickerInput. If the user manually removes
-# metrics, this will uncheck the corresponding toggle.
-observeEvent(input$selected_metrics, {
-  
-  current_selection <- input$selected_metrics
-  # Handle empty selection
-  if (is.null(current_selection)) {
-    current_selection <- character(0)
+# --- *** NEW: Define Metric Choices for Plot Titles *** ---
+# This must match the 'choices' in your 10_stride2_UI.R pickers
+hr_metric_choices <- list(
+  `School Information` = c("School Size Typology" = "School.Size.Typology", 
+                           "Curricular Offering" = "Modified.COC"),
+  `Teaching Data` = c("Total Teachers" = "TotalTeachers", 
+                      "Teacher Excess" = "Total.Excess", 
+                      "Teacher Shortage" = "Total.Shortage"),
+  `Non-teaching Data` = c("COS" = "Outlier.Status", 
+                          "AOII Clustering Status" = "Clustering.Status"),
+  `Enrolment Data` = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                       "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                       "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                       "Grade 7" = "G7", "Grade 8" = "G8", 
+                       "Grade 9" = "G9", "Grade 10" = "G10", 
+                       "Grade 11" = "G11", "Grade 12" = "G12"),
+  `Specialization Data` = c("English" = "English", "Mathematics" = "Mathematics", 
+                            "Science" = "Science", 
+                            "Biological Sciences" = "Biological.Sciences", 
+                            "Physical Sciences" = "Physical.Sciences")
+)
+
+infra_metric_choices <- list(
+  `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024",
+                  "Classroom Requirement" =  "Classroom.Requirement",
+                  "Classroom Shortage" = "Est.CS",
+                  "Shifting" = "Shifting",
+                  "Buildings" = "Buildings",
+                  "Buildable Space" = "Buidable_space",
+                  "Major Repairs Needed" = "Major.Repair.2023.2024"),
+  `Facilities` = c("Total Seats Available" = "Total.Seats.2023.2024",
+                   "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
+  `Resources` = c("Ownership Type" = "OwnershipType",
+                  "Electricity Source" = "ElectricitySource",
+                  "Water Source" = "WaterSource"
+  ))
+
+# Combine and unlist to create a flat, named vector for lookups
+metric_choices <- unlist(c(hr_metric_choices, infra_metric_choices))
+
+
+# --- *** NEW: COMBINED METRIC REACTIVE *** ---
+all_selected_metrics <- reactive({
+  hr_metrics <- input$Combined_HR_Toggles_Build
+  infra_metrics <- input$Combined_Infra_Toggles_Build
+  c(hr_metrics, infra_metrics)
+})
+
+
+# --- *** START: PRESET & PICKER SYNC LOGIC *** ---
+
+# --- Define Metric Groups ---
+teacher_metrics <- c("TotalTeachers", "Total.Shortage", "Total.Excess")
+school_metrics <- c("School.Size.Typology", "Modified.COC") 
+classroom_metrics <- c("Instructional.Rooms.2023.2024", "Classroom.Requirement", "Shifting")
+enrolment_metrics <- c("G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12")
+
+# --- Observer 1: Sync Pickers -> Toggles ---
+
+
+# --- Observers 2-4: Sync Toggles -> Pickers (Add-only logic) ---
+
+# --- Observers 2-5: Sync Toggles -> Pickers (UPDATED) ---
+
+# Preset 1: Teacher Focus Toggle
+observeEvent(input$preset_teacher, {
+  current_selection <- isolate(input$Combined_HR_Toggles_Build)
+  if (input$preset_teacher == TRUE) {
+    new_selection <- union(current_selection, teacher_metrics)
+  } else {
+    # --- ADDED: This will remove the metrics ---
+    new_selection <- setdiff(current_selection, teacher_metrics)
   }
+  shinyWidgets::updatePickerInput(
+    session, 
+    "Combined_HR_Toggles_Build", 
+    selected = new_selection
+  )
+}, ignoreInit = TRUE)
+
+# Preset 2: School Focus Toggle
+observeEvent(input$preset_school, {
+  current_selection <- isolate(input$Combined_HR_Toggles_Build)
+  if (input$preset_school == TRUE) {
+    new_selection <- union(current_selection, school_metrics)
+  } else {
+    # --- ADDED: This will remove the metrics ---
+    new_selection <- setdiff(current_selection, school_metrics)
+  }
+  shinyWidgets::updatePickerInput(
+    session, 
+    "Combined_HR_Toggles_Build", 
+    selected = new_selection
+  )
+}, ignoreInit = TRUE)
+
+
+# Preset 3: Infrastructure Focus Toggle
+observeEvent(input$preset_classroom, {
+  current_selection <- isolate(input$Combined_Infra_Toggles_Build)
+  if (input$preset_classroom == TRUE) {
+    new_selection <- union(current_selection, classroom_metrics)
+  } else {
+    # --- ADDED: This will remove the metrics ---
+    new_selection <- setdiff(current_selection, classroom_metrics)
+  }
+  shinyWidgets::updatePickerInput(
+    session, 
+    "Combined_Infra_Toggles_Build", 
+    selected = new_selection
+  )
+}, ignoreInit = TRUE)
+
+# Preset 4: Enrolment Focus Toggle
+observeEvent(input$preset_enrolment, {
+  current_selection <- isolate(input$Combined_HR_Toggles_Build)
+  if (input$preset_enrolment == TRUE) {
+    new_selection <- union(current_selection, enrolment_metrics)
+  } else {
+    # --- ADDED: This will remove the metrics ---
+    new_selection <- setdiff(current_selection, enrolment_metrics)
+  }
+  shinyWidgets::updatePickerInput(
+    session, 
+    "Combined_HR_Toggles_Build", 
+    selected = new_selection
+  )
+}, ignoreInit = TRUE)
+
+# --- *** END: PRESET & PICKER SYNC LOGIC *** ---
+
+# --- *** END: PRESET & PICKER SYNC LOGIC *** ---
+
+
+# --- *** UPDATED: Conditional UI for Data Explorer Tab *** ---
+output$data_explorer_content <- renderUI({
   
-  # --- *** FIXED: Use the SAME metric lists as the toggle observers *** ---
-  teacher_metrics <- c("TotalTeachers", "Total.Shortage","Total.Excess")
-  classroom_metrics <- c("Instructional.Rooms.2023.2024","Classroom.Requirement","Buildings","Shifting") 
-  school_metrics <- c("Total.Schools","School.Size.Typology","Modified.COC") 
+  state <- global_drill_state()
   
-  
-  # Check if ALL metrics for a group are selected
-  all_teacher_selected <- all(teacher_metrics %in% current_selection)
-  all_school_selected <- all(school_metrics %in% current_selection)
-  all_classroom_selected <- all(classroom_metrics %in% current_selection)
-  
-  # --- *** START OF FIX *** ---
-  # Only send an update if the toggle's current value is
-  # DIFFERENT from the value we want to set. This breaks the loop.
-  
-  if (isolate(input$preset_teacher) != all_teacher_selected) {
+  # Condition: No region is selected (user is at the top level)
+  if (state$level == "Region") {
     
-    # We still use freezeReactiveValue for safety
-    freezeReactiveValue(input, "preset_teacher") 
-    shinyWidgets::updateAwesomeCheckbox(
-      session,
-      "preset_teacher",
-      value = all_teacher_selected
+    # Render the instruction message
+    tags$div(
+      class = "d-flex align-items-center justify-content-center",
+      style = "height: 60vh; padding: 20px;", 
+      bslib::card(
+        style = "max-width: 600px;", 
+        bslib::card_body(
+          h4("Data Explorer", class = "card-title"),
+          p("Please go to the ", tags$b("Dashboard Visuals"), " tab and click on a bar in any graph to select a region."),
+          p("The map and data table will appear here once you have drilled down into a specific area.")
+        )
+      )
     )
-  }
-  
-  if (isolate(input$preset_school) != all_school_selected) {
     
-    freezeReactiveValue(input, "preset_school")
-    shinyWidgets::updateAwesomeCheckbox(
-      session,
-      "preset_school",
-      value = all_school_selected
-    )
-  }
-  
-  if (isolate(input$preset_classroom) != all_classroom_selected) {
+  } else {
     
-    freezeReactiveValue(input, "preset_classroom")
-    shinyWidgets::updateAwesomeCheckbox(
-      session,
-      "preset_classroom",
-      value = all_classroom_selected
-    )
-  }
-  # --- *** END OF FIX *** ---
-  
-}, ignoreNULL = FALSE, ignoreInit = TRUE) # <-- Added ignoreInit = TRUE
+    # Render the map/table/details UI
+    tagList(
+      
+      # --- SECTION 1: Map and Table (SWAPPED) ---
+      bslib::layout_columns(
+        col_widths = c(6, 6), 
+        
+        # --- Column 1: Datatable (MOVED) ---
+        bslib::card(
+          full_screen = TRUE,
+          bslib::card_header("Filtered Data (Click a row)"),
+          bslib::card_body(
+            DT::dataTableOutput("school_table")
+          )
+        ),
+        
+        # --- Column 2: Leaflet Map (MOVED) ---
+        bslib::card(
+          full_screen = TRUE,
+          bslib::card_header("School Map (Click a school)"),
+          bslib::card_body(
+            leaflet::leafletOutput("school_map", height = "500px") 
+          )
+        )
+      ), # End layout_columns
+      
+      # --- SECTION 2: School Details ---
+      bslib::card(
+        full_screen = TRUE,
+        card_header(div(strong("School Details"),
+                        tags$span(em("(Select a school from the table or map above)"),
+                                  style = "font-size: 0.7em; color: grey;"
+                        ))),
+        card_body(
+          uiOutput("build_dashboard_school_details_ui") 
+        )
+      )
+    ) # End tagList
+  } # End else
+})
 
-# --- NEW: Map & Table Server Logic (Optimized) ---
 
-# --- 1. Base Leaflet Map ---
-# Renders the map using all data from the current drilldown/filter state.
-# --- 1. Base Leaflet Map ---
-# Renders the map using all data from the current drilldown/filter state.
+# --- Map & Table Server Logic ---
 output$school_map <- leaflet::renderLeaflet({
-  
-  # --- *** Wait for first user drilldown/filter *** ---
   req(global_trigger() > 0)
-  
-  data_to_map_raw <- filtered_data() # Get the raw filtered data
-  
-  # Stop if no data or no coordinate columns
+  data_to_map_raw <- filtered_data() 
   req(nrow(data_to_map_raw) > 0)
   req("Latitude" %in% names(data_to_map_raw), "Longitude" %in% names(data_to_map_raw))
   
-  # --- *** NEW FIX: Force columns to numeric *before* using scales::comma *** ---
-  # This prevents the "round_any" error on character objects
   data_to_map <- data_to_map_raw %>%
     mutate(
-      # Use as.numeric(as.character(...)) to handle potential factors/text
       TotalEnrolment = as.numeric(as.character(TotalEnrolment)),
       Instructional.Rooms.2023.2024 = as.numeric(as.character(Instructional.Rooms.2023.2024)),
       TotalTeachers = as.numeric(as.character(TotalTeachers))
     )
-  # --- *** END OF FIX *** ---
   
   leaflet(data_to_map) %>%
-    
-    # --- Using satellite imagery tile ---
     addProviderTiles(providers$Esri.WorldImagery) %>%
-    
-    # Fit map to show all data points
     fitBounds(
       lng1 = min(data_to_map$Longitude, na.rm = TRUE),
       lat1 = min(data_to_map$Latitude, na.rm = TRUE),
@@ -144,60 +247,30 @@ output$school_map <- leaflet::renderLeaflet({
     addMarkers(
       lng = ~Longitude,
       lat = ~Latitude,
-      
-      # --- UPDATED: Handle NAs and format numbers in hover label ---
-      # This code is now safe because the columns were converted to numeric
       label = ~lapply(paste(
         "<strong>School:</strong>", htmltools::htmlEscape(School.Name),
         "<br/><strong>School ID:</strong>", htmltools::htmlEscape(SchoolID),
-        "<br/><strong>Latitude:</strong>", htmltools::htmlEscape(Latitude),
-        "<br/><strong>Longitude:</strong>", htmltools::htmlEscape(Longitude),
         "<br/><strong>Typology:</strong>", htmltools::htmlEscape(School.Size.Typology),
-        
         "<br/><strong>Total Enrolment:</strong>", 
-        ifelse(is.na(TotalEnrolment), "N/A", scales::comma(TotalEnrolment, accuracy = 1)),
-        "<br/><strong>Total Classrooms:</strong>", 
-        ifelse(is.na(Instructional.Rooms.2023.2024), "N/A", scales::comma(Instructional.Rooms.2023.2024, accuracy = 1)),
-        "<br/><strong>Total Teachers:</strong>", 
-        ifelse(is.na(TotalTeachers), "N/A", scales::comma(TotalTeachers, accuracy = 1))
+        ifelse(is.na(TotalEnrolment), "N/A", scales::comma(TotalEnrolment, accuracy = 1))
       ), htmltools::HTML),
-      
-      # --- Added labelOptions for styling the hover label ---
-      labelOptions = labelOptions(
-        noHide = FALSE, 
-        direction = 'auto', 
-        style = list(
-          "font-weight" = "normal", 
-          "padding" = "3px 8px",
-          "background-color" = "rgba(255, 255, 255, 0.85)", # Semi-transparent white
-          "border" = "1px solid rgba(0,0,0,0.3)" # Faint border
-        )
-      ),
-      
-      # Use the unique ID as the layerId for proxy clicks
-      layerId = ~SchoolID,
-      clusterOptions = markerClusterOptions() # Cluster points when zoomed out
+      labelOptions = labelOptions(noHide = FALSE, direction = 'auto'),
+      layerId = ~SchoolID, # --- IMPORTANT: This is the ID we use for clicks ---
+      clusterOptions = markerClusterOptions() 
     )
 })
 
-# --- 2. Reactive Data for Table (filters by map bounds) ---
-# This reactive filters 'filtered_data()' based on
-# what is currently visible in the 'school_map' bounds.
+# --- data_in_bounds (Unchanged) ---
 data_in_bounds <- reactive({
-  
   data_to_filter <- filtered_data()
   req(nrow(data_to_filter) > 0)
   req("Latitude" %in% names(data_to_filter), "Longitude" %in% names(data_to_filter))
   
-  # Get map bounds from the input
   bounds <- input$school_map_bounds
-  
-  # If bounds are NULL (map not initialized), return all data
   if (is.null(bounds)) {
     return(data_to_filter)
   }
   
-  # Filter data to include only points within the map bounds
   data_to_filter %>%
     filter(
       Latitude >= bounds$south & Latitude <= bounds$north &
@@ -205,219 +278,124 @@ data_in_bounds <- reactive({
     )
 })
 
-# --- 3. Render the Datatable ---
-# This table *only* shows the data from the 'data_in_bounds()' reactive.
-# It will automatically update when the map is panned or zoomed.
+# --- school_table (Unchanged) ---
 output$school_table <- DT::renderDataTable({
-  
-  # --- *** NEW: Wait for first user drilldown/filter *** ---
   req(global_trigger() > 0)
-  
   data_for_table <- data_in_bounds()
-  
-  # ASSUMPTION: Selecting columns to show. Change these as needed.
   cols_to_show <- c("SchoolID", "School.Name", "Division", "Region", "TotalTeachers", "Modified.COC")
-  
-  # Keep only columns that actually exist in the data
   cols_to_show <- intersect(cols_to_show, names(data_for_table))
-  
   req(length(cols_to_show) > 0)
   
   DT::datatable(
     data_for_table[, cols_to_show],
-    selection = 'single', # Allow only single row selection
+    selection = 'single', 
     rownames = FALSE,
     options = list(
       pageLength = 10,
-      scrollY = "400px", # Adjusted height
+      scrollY = "400px", 
       scrollCollapse = TRUE,
-      paging = FALSE # Disable paging, use scroll instead
+      paging = FALSE 
     )
   )
 })
 
-# --- 4. Observer (Table -> Map) ---
-# This zooms the map when a user clicks a row in the datatable.
+# --- *** NEW: Observers for Map/Table Clicks *** ---
+
+# --- Observer for Table Clicks (UPDATED) ---
 observeEvent(input$school_table_rows_selected, {
-  
-  # Get the selected row number
   selected_row_index <- input$school_table_rows_selected
   req(selected_row_index)
   
-  # Get the data *currently in the table*
   table_data <- data_in_bounds()
-  
-  # Get the specific row that was clicked
   selected_row_data <- table_data[selected_row_index, ]
   
-  # Ensure we have lat/lng
+  # Set the reactive ID for school details
+  reactive_selected_school_id(selected_row_data$SchoolID)
+  
   req("Latitude" %in% names(selected_row_data), "Longitude" %in% names(selected_row_data))
   
-  # Use leafletProxy to zoom the map without re-rendering it
+  # Zoom the map
   leafletProxy("school_map", session) %>%
     setView(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15 # You can adjust this zoom level
+      zoom = 15 
     )
-})
+}, ignoreNULL = TRUE, ignoreInit = TRUE)
 
+# --- Observer for Map Marker Clicks ---
+observeEvent(input$school_map_marker_click, {
+  clicked_marker <- input$school_map_marker_click
+  req(clicked_marker$id) 
+  reactive_selected_school_id(clicked_marker$id)
+}, ignoreNULL = TRUE, ignoreInit = TRUE)
 
-# --- *** UPDATED: PRESET TOGGLE OBSERVERS *** ---
-# These observers now ADD or REMOVE metrics based on the toggle state.
-
-# Preset 1: Teacher Focus Toggle
-observeEvent(input$preset_teacher, {
-  # 1. Get the metrics that are *already* selected
-  current_selection <- isolate(input$selected_metrics)
-  
-  # 2. Define the metrics for *this* preset
-  teacher_metrics <- c("TotalTeachers", "Total.Shortage","Total.Excess")
-  
-  # 3. Add or Remove based on the checkbox value
-  if (input$preset_teacher == TRUE) {
-    # Add metrics: union() merges and removes duplicates
-    new_selection <- union(current_selection, teacher_metrics)
-  } else {
-    # Remove metrics: setdiff() keeps items in 'current_selection'
-    # that are NOT in 'teacher_metrics'
-    new_selection <- setdiff(current_selection, teacher_metrics)
-  }
-  
-  # 4. Update the picker input
-  shinyWidgets::updatePickerInput(
-    session, 
-    "selected_metrics", 
-    selected = new_selection
-  )
-}, ignoreInit = TRUE)
-
-# Preset 2: Categorical/Demographic Focus Toggle
-observeEvent(input$preset_classroom, {
-  
-  # 1. Get the metrics that are *already* selected
-  current_selection <- isolate(input$selected_metrics)
-  
-  # 2. Define the metrics for *this* preset
-  classroom_metrics <- c("Instructional.Rooms.2023.2024","Classroom.Requirement","Buildings","Shifting") 
-  
-  # 3. Add or Remove based on the checkbox value
-  if (input$preset_classroom == TRUE) {
-    # Add metrics
-    new_selection <- union(current_selection, classroom_metrics)
-  } else {
-    # Remove metrics
-    new_selection <- setdiff(current_selection, classroom_metrics)
-  }
-  
-  # 4. Update the picker input
-  shinyWidgets::updatePickerInput(
-    session, 
-    "selected_metrics", 
-    selected = new_selection
-  )
-}, ignoreInit = TRUE)
-
-observeEvent(input$preset_school, {
-  
-  # 1. Get the metrics that are *already* selected
-  current_selection <- isolate(input$selected_metrics)
-  
-  # 2. Define the metrics for *this* preset
-  school_metrics <- c("Total.Schools","School.Size.Typology","Modified.COC") 
-  
-  # 3. Add or Remove based on the checkbox value
-  if (input$preset_school == TRUE) {
-    # Add metrics
-    new_selection <- union(current_selection, school_metrics)
-  } else {
-    # Remove metrics
-    new_selection <- setdiff(current_selection, school_metrics)
-  }
-  
-  # 4. Update the picker input
-  shinyWidgets::updatePickerInput(
-    session, 
-    "selected_metrics", 
-    selected = new_selection
-  )
+# --- Observer to clear selection on any data change ---
+observeEvent(global_trigger(), {
+  reactive_selected_school_id(NULL)
 }, ignoreInit = TRUE)
 
 
-# --- Back Button Logic (Updated for Dynamic Label) ---
+# --- Back Button Logic (UPDATED) ---
 output$back_button_ui <- renderUI({
   state <- global_drill_state() 
-  button_label <- ""  # Initialize
-  show_button <- FALSE # Flag to control visibility
+  button_label <- ""  
+  show_button <- FALSE 
   
-  # --- Determine button label based on the state, in reverse priority order ---
-  
-  # --- NEW: Check for Shifting Filter (Highest priority undo) ---
-  if (!is.null(state$shifting_filter)) {
-    
+  if (!is.null(state$clustering_filter)) {
+    label_text <- stringr::str_trunc(state$clustering_filter, 20) 
+    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+  } else if (!is.null(state$outlier_filter)) {
+    label_text <- stringr::str_trunc(state$outlier_filter, 20) 
+    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+  } else if (!is.null(state$shifting_filter)) {
     label_text <- stringr::str_trunc(state$shifting_filter, 20) 
-    button_label <- paste("Undo Filter:", label_text)
-    show_button <- TRUE
-    
-    # 1. Check for Typology Filter
+    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
   } else if (!is.null(state$typology_filter)) {
-    
-    # Use str_trunc to prevent a very long button label
     label_text <- stringr::str_trunc(state$typology_filter, 20) 
-    button_label <- paste("Undo Filter:", label_text)
-    show_button <- TRUE
-    
-    # 2. Check for COC Filter
+    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
   } else if (!is.null(state$coc_filter)) {
-    
     label_text <- stringr::str_trunc(state$coc_filter, 20)
-    button_label <- paste("Undo Filter:", label_text)
-    show_button <- TRUE
-    # 3. Check for Legislative District Level
+    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+  } else if (state$level == "District") {
+    button_label <- "Undo Drilldown"; show_button <- TRUE
   } else if (state$level == "Legislative.District") {
-    
-    button_label <- "Undo Drilldown" # Or "Go Back to Division"
-    show_button <- TRUE
-    
-    # 4. Check for Division Level
+    button_label <- "Undo Drilldown"; show_button <- TRUE
+  } else if (state$level == "Municipality") {
+    button_label <- "Undo Drilldown"; show_button <- TRUE
   } else if (state$level == "Division") {
-    
-    button_label <- "Undo Drilldown" # Or "Go Back to Region"
-    show_button <- TRUE
+    button_label <- "Undo Drilldown"; show_button <- TRUE
   }
   
-  # --- Render the button only if one of the conditions was met ---
   if (show_button) { 
-    
-    # --- UPDATED: Added class = "btn-danger" to make the button red ---
-    actionButton("back_button", 
-                 button_label, 
-                 icon = icon("undo"), 
-                 class = "btn-danger") # <-- THIS IS THE CHANGE
+    actionButton("back_button", button_label, icon = icon("undo"), class = "btn-danger") 
   }
 })
 
+# --- Back Button Observer (UPDATED) ---
 observeEvent(input$back_button, {
   state <- isolate(global_drill_state()) 
-  new_state <- state # Start with the current state
+  new_state <- state 
   
-  # --- CHANGED: Clear categorical filters first (in reverse order) ---
-  
-  # --- NEW: Shifting filter cleared first ---
-  if (!is.null(state$shifting_filter)) {
+  if (!is.null(state$clustering_filter)) {
+    new_state$clustering_filter <- NULL
+  } else if (!is.null(state$outlier_filter)) {
+    new_state$outlier_filter <- NULL
+  } else if (!is.null(state$shifting_filter)) {
     new_state$shifting_filter <- NULL
   } else if (!is.null(state$typology_filter)) {
-    new_state$typology_filter <- NULL # Clear typology filter
+    new_state$typology_filter <- NULL 
   } else if (!is.null(state$coc_filter)) {
-    new_state$coc_filter <- NULL      # Clear COC filter
+    new_state$coc_filter <- NULL      
   } 
-  # --- Original logic for geographic drill-up ---
-  else if (state$level == "Legislative.District") {
-    new_state$level <- "Division"
-    new_state$division <- NULL
+  else if (state$level == "District") {
+    new_state$level <- "Legislative.District"; new_state$legislative_district <- NULL 
+  } else if (state$level == "Legislative.District") {
+    new_state$level <- "Municipality"; new_state$municipality <- NULL
+  } else if (state$level == "Municipality") {
+    new_state$level <- "Division"; new_state$division <- NULL
   } else if (state$level == "Division") {
-    new_state$level <- "Region"
-    new_state$region <- NULL
+    new_state$level <- "Region"; new_state$region <- NULL
   }
   
   global_drill_state(new_state)
@@ -425,13 +403,10 @@ observeEvent(input$back_button, {
 })
 
 
-# --- DYNAMIC OBSERVER MANAGER ---
-# --- DYNAMIC OBSERVER MANAGER ---
+# --- *** UPDATED: DYNAMIC OBSERVER MANAGER *** ---
 observe({
-  # --- CHANGED: Use our new ordered list ---
-  selected_metrics <- selection_order() 
+  selected_metrics <- all_selected_metrics() 
   
-  # (Rest of this observer is unchanged)
   old_handles <- isolate(drilldown_observers())
   walk(old_handles, ~ .x$destroy()) 
   
@@ -439,97 +414,53 @@ observe({
     current_metric <- .x
     current_metric_source <- paste0("plot_source_", current_metric)
     
-    # --- NEW: Categorical Filter Observers ---
-    
-    # This observer handles clicks on the Modified.COC chart
+    # --- Categorical Filter Observers (UPDATED) ---
     observeEvent(event_data("plotly_click", source = "coc_pie_click"), {
-      d <- event_data("plotly_click", source = "coc_pie_click")
-      
-      if (is.null(d$y)) return() # Horizontal bar charts use 'y'
-      clicked_coc <- d$y        
-      
-      state <- isolate(global_drill_state())
-      # Only update if the filter is new
-      if (is.null(state$coc_filter) || state$coc_filter != clicked_coc) {
-        state$coc_filter <- clicked_coc
-        global_drill_state(state)
-        global_trigger(global_trigger() + 1)
-      }
-      
+      d <- event_data("plotly_click", source = "coc_pie_click"); if (is.null(d$y)) return() 
+      state <- isolate(global_drill_state()); state$coc_filter <- d$y
+      global_drill_state(state); global_trigger(global_trigger() + 1)
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
     
-    # This observer handles clicks on the School.Size.Typology bar chart
     observeEvent(event_data("plotly_click", source = "typology_bar_click"), {
-      d <- event_data("plotly_click", source = "typology_bar_click")
-      if (is.null(d$y)) return() # Horizontal bar charts use 'y'
-      
-      clicked_typology <- d$y
-      
-      state <- isolate(global_drill_state())
-      # Only update if the filter is new
-      if (is.null(state$typology_filter) || state$typology_filter != clicked_typology) {
-        state$typology_filter <- clicked_typology
-        global_drill_state(state)
-        global_trigger(global_trigger() + 1)
-      }
-      
+      d <- event_data("plotly_click", source = "typology_bar_click"); if (is.null(d$y)) return() 
+      state <- isolate(global_drill_state()); state$typology_filter <- d$y
+      global_drill_state(state); global_trigger(global_trigger() + 1)
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
     
-    # --- *** NEW: Observer for Shifting *** ---
-    # This observer handles clicks on the Shifting bar chart
     observeEvent(event_data("plotly_click", source = "shifting_bar_click"), {
-      d <- event_data("plotly_click", source = "shifting_bar_click")
-      if (is.null(d$y)) return() # Horizontal bar charts use 'y'
-      
-      clicked_shifting <- d$y
-      
-      state <- isolate(global_drill_state())
-      # Only update if the filter is new
-      if (is.null(state$shifting_filter) || state$shifting_filter != clicked_shifting) {
-        state$shifting_filter <- clicked_shifting
-        global_drill_state(state)
-        global_trigger(global_trigger() + 1)
-      }
-      
+      d <- event_data("plotly_click", source = "shifting_bar_click"); if (is.null(d$y)) return() 
+      state <- isolate(global_drill_state()); state$shifting_filter <- d$y
+      global_drill_state(state); global_trigger(global_trigger() + 1)
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    # --- *** END OF NEW OBSERVER *** ---
     
-    # --- Geographic Drilldown Observer ---
+    observeEvent(event_data("plotly_click", source = "outlier_click"), {
+      d <- event_data("plotly_click", source = "outlier_click"); if (is.null(d$y)) return() 
+      state <- isolate(global_drill_state()); state$outlier_filter <- d$y
+      global_drill_state(state); global_trigger(global_trigger() + 1)
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+    
+    observeEvent(event_data("plotly_click", source = "clustering_click"), {
+      d <- event_data("plotly_click", source = "clustering_click"); if (is.null(d$y)) return() 
+      state <- isolate(global_drill_state()); state$clustering_filter <- d$y
+      global_drill_state(state); global_trigger(global_trigger() + 1)
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+    
+    # --- Geographic Drilldown Observer (Unchanged) ---
     observeEvent(event_data("plotly_click", source = current_metric_source), {
-      state <- isolate(global_drill_state()) 
-      if (state$level == "Legislative.District") return()
-      d <- event_data("plotly_click", source = current_metric_source)
-      if (is.null(d$y)) return()
-      clicked_category <- d$y 
+      state <- isolate(global_drill_state()); if (state$level == "District") return() 
+      d <- event_data("plotly_click", source = current_metric_source); if (is.null(d$y)) return()
       
-      # --- *** NEW VALIDATION STEP *** ---
-      # This check prevents "stale" clicks from re-firing
-      # when the UI is redrawn by a preset button.
-      
-      # 1. Get the data that is *supposed* to be in the current plot
-      current_plot_data <- tryCatch({
-        summarized_data_long() %>%
-          filter(Metric == current_metric)
-      }, error = function(e) { tibble() })
-      
-      # 2. Check if the click is valid
-      # If the clicked category (e.g., "Region I") is NOT in the
-      # current plot's data (e.g., c("SDO I", "SDO II")), then
-      # this is a stale click. Ignore it.
-      if (nrow(current_plot_data) == 0 || !clicked_category %in% current_plot_data$Category) {
-        return()
-      }
-      # --- *** END OF VALIDATION STEP *** ---
-      
-      # If the click is valid, proceed with drilldown
-      new_state <- list()
+      new_state <- state 
       if (state$level == "Region") {
-        new_state <- list(level = "Division", region = clicked_category, division = NULL)
+        new_state$level <- "Division"; new_state$region <- d$y
       } else if (state$level == "Division") {
-        new_state <- list(level = "Legislative.District", region = state$region, division = clicked_category)
+        new_state$level <- "Municipality"; new_state$division <- d$y
+      } else if (state$level == "Municipality") { 
+        new_state$level <- "Legislative.District"; new_state$municipality <- d$y
+      } else if (state$level == "Legislative.District") { 
+        new_state$level <- "District"; new_state$legislative_district <- d$y
       }
-      global_drill_state(new_state)
-      global_trigger(global_trigger() + 1)
+      global_drill_state(new_state); global_trigger(global_trigger() + 1)
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
   })
   
@@ -537,141 +468,102 @@ observe({
 })
 
 
-# --- Reactive Data (Updated) ---
+# --- Reactive Data (filtered_data) (UPDATED) ---
 filtered_data <- reactive({
   trigger <- global_trigger() 
   state <- global_drill_state()
   temp_data <- uni
   
-  # --- 1. Geographic filters (Unchanged) ---
   if (state$level == "Division") {
-    req(state$region)
-    temp_data <- temp_data %>% filter(Region == state$region)
-  } else if (state$level == "Legislative.District") {
-    req(state$region, state$division)
-    temp_data <- temp_data %>% 
-      filter(Region == state$region, Division == state$division)
+    req(state$region); temp_data <- temp_data %>% filter(Region == state$region)
+  } else if (state$level == "Municipality") { 
+    req(state$region, state$division); temp_data <- temp_data %>% filter(Region == state$region, Division == state$division)
+  } else if (state$level == "Legislative.District") { 
+    req(state$region, state$division, state$municipality); temp_data <- temp_data %>% filter(Region == state$region, Division == state$division, Municipality == state$municipality)
+  } else if (state$level == "District") { 
+    req(state$region, state$division, state$municipality, state$legislative_district); temp_data <- temp_data %>% filter(Region == state$region, Division == state$division, Municipality == state$municipality, Legislative.District == state$legislative_district)
   }
   
-  # --- 2. NEW: Categorical filters ---
-  # Apply COC filter if it exists
-  if (!is.null(state$coc_filter)) {
-    temp_data <- temp_data %>% filter(Modified.COC == state$coc_filter)
-  }
-  
-  # Apply Typology filter if it exists
-  if (!is.null(state$typology_filter)) {
-    temp_data <- temp_data %>% filter(School.Size.Typology == state$typology_filter)
-  }
-  
-  # --- NEW: Apply Shifting filter if it exists ---
-  if (!is.null(state$shifting_filter)) {
-    temp_data <- temp_data %>% filter(Shifting == state$shifting_filter)
-  }
+  if (!is.null(state$coc_filter)) { temp_data <- temp_data %>% filter(Modified.COC == state$coc_filter) }
+  if (!is.null(state$typology_filter)) { temp_data <- temp_data %>% filter(School.Size.Typology == state$typology_filter) }
+  if (!is.null(state$shifting_filter)) { temp_data <- temp_data %>% filter(Shifting == state$shifting_filter) }
+  if (!is.null(state$outlier_filter)) { temp_data <- temp_data %>% filter(Outlier.Status == state$outlier_filter) }
+  if (!is.null(state$clustering_filter)) { temp_data <- temp_data %>% filter(Clustering.Status == state$clustering_filter) }
   
   temp_data
 })
 
-# --- Reactive Data (Updated for "Total Schools" count and Robust NA/Numeric Conversion) ---
+# --- Reactive Data (summarized_data_long) (UPDATED) ---
 summarized_data_long <- reactive({
-  # This reactive doesn't care about UI order, so it can
-  # still use input$selected_metrics directly.
-  req(input$selected_metrics) 
+  
+  selected_metrics_list <- all_selected_metrics()
+  req(length(selected_metrics_list) > 0) 
+  
   state <- global_drill_state() 
   group_by_col <- state$level  
-  
-  metrics_to_process <- input$selected_metrics 
+  metrics_to_process <- selected_metrics_list 
   data_in <- filtered_data()
-  
-  # A list to hold our different summary tibbles
   summaries_list <- list()
   
-  # --- NEW: Special handling for "Total Schools" ---
   if ("Total.Schools" %in% metrics_to_process) {
-    
     school_count_summary <- data_in %>%
       group_by(!!sym(group_by_col)) %>%
-      summarise(Value = n(), .groups = "drop") %>% # <-- Count rows (n())
+      summarise(Value = n(), .groups = "drop") %>% 
       rename(Category = !!sym(group_by_col)) %>%
-      mutate(Metric = "Total.Schools") # <-- Assign the metric name
-    
-    # Add it to our list
+      mutate(Metric = "Total.Schools") 
     summaries_list[["school_count"]] <- school_count_summary
   }
-  # --- END of new "Total Schools" logic ---
   
+  categorical_metrics <- c("Modified.COC", "School.Size.Typology", "Total.Schools","Shifting", "Completion",
+                           "Outlier.Status", "Clustering.Status")
   
-  # --- EXISTING: Handle all other standard numeric metrics ---
-  
-  # Define categorical metrics to exclude them from this numeric summary
-  categorical_metrics <- c("Modified.COC", "School.Size.Typology", "Total.Schools","Shifting")
-  
-  # Get only the standard numeric metrics selected by the user
   numeric_metrics_to_process <- setdiff(metrics_to_process, categorical_metrics)
-  
   existing_metrics <- intersect(numeric_metrics_to_process, names(data_in))
   
   if (length(existing_metrics) > 0) {
-    
-    # --- *** NEW: Force all potential metrics to numeric IN THE DATA *** ---
-    # This converts columns to numeric *before* the 'is.numeric' check.
-    # It handles factors/characters (e.g., "1,000", "N/A")
-    # by coercing them, creating NAs where needed.
     data_in <- data_in %>%
-      mutate(
-        across(
-          all_of(existing_metrics), 
-          ~ as.numeric(as.character(.)) # as.character() handles factors
-        )
-      )
-    # --- *** END OF NEW CODE *** ---
+      mutate(across(all_of(existing_metrics), ~ as.numeric(as.character(.))))
     
-    # Now, this check will correctly identify the columns we just converted
     valid_metrics <- existing_metrics[sapply(data_in[existing_metrics], is.numeric)]
     
     if (length(valid_metrics) > 0) {
-      
-      # Perform the standard pivot/sum for all *other* numeric metrics
       numeric_summary <- data_in %>%
         select(!!sym(group_by_col), all_of(valid_metrics)) %>%
-        pivot_longer(
-          cols = all_of(valid_metrics),
-          names_to = "Metric",
-          values_to = "Value"
-        ) %>%
+        pivot_longer(cols = all_of(valid_metrics), names_to = "Metric", values_to = "Value") %>%
         group_by(!!sym(group_by_col), Metric) %>%
-        # This sum() now safely handles NAs from coercion AND original NAs
         summarise(Value = sum(Value, na.rm = TRUE), .groups = "drop") %>%
         rename(Category = !!sym(group_by_col))
-      
-      # Add this tibble to our list
       summaries_list[["numeric_metrics"]] <- numeric_summary
     }
   }
   
-  # --- Combine all summaries into one long tibble ---
   if (length(summaries_list) == 0) {
-    # Return an empty tibble if no valid metrics were found
     return(tibble(Category = character(), Metric = character(), Value = numeric()))
   }
   
-  # Bind all the tibbles in the list (e.g., school counts + teacher counts)
-  final_summary_data <- bind_rows(summaries_list)
-  
-  return(final_summary_data)
+  bind_rows(summaries_list)
 })
 
 
-# --- Dynamic UI: Combined Dashboard Grid (Updated) ---
-# --- Dynamic UI: Combined Dashboard Grid (Updated) ---
-# --- Dynamic UI: Combined Dashboard Grid (Updated) ---
-# --- Dynamic UI: Combined Dashboard Grid (Updated) ---
+# --- Dynamic UI Dashboard Grid (UPDATED) ---
 output$dashboard_grid <- renderUI({
   
-  selected_metrics <- selection_order() 
+  selected_metrics <- all_selected_metrics() 
   
   if (length(selected_metrics) == 0) {
-    return(tags$h4("Please select at least one metric to display graphs."))
+    return(
+      tags$div(
+        class = "d-flex align-items-center justify-content-center", style = "height: 60vh; padding: 20px;", 
+        bslib::card(
+          style = "max-width: 600px;", 
+          bslib::card_body(
+            h4("Welcome to your Dashboard!", class = "card-title"),
+            p("Welcome to this Interactive Education Resource Dashboard."),
+            p("Start by selecting any of the presets or choosing from the advanced filters available on the sidebar to build your view.")
+          )
+        )
+      )
+    )
   }
   
   # --- 1. Create Plotly Renders ---
@@ -679,63 +571,44 @@ output$dashboard_grid <- renderUI({
     current_metric <- .x
     current_metric_name <- names(metric_choices)[metric_choices == current_metric]
     
-    # --- NEW: Unified Title Logic ---
-    # Get the state ONCE for all plots
     state <- global_drill_state()
     level_name <- stringr::str_to_title(state$level) 
-    plot_title <- current_metric_name # Start with the metric name
+    plot_title <- current_metric_name 
     
-    # A. Add geographic context
     if (state$level == "Region") {
       plot_title <- paste(plot_title, "by", level_name)
     } else if (state$level == "Division") {
       plot_title <- paste(plot_title, "by", level_name, "in", state$region)
-    } else if (state$level == "Legislative.District") {
+    } else if (state$level == "Municipality") { 
       plot_title <- paste(plot_title, "by", level_name, "in", state$division)
+    } else if (state$level == "Legislative.District") { 
+      plot_title <- paste(plot_title, "by", level_name, "in", state$municipality)
+    } else if (state$level == "District") { 
+      plot_title <- paste(plot_title, "by", level_name, "in", state$legislative_district)
     }
     
-    # B. Add filter context
     filter_parts <- c()
-    if (!is.null(state$coc_filter)) {
-      filter_parts <- c(filter_parts, state$coc_filter)
-    }
-    if (!is.null(state$typology_filter)) {
-      filter_parts <- c(filter_parts, state$typology_filter)
-    }
-    if (!is.null(state$shifting_filter)) {
-      filter_parts <- c(filter_parts, state$shifting_filter)
-    }
+    if (!is.null(state$coc_filter)) { filter_parts <- c(filter_parts, state$coc_filter) }
+    if (!is.null(state$typology_filter)) { filter_parts <- c(filter_parts, state$typology_filter) }
+    if (!is.null(state$shifting_filter)) { filter_parts <- c(filter_parts, state$shifting_filter) }
+    if (!is.null(state$outlier_filter)) { filter_parts <- c(filter_parts, state$outlier_filter) }
+    if (!is.null(state$clustering_filter)) { filter_parts <- c(filter_parts, state$clustering_filter) }
     
-    # Append filters to the title if any exist
     if (length(filter_parts) > 0) {
       plot_title <- paste0(plot_title, " (Filtered by: ", paste(filter_parts, collapse = ", "), ")")
     }
-    # --- END of Unified Title Logic ---
     
-    
-    # --- Conditional Plot Rendering ---
-    
-    # --- *** FIX 1: Added "Total.Schools" to this condition *** ---
-    if (current_metric == "Modified.COC" || current_metric == "School.Size.Typology" || current_metric == "Shifting" || current_metric == "Total.Schools") {
-      # --- RENDER CATEGORICAL BAR CHART ---
+    # --- UPDATED IF CONDITION ---
+    if (current_metric %in% c("Modified.COC", "School.Size.Typology", "Shifting", "Total.Schools", "Completion", "Outlier.Status", "Clustering.Status")) {
+      
       output[[paste0("plot_", current_metric)]] <- renderPlotly({
         tryCatch({
-          
-          # --- Special data handling for categorical ---
-          # "Total.Schools" comes from summarized_data_long
-          # The others come from filtered_data()
-          
-          bar_data <- tibble() # Initialize
-          
+          bar_data <- tibble() 
           if (current_metric == "Total.Schools") {
-            
             bar_data <- summarized_data_long() %>%
-              filter(Metric == "Total.Schools") %>%
-              filter(!is.na(Category)) %>%
-              rename(Count = Value) # Rename Value to Count
-            
+              filter(Metric == "Total.Schools", !is.na(Category)) %>%
+              rename(Count = Value) 
           } else {
-            
             plot_data_bar <- filtered_data()
             if (nrow(plot_data_bar) > 0) {
               bar_data <- plot_data_bar %>%
@@ -746,151 +619,99 @@ output$dashboard_grid <- renderUI({
           }
           
           if (nrow(bar_data) == 0) {
-            return(
-              plot_ly() %>% 
-                layout(
-                  title = list(text = plot_title, x = 0.05), # Use unified title
-                  annotations = list(x = 0.5, y = 0.5, text = "No data available for this view", showarrow = FALSE, font = list(size = 14))
-                )
-            )
+            return(plot_ly() %>% layout(title = list(text = plot_title, x = 0.05), annotations = list(x = 0.5, y = 0.5, text = "No data available", showarrow = FALSE)))
           }
           
+          # --- UPDATED CASE_WHEN ---
           plot_source <- dplyr::case_when(
             current_metric == "Modified.COC" ~ "coc_pie_click",
             current_metric == "School.Size.Typology" ~ "typology_bar_click",
-            current_metric == "Shifting" ~ "shifting_bar_click", 
-            # "Total.Schools" uses the default drilldown, so we give it a standard source
+            current_metric == "Shifting" ~ "shifting_bar_click",
+            current_metric == "Outlier.Status" ~ "outlier_click", 
+            current_metric == "Clustering.Status" ~ "clustering_click",
             TRUE ~ paste0("plot_source_", current_metric) 
           )
           
-          # Use plot_source for drilldown if it's NOT a filter
-          click_source_name <- if (plot_source %in% c("coc_pie_click", "typology_bar_click", "shifting_bar_click")) {
+          click_source_name <- if (plot_source %in% c("coc_pie_click", "typology_bar_click", "shifting_bar_click", "outlier_click", "clustering_click")) {
             plot_source
           } else {
-            paste0("plot_source_", current_metric) # Standard drilldown
+            paste0("plot_source_", current_metric) 
           }
           
-          p_bar <- plot_ly(
-            data = bar_data,
-            y = ~Category, 
-            x = ~Count,
-            type = "bar",
-            orientation = 'h',
-            name = current_metric_name,
+          plot_ly(
+            data = bar_data, y = ~Category, x = ~Count,
+            type = "bar", orientation = 'h', name = current_metric_name,
             texttemplate = '%{x:,.0f}', textposition = "outside",
             cliponaxis = FALSE, textfont = list(color = '#000000', size = 10),
             source = click_source_name 
           ) %>%
             layout(
-              title = list(text = plot_title, x = 0.05), # Use unified title
+              title = list(text = plot_title, x = 0.05), 
               yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
               xaxis = list(title = "Total Count", tickformat = ',.0f'),
-              legend = list(orientation = 'h', xanchor = 'center', x = 0.5, yanchor = 'bottom', y = 1.02),
+              legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.02),
               margin = list(l = 150) 
             )
-          
-          p_bar
-          
         }, error = function(e) {
-          # ... (Error handling unchanged) ...
+          # ... (Error handling) ...
         })
       })
       
     } else {
-      # --- RENDER DEFAULT DRILLDOWN BAR CHART ---
+      # --- RENDER DEFAULT DRILLDOWN BAR CHART (Unchanged) ---
       output[[paste0("plot_", current_metric)]] <- renderPlotly({
         tryCatch({
-          trigger <- global_trigger()
           plot_data <- summarized_data_long() %>%
-            filter(Metric == current_metric) %>%
-            filter(!is.na(Category))
+            filter(Metric == current_metric, !is.na(Category))
           
-          # --- *** FIX 2: Separated the 'if' checks *** ---
-          # This avoids the logical(0) error
-          
-          # Check 1: Is the data frame empty?
-          if (nrow(plot_data) == 0) {
-            return(
-              plot_ly() %>% 
-                layout(
-                  title = list(text = plot_title, x = 0.05), 
-                  annotations = list(x = 0.5, y = 0.5, text = "No data available for this view", showarrow = FALSE, font = list(size = 14))
-                )
-            )
+          if (nrow(plot_data) == 0 || all(is.na(plot_data$Value))) {
+            return(plot_ly() %>% layout(title = list(text = plot_title, x = 0.05), annotations = list(x = 0.5, y = 0.5, text = "No data available", showarrow = FALSE)))
           }
           
-          # Check 2: Are all values NA? (Now safe, since nrow > 0)
-          if (all(is.na(plot_data$Value))) {
-            return(
-              plot_ly() %>% 
-                layout(
-                  title = list(text = plot_title, x = 0.05), 
-                  annotations = list(x = 0.5, y = 0.5, text = "No data available for this view", showarrow = FALSE, font = list(size = 14))
-                )
-            )
-          }
-          # --- *** END OF FIX 2 *** ---
+          xaxis_range <- c(0, max(plot_data$Value, na.rm = TRUE) * 1.3)
           
-          max_val <- max(plot_data$Value, na.rm = TRUE)
-          xaxis_range <- c(0, max_val * 1.3)
-          
-          p <- plot_ly(
+          plot_ly(
             data = plot_data, y = ~Category, x = ~Value, type = "bar",
             orientation = 'h', name = current_metric_name,
-            source = paste0("plot_source_", current_metric), # (Original drilldown source)
+            source = paste0("plot_source_", current_metric), 
             texttemplate = '%{x:,.0f}', textposition = "outside",
             cliponaxis = FALSE, textfont = list(color = '#000000', size = 10)
           ) %>%
             layout(
-              title = list(text = plot_title, x = 0.05), # Use unified title
+              title = list(text = plot_title, x = 0.05), 
               yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
               xaxis = list(title = "Total Value", tickformat = ',.0f', range = xaxis_range),
-              legend = list(orientation = 'h', xanchor = 'center', x = 0.5, yanchor = 'bottom', y = 1.02),
+              legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.02),
               margin = list(l = 150)
             )
-          
-          p
-          
         }, error = function(e) {
-          # ... (Error handling unchanged) ...
+          # ... (Error handling) ...
         })
       })
     }
-    # --- END of Conditional Plot Rendering ---
   })
   
   # --- 2. Create the UI Card Elements ---
   plot_cards <- map(selected_metrics, ~{
     current_metric <- .x
     current_metric_name <- names(metric_choices)[metric_choices == current_metric]
-    
-    # --- Conditional Summary Card ---
     summary_card_content <- NULL
     
-    # --- *** FIX 1 (Copied): Added "Total.Schools" to this condition *** ---
-    if (current_metric == "Modified.COC" || current_metric == "School.Size.Typology" || current_metric == "Shifting" || current_metric == "Total.Schools") {
+    # --- UPDATED IF CONDITION ---
+    if (current_metric %in% c("Modified.COC", "School.Size.Typology", "Shifting", "Total.Schools", "Completion", "Outlier.Status", "Clustering.Status")) {
       
-      # --- Special handling for summary ---
       total_count <- tryCatch({
         if (current_metric == "Total.Schools") {
-          summarized_data_long() %>%
-            filter(Metric == "Total.Schools") %>%
-            pull(Value) %>%
-            sum(na.rm = TRUE)
+          summarized_data_long() %>% filter(Metric == "Total.Schools") %>% pull(Value) %>% sum(na.rm = TRUE)
         } else {
           nrow(filtered_data()) 
         }
       }, error = function(e) { 0 }) 
       
-      # Use a different title for Total.Schools
-      summary_title <- if (current_metric == "Total.Schools") {
-        paste("Total", current_metric_name)
-      } else {
-        "Total Records in View"
-      }
+      summary_title <- if (current_metric == "Total.Schools") paste("Total", current_metric_name) else "Total Records in View"
       
       summary_card_content <- card(
-        style = "background-color: #FFFFE0; padding: 5px;", # Light yellow, tight padding
+        style = "background-color: #1f77b445; padding: 0px;", # Light yellow, tight padding
         tags$h5(
           summary_title, 
           style = "font-weight: 600; color: #555; margin-top: 2px; margin-bottom: 2px;" # Tighter margins
@@ -904,14 +725,11 @@ output$dashboard_grid <- renderUI({
     } else {
       
       total_val <- tryCatch({
-        summarized_data_long() %>%
-          filter(Metric == current_metric) %>%
-          pull(Value) %>%
-          sum(na.rm = TRUE)
+        summarized_data_long() %>% filter(Metric == current_metric) %>% pull(Value) %>% sum(na.rm = TRUE)
       }, error = function(e) { 0 }) 
       
       summary_card_content <- card(
-        style = "background-color: #FFFFE0; padding: 5px;", # Light yellow, tight padding
+        style = "background-color: #1f77b445; padding: 0px;", # Light yellow, tight padding
         tags$h5(
           paste("Total", current_metric_name), 
           style = "font-weight: 600; color: #555; margin-top: 2px; margin-bottom: 2px;" # Tighter margins
@@ -922,33 +740,168 @@ output$dashboard_grid <- renderUI({
         )
       )
     }
-    # --- END of Conditional Summary Card ---
     
-    # --- Build the final card for this metric ---
     bslib::card(
       full_screen = TRUE,
       card_header(current_metric_name),
       card_body(
-        tags$div(
-          style = "text-align: center; padding-bottom: 10px;",
-          summary_card_content 
-        ),
+        tags$div(style = "text-align: center; padding-bottom: 10px;", summary_card_content),
         plotlyOutput(paste0("plot_", .x))
       )
     )
   })
   
-  # --- 3. Arrange the cards into the layout ---
-  plot_grid <- do.call(
-    bslib::layout_columns,
-    c(list(col_widths = 4), plot_cards)
-  )
-  
-  # --- *** NEW: Add the main title *** ---
+  # --- 3. Arrange the cards into the layout (Logic Unchanged) ---
+  plot_grid <- do.call(bslib::layout_columns, c(list(col_widths = 4), plot_cards))
   tagList(
-    tags$h3("Interactive Education Resource Dashboard", 
-            style = "text-align: center; font-weight: bold; margin-bottom: 20px;"),
-    plot_grid # This is the grid of cards we just defined
+    tags$h3("Interactive Education Resource Dashboard", style = "text-align: center; font-weight: bold; margin-bottom: 20px;"),
+    plot_grid 
   )
-  
 })
+
+
+# --- *** NEW: School Details Logic for Build Your Dashboard *** ---
+
+# --- 1. Reactive to get the full data for the selected school (UPDATED) ---
+selected_school_data <- reactive({
+  # Require the new reactiveVal to have a value
+  req(reactive_selected_school_id())
+  selected_id <- reactive_selected_school_id()
+  
+  # Filter the main 'uni' dataframe for this one school.
+  uni %>% filter(SchoolID == selected_id)
+})
+
+
+# --- 2. Dynamic UI to show prompt or detail tables (UPDATED) ---
+output$build_dashboard_school_details_ui <- renderUI({
+  
+  # Check the new reactiveVal
+  if (is.null(reactive_selected_school_id())) {
+    return(
+      tags$div(
+        style = "padding: 20px; text-align: center; color: #6c757d;",
+        bs_icon("info-circle", size = "2em"),
+        h5("Click a school in the 'Filtered Data' table or on the map to load its details here.")
+      )
+    )
+  }
+  
+  # If a school IS selected, show the 4-column layout
+  layout_columns(
+    col_widths = c(6,6,6,6),
+    
+    card(full_screen = TRUE,
+         card_header(strong("Basic Information")),
+         tableOutput("schooldetails_build")),
+    
+    card(full_screen = TRUE,
+         card_header(strong("HR Data")),
+         tableOutput("schooldetails_build2")),
+    
+    card(full_screen = TRUE,
+         card_header(strong("Classroom Data")),
+         tableOutput("schooldetails_build3")),
+    
+    card(full_screen = TRUE,
+         card_header(div(strong("Specialization Data"),
+                         tags$span(em("(based on eSF7 for SY 2023-2024)"),
+                                   style = "font-size: 0.7em; color: grey;"
+                         ))),
+         tableOutput("schooldetails_build5"))
+  )
+})
+
+# --- 3. Render the four detail tables (FIXED with correct column names) ---
+
+# --- School Details Table 1: Basic Info ---
+output$schooldetails_build <- renderTable({
+  data <- selected_school_data(); req(nrow(data) > 0)
+  data.frame(
+    Metric = c("Region", "Province", "Municipality", "Division", "District", 
+               "Barangay", "Street Address", "School ID", "School Name", "School Head", 
+               "School Head Position", "Implementing Unit", "Modified Curricular Offering", 
+               "Latitude", "Longitude"),
+    Value = as.character(c(
+      data$Region, data$Province, data$Municipality, data$Division, data$District,
+      data$Barangay, data$Street.Address, data$SchoolID, data$School.Name, data$School.Head.Name,
+      data$SH.Position, data$Implementing.Unit, data$Modified.COC,
+      data$Latitude, data$Longitude
+    ))
+  )
+}, striped = TRUE, hover = TRUE, bordered = TRUE)
+
+# --- School Details Table 2: HR Data ---
+output$schooldetails_build2 <- renderTable({
+  data <- selected_school_data(); req(nrow(data) > 0)
+  data.frame(
+    Metric = c("ES Excess", "ES Shortage", "JHS Excess", "JHS Shortage", 
+               "SHS Excess", "SHS Shortage", "ES Teachers", "JHS Teachers", 
+               "SHS Teachers", "ES Enrolment", "JHS Enrolment", "SHS Enrolment", 
+               "School Size Typology", "AO II Deployment", "COS Deployment"),
+    Value = as.character(c(
+      data$ES.Excess, data$ES.Shortage, data$JHS.Excess, data$JHS.Shortage,
+      data$SHS.Excess, data$SHS.Shortage, data$ES.Teachers, data$JHS.Teachers,
+      data$SHS.Teachers, data$ES.Enrolment, data$JHS.Enrolment, data$SHS.Enrolment,
+      data$School.Size.Typology, data$PDOI_Deployment, data$Outlier.Status
+    ))
+  )
+}, striped = TRUE, hover = TRUE, bordered = TRUE)
+
+# --- School Details Table 3: Classroom Data ---
+output$schooldetails_build3 <- renderTable({
+  data <- selected_school_data(); req(nrow(data) > 0)
+  data.frame(
+    Metric = c("Number of Buildings", "Number of Instructional Rooms", 
+               "Classroom Requirement", "Estimated Classroom Shortage", 
+               "With Buildable Space", "For Major Repairs", 
+               "School Building Priority Index", "Shifting", "Ownership Type", 
+               "Source of Electricity", "Source of Water", "Total Seats", 
+               "Total Seats Shortage"),
+    Value = as.character(c(
+      data$Buildings, data$Instructional.Rooms.2023.2024,
+      data$Classroom.Requirement, data$Est.CS,
+      data$Buidable_space, data$Major.Repair.2023.2024,
+      data$SBPI, data$Shifting, data$OwnershipType,
+      data$ElectricitySource, data$WaterSource, data$Total.Seats.2023.2024,
+      data$Total.Seats.Shortage.2023.2024
+    ))
+  )
+}, striped = TRUE, hover = TRUE, bordered = TRUE)
+
+# --- School Details Table 4: Specialization (was build5) ---
+# --- School Details Table 4: Specialization (UPDATED) ---
+output$schooldetails_build5 <- renderTable({
+  data <- selected_school_data(); req(nrow(data) > 0)
+  
+  # --- Define the metric list ---
+  metric_labels <- c("English", "Mathematics", "Science", "Biological Sciences", 
+                     "Physical Sciences", "General Education", "Araling Panlipunan", 
+                     "TLE", "MAPEH", "Filipino", "ESP", "Agriculture", 
+                     "Early Childhood Education", "SPED")
+  
+  # --- Check if the school is "Purely ES" ---
+  # We add !is.na() as a safety check
+  if (!is.na(data$Modified.COC) && data$Modified.COC == "Purely ES") {
+    
+    # --- If YES, show dashes ("-") for all values ---
+    data.frame(
+      Metric = metric_labels,
+      Value = rep("-", length(metric_labels))
+    )
+    
+  } else {
+    
+    # --- If NO, show the actual specialization data ---
+    data.frame(
+      Metric = metric_labels,
+      Value = as.character(c(
+        data$English, data$Mathematics, data$Science, data$Biological.Sciences,
+        data$Physical.Sciences, data$General.Ed, data$Araling.Panlipunan,
+        data$TLE, data$MAPEH, data$Filipino, data$ESP, data$Agriculture,
+        data$ECE, data$SPED
+      ))
+    )
+  }
+  
+}, striped = TRUE, hover = TRUE, bordered = TRUE)

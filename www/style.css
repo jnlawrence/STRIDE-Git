@@ -178,6 +178,21 @@ body.login-bg {
   box-shadow: 0 0 0 3px rgba(23, 66, 140, 0.15);
 }
 
+/* Password toggle styles */
+.input-group .toggle-password {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-left: 1px solid #e0e0e0;
+  background: transparent;
+  color: #495057;
+  border-radius: 0 8px 8px 0;
+}
+.input-group .toggle-password i { font-size: 1rem; }
+.input-group .form-control { border-radius: 8px 0 0 8px; }
+
+
 /* Buttons (Login/Register/Guest) */
 #auth .btn, #auth-do_login, #auth-do_register, .btn-login {
   background-color: #17428C !important; /* DepEd Blue */
@@ -531,17 +546,25 @@ body.show-header-footer .app-footer { display: block !important; /* Or flex, dep
         -webkit-flex-wrap: nowrap;
         justify-content: flex-start;
         border-bottom: 7px solid #003366 !important;
-        -webkit-justify-content: flex-start
+        -webkit-justify-content: flex-start;
+        height: 108px;
     }
     
 *,*::before,*::after {
     box-sizing: border-box;
-    margin-block: -3px;}
+    margin-block: -1px;}
 
 @media (prefers-reduced-motion: no-preference) {
     :root {
         scroll-behavior: smooth
     }
+    
+@media (min-width: 992px) {
+    .navbar-expand-lg .navbar-nav, .navbar:not(.navbar-expand):not(.navbar-expand-sm):not(.navbar-expand-md):not(.navbar-expand-lg):not(.navbar-expand-xl) .navbar-nav {
+        -webkit-flex-direction: row;
+        margin-right: 39px;
+    }
+}
     
 /* ==== FIX: RESOURCE TYPE RADIO BUTTON ALIGNMENT ==== */
 #resource_type_selection {
@@ -568,6 +591,69 @@ body.show-header-footer .app-footer { display: block !important; /* Or flex, dep
   text-align: left !important;
   font-weight: 600;
   color: #002D62; /* optional – DepEd blue */
+}
+
+/* Responsive Grid System */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* Responsive Cards */
+.card {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Responsive Tables */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  
+  .login-left, .login-right {
+    width: 100%;
+  }
+  
+  .stride-logo-text {
+    font-size: 6rem;
+  }
+  
+  .slogan-mid {
+    font-size: 28px;
+  }
+  
+  .slogan-bottom-row {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .bslib-value-box {
+  }
+  
+  .login-card {
+    padding: 20px 15px;
+    margin: 10px;
+  }
+}
+
+
+
+img, svg {
+    vertical-align: middle;
+    margin-right: -3px;
+    padding-top: 11px;
+    margin-top: -35px;
 }
     
 

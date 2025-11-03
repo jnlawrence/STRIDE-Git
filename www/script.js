@@ -164,7 +164,51 @@ $(document).on("change", "select[id$='govlev']", function() {
 });
 
 
+// Add this function for better responsive scaling
+function handleResponsiveLayout() {
+  const isMobile = window.innerWidth <= 768;
+  const root = document.documentElement;
+  
+  if (isMobile) {
+    root.style.setProperty('--base-font-size', '14px');
+    root.style.setProperty('--card-padding', '10px');
+  } else {
+    root.style.setProperty('--base-font-size', '16px');
+    root.style.setProperty('--card-padding', '20px');
+  }
+}
 
+// Add event listeners
+window.addEventListener('load', handleResponsiveLayout);
+window.addEventListener('resize', handleResponsiveLayout);
+
+
+// === PASSWORD VISIBILITY TOGGLE ===
+// Click handler for eye toggle; toggles input type between password and text
+$(document).on('click', '.toggle-password', function(e) {
+  e.preventDefault();
+  var target = $(this).attr('data-target') || $(this).data('target');
+  if (!target) return;
+
+  // IDs produced by Shiny ns() may contain characters that need escaping in jQuery selectors
+  var esc = target.replace(/([:\\.\[\],=@])/g, "\\$1");
+  var $input = $('#' + esc);
+
+  // Fallback: try attribute selector if direct id not found
+  if ($input.length === 0) {
+    $input = $("[id$='" + target.split('-').slice(-1)[0] + "']");
+  }
+
+  if ($input.length === 0) return;
+
+  if ($input.attr('type') === 'password') {
+    $input.attr('type', 'text');
+    $(this).find('i').removeClass('fa-eye').addClass('fa-eye-slash');
+  } else {
+    $input.attr('type', 'password');
+    $(this).find('i').removeClass('fa-eye-slash').addClass('fa-eye');
+  }
+});
 
 
 

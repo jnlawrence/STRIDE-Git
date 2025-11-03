@@ -52,7 +52,11 @@ authentication_server <- function(input, output, session, user_status,
             class = "login-card",
             tags$img(src = "logo1.png", class = "login-logo-top"),
             textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
-            passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+            # custom password input with toggle eye (no server action triggered)
+            tags$div(class = "input-group mb-2",
+                     tags$input(id = ns("login_pass"), type = "password", class = "form-control", placeholder = "Password"),
+                     tags$span(class = "input-group-text toggle-password", `data-target` = ns("login_pass"), HTML('<i class="fa fa-eye" aria-hidden="true"></i>'))
+            ),
             actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
             uiOutput(ns("login_message")),
             br(),
@@ -118,8 +122,16 @@ authentication_server <- function(input, output, session, user_status,
               uiOutput(ns("position_ui")),
               
               textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
-              passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
-              passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
+              # registration password with toggle
+              tags$div(class = "input-group mb-2",
+                       tags$input(id = ns("reg_pass"), type = "password", class = "form-control", placeholder = "Password"),
+                       tags$span(class = "input-group-text toggle-password", `data-target` = ns("reg_pass"), HTML('<i class="fa fa-eye" aria-hidden="true"></i>'))
+              ),
+              # confirm password with toggle
+              tags$div(class = "input-group mb-2",
+                       tags$input(id = ns("reg_pass_confirm"), type = "password", class = "form-control", placeholder = "Confirm Password"),
+                       tags$span(class = "input-group-text toggle-password", `data-target` = ns("reg_pass_confirm"), HTML('<i class="fa fa-eye" aria-hidden="true"></i>'))
+              ),
               
               actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
               uiOutput(ns("register_message")),

@@ -10,8 +10,8 @@ output$STRIDE2 <- renderUI({
     margin-left: 20px;
     margin-top: 20px;"),
     tags$div(
-      tags$img(src = "Stridelogo1.png", height = "74px", style = "margin-right: 9px; padding-top: 9px;"),
-      tags$small("Strategic Inventory for Deployment Efficiency", style = "font-size: 17px; color: ##ffb81c; display: block; line-height: 1;")
+      tags$img(src = "Stridelogo1.png", height = "74px", style = "margin-right: -3px; padding-top: 11px; margin-top: -35px;"),
+      tags$small("Strategic Inventory for Deployment Efficiency", style = "font-size: 17px; color: #3d3232; display: block; line-height: 1; margin-block: -21px")
     )
   ) # End of navbar_title_ui tags$a
   
@@ -579,27 +579,14 @@ output$STRIDE2 <- renderUI({
       nav_panel("Build your Dashboard",
                 layout_sidebar(
                   sidebar = sidebar(
+                    width = 350,
                     title = "Dashboard Controls",
                     value = "build_dashboard_tab",
                     uiOutput("back_button_ui"),
                     
-                    # --- Your original controls (unchanged) ---
-                    pickerInput(
-                      inputId = "selected_metrics",
-                      label = "Select metrics to display:",
-                      choices = metric_choices,
-                      selected = c("Total.Schools", "Instructional.Rooms.2023.2024", "TotalEnrolment"),
-                      multiple = TRUE, 
-                      options = list(
-                        `actions-box` = TRUE,
-                        `dropup-auto` = FALSE, 
-                        `live-search` = TRUE,
-                        `live-search-style` = 'contains'
-                      )
-                    ),
-                    tags$h5("Metric Presets", style = "margin-top: 20px;"),
-                    
-                    # --- NEW: Wrapper Div to control alignment ---
+                    # --- Section 1: Presets ---
+                    hr(), # Added horizontal rule for separation
+                    h4(strong("Dashboard Presets")), # Replaced card_header
                     # We apply a negative margin to pull the checkboxes left.
                     # This offsets the default padding of the input container.
                     tags$div(
@@ -634,50 +621,116 @@ output$STRIDE2 <- renderUI({
                           tags$span("Infrastructure Focus", style = "margin-left: 10px; font-size: 1.1rem;")
                         ),
                         value = FALSE 
+                      ),
+                      
+                      # --- ADD THIS NEW PRESET ---
+                      tags$div(style = "margin-top: 5px;"), # Spacer
+                      
+                      shinyWidgets::awesomeCheckbox(
+                        inputId = "preset_enrolment",
+                        label = tags$div(
+                          style = "display: flex; align-items: center;", 
+                          tags$span("Enrolment Focus", style = "margin-left: 10px; font-size: 1.1rem;")
+                        ),
+                        value = FALSE 
                       )
-                    )), # --- End of Wrapper Div ---
+                      # --- END OF NEW PRESET ---
+                      # --- End of Wrapper Div ---
+                    ), # --- End of Wrapper Div ---
+                    
+                    
+                    # --- Section 2: Advanced Filtering ---
+                    hr(), # Added horizontal rule for separation
+                    h4(strong("Dashboard Filters")), # Replaced card_header
+
+                    
+                    # --- Picker 1: Human Resource Metrics ---
+                    pickerInput(
+                      inputId = "Combined_HR_Toggles_Build", # New combined ID
+                      label = strong("Select Human Resource Metrics"),
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        `actions-box` = TRUE,
+                        liveSearch = TRUE,
+                        dropupAuto = FALSE,
+                        dropup = FALSE,
+                        header = "Select HR Metrics",
+                        title = "No HR Metrics Selected"
+                      ),
+                      choices = list(
+                        `School Information` = c("School Size Typology" = "School.Size.Typology", 
+                                                 "Curricular Offering" = "Modified.COC"),
+                        `Teaching Data` = c("Total Teachers" = "TotalTeachers", 
+                                            "Teacher Excess" = "Total.Excess", 
+                                            "Teacher Shortage" = "Total.Shortage"),
+                        `Non-teaching Data` = c("COS" = "Outlier.Status", 
+                                                "AOII Clustering Status" = "Clustering.Status"),
+                        `Enrolment Data` = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                             "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                             "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                             "Grade 7" = "G7", "Grade 8" = "G8", 
+                                             "Grade 9" = "G9", "Grade 10" = "G10", 
+                                             "Grade 11" = "G11", "Grade 12" = "G12"),
+                        `Specialization Data` = c("English" = "English", "Mathematics" = "Mathematics", 
+                                                  "Science" = "Science", 
+                                                  "Biological Sciences" = "Biological.Sciences", 
+                                                  "Physical Sciences" = "Physical.Sciences")
+                      )
+                    ),
+                    
+                    # --- Picker 2: Infrastructure Metrics ---
+                    pickerInput(
+                      inputId = "Combined_Infra_Toggles_Build", # New combined ID
+                      label = strong("Select Infrastructure Metrics"),
+                      choices = list(
+                        `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024",
+                                        "Classroom Requirement" =  "Classroom.Requirement",
+                                        "Classroom Shortage" = "Est.CS",
+                                        "Shifting" = "Shifting",
+                                        "Buildings" = "Buildings",
+                                        "Buildable Space" = "Buidable_space",
+                                        "Major Repairs Needed" = "Major.Repair.2023.2024"),
+                        `Facilities` = c("Total Seats Available" = "Total.Seats.2023.2024",
+                                         "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
+                        `Resources` = c("Ownership Type" = "OwnershipType",
+                                        "Electricity Source" = "ElectricitySource",
+                                        "Water Source" = "WaterSource"
+                        )),
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        `actions-box` = TRUE,
+                        liveSearch = TRUE,
+                        header = "Select Data Columns",
+                        title = "No Data Column Selected",
+                        dropupAuto = FALSE,
+                        dropup = FALSE
+                      )
+                    )
+                    
+                  ), # --- End of sidebar ---
                   
-                  # --- *** NEW navset_card_tab LAYOUT *** ---
+                  # --- Main content area (UNCHANGED) ---
                   bslib::navset_card_tab(
                     full_screen = TRUE,
                     
                     # --- Tab 1: Your original dashboard grid ---
                     bslib::nav_panel(
-                      title = "Dashboard Visuals",
+                      title = "Interactive Dashboard",
                       uiOutput("dashboard_grid") # This is your existing chart grid
                     ),
                     
                     # --- Tab 2: The new Map + Table Data Explorer ---
-                    # --- Tab 2: The new Map + Table Data Explorer ---
                     bslib::nav_panel(
-                      title = "Data Explorer",
-                      bslib::layout_columns(
-                        col_widths = c(6, 6), # 50/50 split
-                        
-                        # Column 1: Leaflet Map in its own Card
-                        bslib::card(
-                          full_screen = TRUE,
-                          bslib::card_header("School Map"),
-                          bslib::card_body(
-                            # Ensure the map has a defined height
-                            leaflet::leafletOutput("school_map", height = "500px") 
-                          )
-                        ),
-                        
-                        # Column 2: Datatable in its own Card
-                        bslib::card(
-                          full_screen = TRUE,
-                          bslib::card_header("Filtered Data (Visible on Map)"),
-                          bslib::card_body(
-                            DT::dataTableOutput("school_table")
-                          )
-                        )
-                      )
+                      title = "School Locator",
+                      # This UI output will now conditionally render 
+                      # either the instructions or the map/table layout.
+                      uiOutput("data_explorer_content")
                     )
                   )
                 )
       ),
-                    # --- *** END OF NEW LAYLUT *** ---
+      # --- *** END OF NEW LAYLUT *** ---
+
       nav_panel(
         "Plantilla Positions",
         layout_sidebar(
