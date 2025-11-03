@@ -34,7 +34,8 @@ library(reactablefmtr)
 
 school_data <- reactiveVal(NULL)
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
-uni <- read_parquet("School-Unique-v2.parquet") # School-level Data
+uni <- read_parquet("School-Unique-v2.parquet") %>% 
+  mutate(Municipality = stringr::str_to_title(Municipality)) # School-level Data  
 # === PRIVATE SCHOOL DATA ===
 PrivateSchools <- read.csv("Private Schools Oct.2025.csv") %>%
   mutate(
@@ -146,6 +147,8 @@ metric_choices <- c("Total Schools" = "Total.Schools",
                     "Electricity Source" = "ElectricitySource",
                     "Water Source" = "WaterSource",
                     "Buildable Space" = "Buidable_space")
+
+
                     
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
