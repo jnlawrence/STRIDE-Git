@@ -348,7 +348,15 @@ output$STRIDE2 <- renderUI({
         }
       "))
       ),
-      
+      # --- STRIDE Banner Section ---
+      div(
+        class = "stride-banner",
+        div(class = "stride-banner-content",
+            h1("STRIDE: Strategic Inventory for Deployment Efficiency"),
+            p("Empowering DepEd with data-driven insights to strengthen education systems, 
+            optimize resources, and promote informed decision-making nationwide.")
+        )
+      ),
       # --- Carousel Section ---
       div(
         class = "home-carousel-container",
@@ -371,15 +379,20 @@ output$STRIDE2 <- renderUI({
             div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
         ),
         
-        # # --- Go to Dashboard Button (unchanged) ---
-        # div(
-        #   style = "text-align:center;",
-        #   tags$a(
-        #     href = "#",
-        #     class = "go-dashboard-btn",
-        #     "Go to Dashboard"
-        #   )
-        # ),
+        # Arrows
+        tags$button(class = "carousel-nav prev-slide", "<"),
+        tags$button(class = "carousel-nav next-slide", ">")
+      ),
+      # --- Go to Dashboard Button (FIXED) ---
+      div(
+        style = "text-align:center;",
+        # Replaced tags$a with actionButton and gave it an ID
+        actionButton(
+          inputId = "goto_dashboard_btn", # This is the new ID we will listen for
+          label = "Go to Dashboard",
+          class = "go-dashboard-btn" # This keeps your custom styling
+        )
+      ),
         
         # --- Carousel Script ---
         tags$script(HTML("
@@ -404,6 +417,7 @@ output$STRIDE2 <- renderUI({
       });
     "))
       )
+      
     ),
     # ==========================================================
     # --- END HOME PANEL ---

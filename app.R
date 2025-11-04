@@ -209,7 +209,7 @@ ui <- page_fluid(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  source("server_parts/01_tutorial_section.R", local = TRUE)
+  # source("server_parts/01_tutorial_section.R", local = TRUE)
   source("server_parts/02_dashboard_back_button.R", local = TRUE)
   source("server_parts/03_authentication.R", local = TRUE)
   source("server_parts/04_gmis_dashboard.R", local = TRUE)
@@ -228,7 +228,7 @@ server <- function(input, output, session) {
   source("server_parts/17_efd_infra_dashboard.R", local = TRUE)
   source("server_parts/18_hrod_databuilder.R", local = TRUE)
   source("server_parts/19_third_level_db.R", local = TRUE)
-  source("server_parts/21_welcome_modal_UI.R", local = TRUE)
+  # source("server_parts/21_welcome_modal_UI.R", local = TRUE)
   source("server_parts/22_quick_school_search.R", local = TRUE)
   source("server_parts/23_plantilla_dynamic_db.R", local = TRUE)
   source("server_parts/24_renderleaflet_resource_mapping.R", local = TRUE)
@@ -248,9 +248,22 @@ server <- function(input, output, session) {
   source("server_parts/99_others.R", local = TRUE)
   
   
+  #Home Nav panel go to dashboard button function
+  #allows to go to build your own dashboard nav panel
+  observeEvent(input$goto_dashboard_btn, {
+    
+    # This function programmatically selects a tab in the main navbar
+    nav_select(
+      id = "STRIDE2_navbar",           # The ID of your main page_navbar
+      selected = "build_dashboard_tab" # The 'value' of the target tab
+    )
+    
+  })
+  
 }
 
 source("server_parts/29_authentication_module.R", local = TRUE)
 source("server_parts/30_data_input_retrieve_data.R", local = TRUE)
+
 
 shinyApp(ui, server)
