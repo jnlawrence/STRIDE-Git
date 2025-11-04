@@ -261,29 +261,37 @@ output$STRIDE2 <- renderUI({
           padding: 0 20px;
         }
 
-        .stride-banner h1 {
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-  white-space: nowrap; /* Ensures it stays on one line */
+      .stride-banner h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-top: -15px;
+    margin-bottom: 10px;
+    margin-left: -75px;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
 }
 
 
         .stride-banner p {
-          font-size: 1.2rem;
-          font-weight: 400;
-          opacity: 0.95;
-        }
+    font-weight: 400;
+    opacity: 0.95;
+}
 
-        /* STRIDE Logo (optional if you have one) */
-        .stride-logo {
-             height: 156px;
+        /* STRIDE Logo (enhanced visibility) */
+.stride-logo {
+    height: 243px;
+    margin-top: -23px;
     margin-bottom: -46px;
-    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.3));
-        }
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4)) /* soft white glow */ drop-shadow(2px 2px 6px rgba(0, 0, 0, 0.6));
+    transition: filter 0.3s 
+ease;
+}
+.stride-logo:hover {
+  filter:
+    drop-shadow(0 0 6px rgba(255, 255, 255, 0.6))
+    drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.8));
+}
 
         /* Carousel styling (unchanged from your existing code) */
         .home-carousel-container {
@@ -356,10 +364,10 @@ output$STRIDE2 <- renderUI({
         div(
           class = "stride-banner-content",
           tags$img(
-            src = "header-logo1.png",
+            src = "Stridelogo1.png",
             class = "stride-logo"
           ),
-          h1("Strategic Inventory for Deployment Efficiency"),
+          h1("Strategic Resource Inventory for Deployment Efficiency"),
           
           p("Empowering DepEd with data-driven insights to strengthen its education systems, 
       optimize resource allocation, and promote informed decision-making nationwide.")
