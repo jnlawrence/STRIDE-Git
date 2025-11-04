@@ -2849,3 +2849,20 @@
 #     layout(hoverlabel = list(bgcolor = "white"),
 #            margin = list(b = 100)) # Increase bottom margin for x-axis labels
 # })
+
+# #Home Nav panel go to dashboard button function
+# #allows to go to build your own dashboard nav panel
+# observeEvent(input$goto_dashboard_btn, {
+#   
+#   # This function programmatically selects a tab in the main navbar
+#   nav_select(
+#     id = "STRIDE2_navbar",           # The ID of your main page_navbar
+#     selected = "build_dashboard_tab" # The 'value' of the target tab
+#   )
+#   
+#   # --- ADD THIS LINE TO FIX THE HANGING MENU ---
+#   # This JavaScript finds any open dropdown toggle (which has aria-expanded="true")
+#   # and triggers a "blur" event, which mimics the user clicking away.
+#   shinyjs::runjs("$('a.dropdown-toggle[aria-expanded=\"true\"]').blur();")
+#   
+# })

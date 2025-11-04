@@ -2,8 +2,8 @@
 
 # --- Shared global drilldown state (applies to ALL cards) ---
 # MOVED: These MUST be outside the observe block to persist.
-global_drill_state <- reactiveVal(list(region = NULL))
-global_trigger <- reactiveVal(0)
+plantilla_drill_state <- reactiveVal(list(region = NULL))
+plantilla_trigger <- reactiveVal(0)
 
 # --- NEW: Create a master list of all locations ---
 all_locations <- distinct(dfGMIS, Old.Region, Division)
@@ -90,8 +90,8 @@ observe({
     output[[vbox_id]] <- renderUI({
       
       # 1. Read the global drill state to make this reactive update when the state changes.
-      trigger <- global_trigger() # Read the trigger to force re-render
-      state <- global_drill_state()
+      trigger <- plantilla_trigger() # Read the trigger to force re-render
+      state <- plantilla_drill_state()
       if (is.null(state)) state <- list(region = NULL)
       
       # 2. Get the base data for the current position
@@ -130,8 +130,8 @@ observe({
     # --- Plot with Global Drilldown ---
     # --- Plot with Global Drilldown ---
     output[[plot_id]] <- renderPlotly({
-      trigger <- global_trigger()  # re-render when drilldown changes
-      state <- global_drill_state()
+      trigger <- plantilla_trigger()  # re-render when drilldown changes
+      state <- plantilla_drill_state()
       if (is.null(state)) state <- list(region = NULL)
       
       df <- df_sub()
@@ -277,13 +277,13 @@ observe({
       cat_clicked <- click_data$y
       if (is.null(cat_clicked)) return()
       
-      current_state <- isolate(global_drill_state())
+      current_state <- isolate(plantilla_drill_state())
       if (is.null(current_state)) current_state <- list(region = NULL)
       
       # Only allow 1 drilldown level: Region -> Division
       if (is.null(current_state$region)) {
-        global_drill_state(list(region = as.character(cat_clicked)))
-        global_trigger(global_trigger() + 1)
+        plantilla_drill_state(list(region = as.character(cat_clicked)))
+        plantilla_trigger(plantilla_trigger() + 1)
       }
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
   })
@@ -292,10 +292,10 @@ observe({
   # This observer can also be moved outside the main observe block.
   # It doesn't need to be recreated every time.
   observeEvent(input$btn_back_drilldown, {
-    state <- isolate(global_drill_state())
+    state <- isolate(plantilla_drill_state())
     if (!is.null(state$region)) {
-      global_drill_state(list(region = NULL))
-      global_trigger(global_trigger() + 1)
+      plantilla_drill_state(list(region = NULL))
+      plantilla_trigger(plantilla_trigger() + 1)
     }
   })
 })

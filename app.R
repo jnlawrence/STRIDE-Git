@@ -247,19 +247,6 @@ server <- function(input, output, session) {
   source("server_parts/98_commented_sections.R", local = TRUE)
   source("server_parts/99_others.R", local = TRUE)
   
-  
-  #Home Nav panel go to dashboard button function
-  #allows to go to build your own dashboard nav panel
-  observeEvent(input$goto_dashboard_btn, {
-    
-    # This function programmatically selects a tab in the main navbar
-    nav_select(
-      id = "STRIDE2_navbar",           # The ID of your main page_navbar
-      selected = "build_dashboard_tab" # The 'value' of the target tab
-    )
-    
-  })
-  
 }
 
 source("server_parts/29_authentication_module.R", local = TRUE)
