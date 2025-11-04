@@ -83,144 +83,207 @@ output$STRIDE2 <- renderUI({
     # ), # End of bs_add_rules
     nav_spacer(),
     
-  #   # --- Navigation Panels and Menus ---
-  #   nav_panel(
-  #     title = tags$b("Home"),
-  #     icon = bs_icon("house-door-fill"),
-  #     value = "home_tab",
-  #     # <<<--- PASTE YOUR HOME PAGE UI CODE (tagList) HERE --->>>
-  #     tagList(
-  #       useShinyjs(),  # Still needed here for this panel's interactivity
-  #       tags$head(
-  #         tags$style(HTML("
-  #   /* =====================================================
-  #      DEPED COLOR THEME
-  #      ===================================================== */
-  #   :root {
-  #     --deped-blue: #003366;
-  #     --deped-gold: #FFB81C;
-  #     --deped-light: #f4f6fa;
-  #     --deped-white: #ffffff;
-  #   }
-  # 
-  # 
-  # 
-  #   /* =====================================================
-  #      SIDEBAR
-  #      ===================================================== */
-  #   .sidebar_erdb {
-  #     width: 260px;
-  #     background: var(--deped-blue);
-  #     color: var(--deped-white);
-  #     padding: 20px;
-  #     border-radius: 0 12px 12px 0;
-  #     box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-  #     position: sticky;
-  #     top: 60px; /* Adjust top based on navbar height */
-  #     height: calc(100vh - 60px); /* Adjust height based on navbar height */
-  #     flex-shrink: 0;
-  #     overflow-y: auto;
-  #   }
-  # 
-  #   .sidebar_erdb h4 {
-  #     color: var(--deped-gold);
-  #     font-weight: 700;
-  #     text-align: center;
-  #     margin-bottom: 20px;
-  #   }
-  # 
-  #   /* =====================================================
-  #      SIDEBAR BUTTONS
-  #      ===================================================== */
-  #   .btn-card {
-  #     background: rgba(255,255,255,0.1);
-  #     border: 1px solid rgba(255,255,255,0.15);
-  #     color: var(--deped-white);
-  #     border-radius: 10px;
-  #     text-align: left;
-  #     padding: 12px 16px;
-  #     display: flex;
-  #     align-items: center;
-  #     width: 100%;
-  #     transition: all 0.2s ease-in-out;
-  #   }
-  # 
-  #   .btn-card:hover,
-  #   .btn-card:focus {
-  #     background: var(--deped-gold) !important;
-  #     color: var(--deped-blue) !important;
-  #     transform: scale(1.02);
-  #     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  #   }
-  # 
-  #   .btn-card h5 {
-  #     display: inline-block;
-  #     margin-left: 8px;
-  #     font-size: 1.05rem;
-  #     font-weight: 600;
-  #   }
-  # 
-  # 
-  # 
-  #   /* =====================================================
-  #      GLOBAL SCROLLBAR
-  #      ===================================================== */
-  #   ::-webkit-scrollbar {
-  #     width: 10px;
-  #   }
-  # 
-  #   ::-webkit-scrollbar-thumb {
-  #     background:  #003366;
-  #     border-radius: 10px;
-  #   }
-  # 
-  # 
-  # "))
-  #       ),
-  #       # --- MAIN LAYOUT Div ---
-  #       div(
-  #         class = "layout_erdb",
-  #         # --- SIDEBAR Div ---
-  #         div(
-  #           class = "sidebar_erdb",
-  #           h4("Select Category"),
-  #           actionButton(
-  #             "erdb_overview",
-  #             label = tagList(bs_icon("house", size = 24), tags$h5("Overview")),
-  #             class = "w-100 btn-card"
-  #           ),
-  #           actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"), # source: 187
-  #           actionButton("erdb_school", label = tagList(bs_icon("building", size = 24), tags$h5("Basic Info")), class = "btn-card mb-2"), # source: 187
-  #           actionButton("erdb_infra", label = tagList(bs_icon("tools", size = 24), tags$h5("Infrastructure")), class = "btn-card mb-2"), # source: 188
-  #           actionButton("erdb_financial", label = tagList(bs_icon("currency-dollar", size = 24), tags$h5("Financial")), class = "btn-card mb-2"), # source: 188
-  #           actionButton("erdb_monitoring", label = tagList(bs_icon("graph-up", size = 24), tags$h5("Monitoring")), class = "btn-card mb-2"), # source: 188
-  #           actionButton("erdb_ppas", label = tagList(bs_icon("clipboard-data", size = 24), tags$h5("PPAs")), class = "btn-card mb-2") # source: 188
-  #         ), # End Sidebar Div
-  #         # --- MAIN CONTENT Div ---
-  #         # div(
-  #         #   id = "main_erdb_content",
-  #         #   uiOutput("dynamic_erdb_panel"), # This will render the content based on sidebar clicks
-  #         #   class = "main-content-erdb"
-  #         # ) # End Main Content Div
-  #       ) # End Main Layout Div
-  #     ) # End tagList for Home content
-  #   ), # End of Home nav_panel - COMMA is correct here
-  # ==========================================================
-  # --- HOME PANEL (NEWS STYLE CAROUSEL) ---
-  # ==========================================================
-  nav_panel(
-    title = tags$b("Home"),
-    icon = bs_icon("house-door-fill"),
-    value = "home_tab",
-    tagList(
-      useShinyjs(),
-      
-      # --- Inline CSS (Scoped only to Home Panel) ---
-      tags$head(
-        tags$style(HTML("
+    #   # --- Navigation Panels and Menus ---
+    #   nav_panel(
+    #     title = tags$b("Home"),
+    #     icon = bs_icon("house-door-fill"),
+    #     value = "home_tab",
+    #     # <<<--- PASTE YOUR HOME PAGE UI CODE (tagList) HERE --->>>
+    #     tagList(
+    #       useShinyjs(),  # Still needed here for this panel's interactivity
+    #       tags$head(
+    #         tags$style(HTML("
+    #   /* =====================================================
+    #      DEPED COLOR THEME
+    #      ===================================================== */
+    #   :root {
+    #     --deped-blue: #003366;
+    #     --deped-gold: #FFB81C;
+    #     --deped-light: #f4f6fa;
+    #     --deped-white: #ffffff;
+    #   }
+    # 
+    # 
+    # 
+    #   /* =====================================================
+    #      SIDEBAR
+    #      ===================================================== */
+    #   .sidebar_erdb {
+    #     width: 260px;
+    #     background: var(--deped-blue);
+    #     color: var(--deped-white);
+    #     padding: 20px;
+    #     border-radius: 0 12px 12px 0;
+    #     box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+    #     position: sticky;
+    #     top: 60px; /* Adjust top based on navbar height */
+    #     height: calc(100vh - 60px); /* Adjust height based on navbar height */
+    #     flex-shrink: 0;
+    #     overflow-y: auto;
+    #   }
+    # 
+    #   .sidebar_erdb h4 {
+    #     color: var(--deped-gold);
+    #     font-weight: 700;
+    #     text-align: center;
+    #     margin-bottom: 20px;
+    #   }
+    # 
+    #   /* =====================================================
+    #      SIDEBAR BUTTONS
+    #      ===================================================== */
+    #   .btn-card {
+    #     background: rgba(255,255,255,0.1);
+    #     border: 1px solid rgba(255,255,255,0.15);
+    #     color: var(--deped-white);
+    #     border-radius: 10px;
+    #     text-align: left;
+    #     padding: 12px 16px;
+    #     display: flex;
+    #     align-items: center;
+    #     width: 100%;
+    #     transition: all 0.2s ease-in-out;
+    #   }
+    # 
+    #   .btn-card:hover,
+    #   .btn-card:focus {
+    #     background: var(--deped-gold) !important;
+    #     color: var(--deped-blue) !important;
+    #     transform: scale(1.02);
+    #     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    #   }
+    # 
+    #   .btn-card h5 {
+    #     display: inline-block;
+    #     margin-left: 8px;
+    #     font-size: 1.05rem;
+    #     font-weight: 600;
+    #   }
+    # 
+    # 
+    # 
+    #   /* =====================================================
+    #      GLOBAL SCROLLBAR
+    #      ===================================================== */
+    #   ::-webkit-scrollbar {
+    #     width: 10px;
+    #   }
+    # 
+    #   ::-webkit-scrollbar-thumb {
+    #     background:  #003366;
+    #     border-radius: 10px;
+    #   }
+    # 
+    # 
+    # "))
+    #       ),
+    #       # --- MAIN LAYOUT Div ---
+    #       div(
+    #         class = "layout_erdb",
+    #         # --- SIDEBAR Div ---
+    #         div(
+    #           class = "sidebar_erdb",
+    #           h4("Select Category"),
+    #           actionButton(
+    #             "erdb_overview",
+    #             label = tagList(bs_icon("house", size = 24), tags$h5("Overview")),
+    #             class = "w-100 btn-card"
+    #           ),
+    #           actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"), # source: 187
+    #           actionButton("erdb_school", label = tagList(bs_icon("building", size = 24), tags$h5("Basic Info")), class = "btn-card mb-2"), # source: 187
+    #           actionButton("erdb_infra", label = tagList(bs_icon("tools", size = 24), tags$h5("Infrastructure")), class = "btn-card mb-2"), # source: 188
+    #           actionButton("erdb_financial", label = tagList(bs_icon("currency-dollar", size = 24), tags$h5("Financial")), class = "btn-card mb-2"), # source: 188
+    #           actionButton("erdb_monitoring", label = tagList(bs_icon("graph-up", size = 24), tags$h5("Monitoring")), class = "btn-card mb-2"), # source: 188
+    #           actionButton("erdb_ppas", label = tagList(bs_icon("clipboard-data", size = 24), tags$h5("PPAs")), class = "btn-card mb-2") # source: 188
+    #         ), # End Sidebar Div
+    #         # --- MAIN CONTENT Div ---
+    #         # div(
+    #         #   id = "main_erdb_content",
+    #         #   uiOutput("dynamic_erdb_panel"), # This will render the content based on sidebar clicks
+    #         #   class = "main-content-erdb"
+    #         # ) # End Main Content Div
+    #       ) # End Main Layout Div
+    #     ) # End tagList for Home content
+    #   ), # End of Home nav_panel - COMMA is correct here
+    # ==========================================================
+    # --- HOME PANEL (with STRIDE Banner + News Carousel) ---
+    # ==========================================================
+    nav_panel(
+      title = tags$b("Home"),
+      icon = bs_icon("house-door-fill"),
+      value = "home_tab",
+      tagList(
+        useShinyjs(),
+        
+        # --- Inline CSS (Scoped only to Home Panel) ---
+        tags$head(
+          tags$style(HTML("
         /* ================================
-           STRIDE HOME NEWS CAROUSEL
+           STRIDE HOME BANNER & CAROUSEL
         ================================ */
+
+        /* Banner section */
+        .stride-banner {
+          position: relative;
+          width: 100%;
+          height: 300px;
+          background: linear-gradient(135deg, #003366 40%, #FFB81C 100%);
+          color: white;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          overflow: hidden;
+          border-bottom: 6px solid #003366;
+          box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Optional animated pattern overlay */
+        .stride-banner::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+          background-size: 30px 30px;
+          animation: movePattern 8s linear infinite;
+        }
+
+        @keyframes movePattern {
+          from { background-position: 0 0; }
+          to { background-position: 60px 60px; }
+        }
+
+        .stride-banner-content {
+          position: relative;
+          z-index: 2;
+          max-width: 900px;
+          padding: 0 20px;
+        }
+
+        .stride-banner h1 {
+          font-size: 2.8rem;
+          font-weight: 800;
+          letter-spacing: 1px;
+          margin-bottom: 10px;
+          text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .stride-banner p {
+          font-size: 1.2rem;
+          font-weight: 400;
+          opacity: 0.95;
+        }
+
+        /* STRIDE Logo (optional if you have one) */
+        .stride-logo {
+          width: 100px;
+          height: auto;
+          margin-bottom: 15px;
+          filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.3));
+        }
+
+        /* Carousel styling (unchanged from your existing code) */
         .home-carousel-container {
           position: relative;
           width: 100%;
@@ -232,68 +295,29 @@ output$STRIDE2 <- renderUI({
           background: #fff;
         }
 
-        .home-slide {
-          display: none;
-          text-align: center;
-          position: relative;
-        }
+        .home-slide { display: none; text-align: center; position: relative; }
+        .home-slide img { width: 100%; height: 500px; object-fit: cover; border-radius: 15px; }
+        .home-slide.active { display: block; animation: fadeIn 1s ease-in-out; }
 
-        .home-slide img {
-          width: 100%;
-          height: 500px;
-          object-fit: cover;
-          border-radius: 15px;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .home-slide.active {
-          display: block;
-          animation: fadeIn 1s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        /* Caption Overlay */
         .slide-caption {
-          position: absolute;
-          bottom: 40px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(0, 51, 102, 0.75);
-          color: #fff;
-          padding: 15px 25px;
-          border-radius: 8px;
-          font-size: 1.2rem;
-          font-weight: 500;
-          max-width: 80%;
+          position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+          background: rgba(0, 51, 102, 0.75); color: #fff; padding: 15px 25px;
+          border-radius: 8px; font-size: 1.2rem; font-weight: 500; max-width: 80%;
         }
 
-        /* Navigation Arrows */
         .carousel-nav {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          background-color: rgba(0,0,0,0.5);
-          color: #fff;
-          font-size: 2rem;
-          font-weight: bold;
-          border: none;
-          padding: 10px 15px;
-          cursor: pointer;
-          border-radius: 50%;
-          transition: background 0.3s ease;
+          position: absolute; top: 50%; transform: translateY(-50%);
+          background-color: rgba(0,0,0,0.5); color: #fff;
+          font-size: 2rem; border: none; padding: 10px 15px; border-radius: 50%;
+          cursor: pointer; transition: background 0.3s ease;
         }
 
-        .carousel-nav:hover {
-          background-color: rgba(0,0,0,0.7);
-        }
-
+        .carousel-nav:hover { background-color: rgba(0,0,0,0.7); }
         .prev-slide { left: 15px; }
         .next-slide { right: 15px; }
 
-        /* Go to Dashboard Button */
         .go-dashboard-btn {
           display: inline-block;
           margin: 40px auto;
@@ -316,6 +340,9 @@ output$STRIDE2 <- renderUI({
         }
 
         @media (max-width: 768px) {
+          .stride-banner { height: 230px; }
+          .stride-banner h1 { font-size: 2rem; }
+          .stride-banner p { font-size: 1rem; }
           .home-slide img { height: 320px; }
           .slide-caption { font-size: 1rem; }
         }
@@ -344,24 +371,18 @@ output$STRIDE2 <- renderUI({
             div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
         ),
         
-        # Arrows
-        tags$button(class = "carousel-nav prev-slide", "<"),
-        tags$button(class = "carousel-nav next-slide", ">")
-      ),
-      
-      # --- Go to Dashboard Button ---
-      div(
-        style = "text-align:center;",
-        tags$a(
-          href = "#",
-          class = "go-dashboard-btn",
-          onclick = "document.querySelector('[data-bs-value=\"build_dashboard_tab\"]').click();",
-          "Go to Dashboard"
-        )
-      ),
-      
-      # --- Inline JS for Carousel Navigation ---
-      tags$script(HTML("
+        # # --- Go to Dashboard Button (unchanged) ---
+        # div(
+        #   style = "text-align:center;",
+        #   tags$a(
+        #     href = "#",
+        #     class = "go-dashboard-btn",
+        #     "Go to Dashboard"
+        #   )
+        # ),
+        
+        # --- Carousel Script ---
+        tags$script(HTML("
       let currentSlide = 0;
       const slides = document.querySelectorAll('.home-slide');
 
@@ -382,13 +403,13 @@ output$STRIDE2 <- renderUI({
         }
       });
     "))
-    )
-  ),
-  # ==========================================================
-  # --- END HOME PANEL ---
-  # ==========================================================
-  
-  nav_menu(
+      )
+    ),
+    # ==========================================================
+    # --- END HOME PANEL ---
+    # ==========================================================
+    
+    nav_menu(
       title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
       value = "dashboard_menu",
       # Assuming this is inside a larger page_navbar structure
@@ -576,161 +597,162 @@ output$STRIDE2 <- renderUI({
       #                 dataTableOutput("GMISTable1")),
       #               col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
       
-      nav_panel("Build your Dashboard",
-                layout_sidebar(
-                  sidebar = sidebar(
-                    width = 350,
-                    title = "Dashboard Controls",
-                    value = "build_dashboard_tab",
-                    uiOutput("back_button_ui"),
-                    
-                    # --- Section 1: Presets ---
-                    hr(), # Added horizontal rule for separation
-                    h4(strong("Dashboard Presets")), # Replaced card_header
-                    # We apply a negative margin to pull the checkboxes left.
-                    # This offsets the default padding of the input container.
-                    tags$div(
-                      style = "margin-left: -10px;", # Adjust this value if needed
-                      
-                      shinyWidgets::awesomeCheckbox(
-                        inputId = "preset_teacher",
-                        label = tags$div(
-                          style = "display: flex; align-items: center;", 
-                          tags$span("Teacher Focus", style = "margin-left: 10px; font-size: 1.1rem;") 
-                        ),
-                        value = FALSE 
-                      ),
-                      
-                      tags$div(style = "margin-top: 5px;"), # Spacer
-                      
-                      shinyWidgets::awesomeCheckbox(
-                        inputId = "preset_school",
-                        label = tags$div(
-                          style = "display: flex; align-items: center;", 
-                          tags$span("School Focus", style = "margin-left: 10px; font-size: 1.1rem;")
-                        ),
-                        value = FALSE
-                      ),
-                      
-                      tags$div(style = "margin-top: 5px;"), # <-- ADDED SPACER
-                      
-                      shinyWidgets::awesomeCheckbox(
-                        inputId = "preset_classroom",
-                        label = tags$div(
-                          style = "display: flex; align-items: center;", 
-                          tags$span("Infrastructure Focus", style = "margin-left: 10px; font-size: 1.1rem;")
-                        ),
-                        value = FALSE 
-                      ),
-                      
-                      # --- ADD THIS NEW PRESET ---
-                      tags$div(style = "margin-top: 5px;"), # Spacer
-                      
-                      shinyWidgets::awesomeCheckbox(
-                        inputId = "preset_enrolment",
-                        label = tags$div(
-                          style = "display: flex; align-items: center;", 
-                          tags$span("Enrolment Focus", style = "margin-left: 10px; font-size: 1.1rem;")
-                        ),
-                        value = FALSE 
-                      )
-                      # --- END OF NEW PRESET ---
-                      # --- End of Wrapper Div ---
-                    ), # --- End of Wrapper Div ---
-                    
-                    
-                    # --- Section 2: Advanced Filtering ---
-                    hr(), # Added horizontal rule for separation
-                    h4(strong("Dashboard Filters")), # Replaced card_header
-
-                    
-                    # --- Picker 1: Human Resource Metrics ---
-                    pickerInput(
-                      inputId = "Combined_HR_Toggles_Build", # New combined ID
-                      label = strong("Select Human Resource Metrics"),
-                      multiple = TRUE,
-                      options = pickerOptions(
-                        `actions-box` = TRUE,
-                        liveSearch = TRUE,
-                        dropupAuto = FALSE,
-                        dropup = FALSE,
-                        header = "Select HR Metrics",
-                        title = "No HR Metrics Selected"
-                      ),
-                      choices = list(
-                        `School Information` = c("School Size Typology" = "School.Size.Typology", 
-                                                 "Curricular Offering" = "Modified.COC"),
-                        `Teaching Data` = c("Total Teachers" = "TotalTeachers", 
-                                            "Teacher Excess" = "Total.Excess", 
-                                            "Teacher Shortage" = "Total.Shortage"),
-                        `Non-teaching Data` = c("COS" = "Outlier.Status", 
-                                                "AOII Clustering Status" = "Clustering.Status"),
-                        `Enrolment Data` = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
-                                             "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
-                                             "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
-                                             "Grade 7" = "G7", "Grade 8" = "G8", 
-                                             "Grade 9" = "G9", "Grade 10" = "G10", 
-                                             "Grade 11" = "G11", "Grade 12" = "G12"),
-                        `Specialization Data` = c("English" = "English", "Mathematics" = "Mathematics", 
-                                                  "Science" = "Science", 
-                                                  "Biological Sciences" = "Biological.Sciences", 
-                                                  "Physical Sciences" = "Physical.Sciences")
-                      )
-                    ),
-                    
-                    # --- Picker 2: Infrastructure Metrics ---
-                    pickerInput(
-                      inputId = "Combined_Infra_Toggles_Build", # New combined ID
-                      label = strong("Select Infrastructure Metrics"),
-                      choices = list(
-                        `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024",
-                                        "Classroom Requirement" =  "Classroom.Requirement",
-                                        "Classroom Shortage" = "Est.CS",
-                                        "Shifting" = "Shifting",
-                                        "Buildings" = "Buildings",
-                                        "Buildable Space" = "Buidable_space",
-                                        "Major Repairs Needed" = "Major.Repair.2023.2024"),
-                        `Facilities` = c("Total Seats Available" = "Total.Seats.2023.2024",
-                                         "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
-                        `Resources` = c("Ownership Type" = "OwnershipType",
-                                        "Electricity Source" = "ElectricitySource",
-                                        "Water Source" = "WaterSource"
-                        )),
-                      multiple = TRUE,
-                      options = pickerOptions(
-                        `actions-box` = TRUE,
-                        liveSearch = TRUE,
-                        header = "Select Data Columns",
-                        title = "No Data Column Selected",
-                        dropupAuto = FALSE,
-                        dropup = FALSE
-                      )
-                    )
-                    
-                  ), # --- End of sidebar ---
-                  
-                  # --- Main content area (UNCHANGED) ---
-                  bslib::navset_card_tab(
-                    full_screen = TRUE,
-                    
-                    # --- Tab 1: Your original dashboard grid ---
-                    bslib::nav_panel(
-                      title = "Interactive Dashboard",
-                      uiOutput("dashboard_grid") # This is your existing chart grid
-                    ),
-                    
-                    # --- Tab 2: The new Map + Table Data Explorer ---
-                    bslib::nav_panel(
-                      title = "School Locator",
-                      # This UI output will now conditionally render 
-                      # either the instructions or the map/table layout.
-                      uiOutput("data_explorer_content")
-                    )
-                  )
-                )
+      nav_panel(
+        title = "Build your Dashboard",
+        value = "build_dashboard_tab",  
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 350,
+            title = "Dashboard Controls",
+            uiOutput("back_button_ui"),
+            
+            # --- Section 1: Presets ---
+            hr(), # Added horizontal rule for separation
+            h4(strong("Dashboard Presets")), # Replaced card_header
+            # We apply a negative margin to pull the checkboxes left.
+            # This offsets the default padding of the input container.
+            tags$div(
+              style = "margin-left: -10px;", # Adjust this value if needed
+              
+              shinyWidgets::awesomeCheckbox(
+                inputId = "preset_teacher",
+                label = tags$div(
+                  style = "display: flex; align-items: center;", 
+                  tags$span("Teacher Focus", style = "margin-left: 10px; font-size: 1.1rem;") 
+                ),
+                value = FALSE 
+              ),
+              
+              tags$div(style = "margin-top: 5px;"), # Spacer
+              
+              shinyWidgets::awesomeCheckbox(
+                inputId = "preset_school",
+                label = tags$div(
+                  style = "display: flex; align-items: center;", 
+                  tags$span("School Focus", style = "margin-left: 10px; font-size: 1.1rem;")
+                ),
+                value = FALSE
+              ),
+              
+              tags$div(style = "margin-top: 5px;"), # <-- ADDED SPACER
+              
+              shinyWidgets::awesomeCheckbox(
+                inputId = "preset_classroom",
+                label = tags$div(
+                  style = "display: flex; align-items: center;", 
+                  tags$span("Infrastructure Focus", style = "margin-left: 10px; font-size: 1.1rem;")
+                ),
+                value = FALSE 
+              ),
+              
+              # --- ADD THIS NEW PRESET ---
+              tags$div(style = "margin-top: 5px;"), # Spacer
+              
+              shinyWidgets::awesomeCheckbox(
+                inputId = "preset_enrolment",
+                label = tags$div(
+                  style = "display: flex; align-items: center;", 
+                  tags$span("Enrolment Focus", style = "margin-left: 10px; font-size: 1.1rem;")
+                ),
+                value = FALSE 
+              )
+              # --- END OF NEW PRESET ---
+              # --- End of Wrapper Div ---
+            ), # --- End of Wrapper Div ---
+            
+            
+            # --- Section 2: Advanced Filtering ---
+            hr(), # Added horizontal rule for separation
+            h4(strong("Dashboard Filters")), # Replaced card_header
+            
+            
+            # --- Picker 1: Human Resource Metrics ---
+            pickerInput(
+              inputId = "Combined_HR_Toggles_Build", # New combined ID
+              label = strong("Select Human Resource Metrics"),
+              multiple = TRUE,
+              options = pickerOptions(
+                `actions-box` = TRUE,
+                liveSearch = TRUE,
+                dropupAuto = FALSE,
+                dropup = FALSE,
+                header = "Select HR Metrics",
+                title = "No HR Metrics Selected"
+              ),
+              choices = list(
+                `School Information` = c("School Size Typology" = "School.Size.Typology", 
+                                         "Curricular Offering" = "Modified.COC"),
+                `Teaching Data` = c("Total Teachers" = "TotalTeachers", 
+                                    "Teacher Excess" = "Total.Excess", 
+                                    "Teacher Shortage" = "Total.Shortage"),
+                `Non-teaching Data` = c("COS" = "Outlier.Status", 
+                                        "AOII Clustering Status" = "Clustering.Status"),
+                `Enrolment Data` = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                     "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                     "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                     "Grade 7" = "G7", "Grade 8" = "G8", 
+                                     "Grade 9" = "G9", "Grade 10" = "G10", 
+                                     "Grade 11" = "G11", "Grade 12" = "G12"),
+                `Specialization Data` = c("English" = "English", "Mathematics" = "Mathematics", 
+                                          "Science" = "Science", 
+                                          "Biological Sciences" = "Biological.Sciences", 
+                                          "Physical Sciences" = "Physical.Sciences")
+              )
+            ),
+            
+            # --- Picker 2: Infrastructure Metrics ---
+            pickerInput(
+              inputId = "Combined_Infra_Toggles_Build", # New combined ID
+              label = strong("Select Infrastructure Metrics"),
+              choices = list(
+                `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024",
+                                "Classroom Requirement" =  "Classroom.Requirement",
+                                "Classroom Shortage" = "Est.CS",
+                                "Shifting" = "Shifting",
+                                "Buildings" = "Buildings",
+                                "Buildable Space" = "Buidable_space",
+                                "Major Repairs Needed" = "Major.Repair.2023.2024"),
+                `Facilities` = c("Total Seats Available" = "Total.Seats.2023.2024",
+                                 "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
+                `Resources` = c("Ownership Type" = "OwnershipType",
+                                "Electricity Source" = "ElectricitySource",
+                                "Water Source" = "WaterSource"
+                )),
+              multiple = TRUE,
+              options = pickerOptions(
+                `actions-box` = TRUE,
+                liveSearch = TRUE,
+                header = "Select Data Columns",
+                title = "No Data Column Selected",
+                dropupAuto = FALSE,
+                dropup = FALSE
+              )
+            )
+            
+          ), # --- End of sidebar ---
+          
+          # --- Main content area (UNCHANGED) ---
+          bslib::navset_card_tab(
+            full_screen = TRUE,
+            
+            # --- Tab 1: Your original dashboard grid ---
+            bslib::nav_panel(
+              title = "Interactive Dashboard",
+              uiOutput("dashboard_grid") # This is your existing chart grid
+            ),
+            
+            # --- Tab 2: The new Map + Table Data Explorer ---
+            bslib::nav_panel(
+              title = "School Locator",
+              # This UI output will now conditionally render 
+              # either the instructions or the map/table layout.
+              uiOutput("data_explorer_content")
+            )
+          )
+        )
       ),
       # --- *** END OF NEW LAYLUT *** ---
-
+      
       nav_panel(
         "Plantilla Positions",
         layout_sidebar(

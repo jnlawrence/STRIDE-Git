@@ -128,7 +128,7 @@ overall_totals <- dfGMIS %>%
 # end of dfGMIS data
 
 metric_choices <- c("Total Schools" = "Total.Schools",
-  "Teachers" = "TotalTeachers",
+                    "Teachers" = "TotalTeachers",
                     "Teacher Shortage" = "Total.Shortage",
                     "Teacher Excess" = "Total.Excess",
                     "Enrolment" = "TotalEnrolment",
@@ -149,7 +149,7 @@ metric_choices <- c("Total Schools" = "Total.Schools",
                     "Buildable Space" = "Buidable_space")
 
 
-                    
+
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
   password = c("deped123", "stride123"), # In a real app, use hashed passwords
@@ -159,6 +159,20 @@ user_base <- tibble::tibble(
 )
 
 SERVICE_ACCOUNT_FILE <- "service_account.json"
+# Check if the file exists before attempting to authenticate
+print("Checking for service_account.json...")
+print(file.exists(SERVICE_ACCOUNT_FILE))
+
+if (file.exists(SERVICE_ACCOUNT_FILE)) {
+  library(googlesheets4)
+  gs4_auth(
+    scopes = "https://www.googleapis.com/auth/spreadsheets",
+    path = SERVICE_ACCOUNT_FILE
+  )
+  print("googlesheets4 authenticated successfully using Service Account.")
+} else {
+  warning(paste("❌ Service account key not found at:", SERVICE_ACCOUNT_FILE))
+}
 sheet_url <- "https://docs.google.com/spreadsheets/d/1e3ni50Jcv3sBAkG8TbwBt4v7kjjMRSVvf9gxtcMiqjU/edit?gid=0#gid=0"
 SHEET_ID <- "https://docs.google.com/spreadsheets/d/1x9D8xfXtkT1Mbr4M4We7I9sUqoj42X4SFX9N9hu24wM/edit?gid=0#gid=0"
 SHEET_NAME <- "Sheet1" # Assuming the data is on the first tab
@@ -188,13 +202,13 @@ ui <- page_fluid(
   ui_loading,
   ui_footer
   # Note: The 'app_header' you commented out could be another file)
-
+  
 )
 
 # MAIN SERVER CONTENT 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
-
+  
   source("server_parts/01_tutorial_section.R", local = TRUE)
   source("server_parts/02_dashboard_back_button.R", local = TRUE)
   source("server_parts/03_authentication.R", local = TRUE)
