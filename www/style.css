@@ -137,10 +137,18 @@ body.login-bg {
 .slogan-left { color: #2c3895; font-weight: 900; /* deep blue */ }
 .slogan-right { color: #d62828; font-weight: 900; /* red */ }
 
-.slogan-login {
-    margin-block: 38px;
+.slogan-login-top {
+    margin-top: 19px;
     font-weight: 700;
-    font-size: 20px;
+    font-size: 25px;
+    margin-bottom: 15px;
+    color: #002d62;
+}
+
+.slogan-login-bottom {
+    font-size: 15px;
+    margin-bottom: 22px;
+    margin-top: 16px;
 }
 
 /* Login Card Styling (Right Side) */

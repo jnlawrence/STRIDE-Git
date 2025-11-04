@@ -47,9 +47,10 @@ authentication_server <- function(input, output, session, user_status,
           class = "login-right",
           div(
             class = "login-card",
+            p(class = "slogan-login-top", "Welcome to STRIDE!"),
             div(
-              class = "slogan-login",
-              span(class = "slogan-login", "Please Log-in.")
+              class = "slogan-login-bottom",
+              span(class = "slogan-login-bottom", "Please enter your email and password.")
             ),
             textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
             # custom password input with toggle eye (no server action triggered)
