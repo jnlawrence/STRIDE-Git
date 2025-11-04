@@ -25,9 +25,10 @@ reactive_selected_school_id <- reactiveVal(NULL)
 # --- *** NEW: Define Metric Choices for Plot Titles *** ---
 # This must match the 'choices' in your 10_stride2_UI.R pickers
 hr_metric_choices <- list(
-  `School Information` = c("School Size Typology" = "School.Size.Typology", 
+  `School Information` = c("Number of Schools" = "Total.Schools",
+    "School Size Typology" = "School.Size.Typology", 
                            "Curricular Offering" = "Modified.COC"),
-  `Teaching Data` = c("Total Teachers" = "TotalTeachers", 
+  `Teaching Data` = c("Number of Teachers" = "TotalTeachers", 
                       "Teacher Excess" = "Total.Excess", 
                       "Teacher Shortage" = "Total.Shortage"),
   `Non-teaching Data` = c("COS" = "Outlier.Status", 
@@ -45,11 +46,11 @@ hr_metric_choices <- list(
 )
 
 infra_metric_choices <- list(
-  `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024",
+  `Classroom` = c("Number of Classrooms" = "Instructional.Rooms.2023.2024",
                   "Classroom Requirement" =  "Classroom.Requirement",
                   "Classroom Shortage" = "Est.CS",
                   "Shifting" = "Shifting",
-                  "Buildings" = "Buildings",
+                  "Number of Buildings" = "Buildings",
                   "Buildable Space" = "Buidable_space",
                   "Major Repairs Needed" = "Major.Repair.2023.2024"),
   `Facilities` = c("Total Seats Available" = "Total.Seats.2023.2024",
@@ -61,6 +62,19 @@ infra_metric_choices <- list(
 
 # Combine and unlist to create a flat, named vector for lookups
 metric_choices <- unlist(c(hr_metric_choices, infra_metric_choices))
+
+# --- *** MODIFIED (Change 1 of 3): Added "clean name" lookup vector *** ---
+# This list combines all inner vectors, preserving their original, clean names
+clean_metric_choices <- c(
+  hr_metric_choices$`School Information`,
+  hr_metric_choices$`Teaching Data`,
+  hr_metric_choices$`Non-teaching Data`,
+  hr_metric_choices$`Enrolment Data`,
+  hr_metric_choices$`Specialization Data`,
+  infra_metric_choices$Classroom,
+  infra_metric_choices$Facilities,
+  infra_metric_choices$Resources
+)
 
 
 # --- *** NEW: COMBINED METRIC REACTIVE *** ---
@@ -75,7 +89,7 @@ all_selected_metrics <- reactive({
 
 # --- Define Metric Groups ---
 teacher_metrics <- c("TotalTeachers", "Total.Shortage", "Total.Excess")
-school_metrics <- c("School.Size.Typology", "Modified.COC") 
+school_metrics <- c("Total.Schools","School.Size.Typology", "Modified.COC") 
 classroom_metrics <- c("Instructional.Rooms.2023.2024", "Classroom.Requirement", "Shifting")
 enrolment_metrics <- c("G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12")
 
@@ -569,7 +583,8 @@ output$dashboard_grid <- renderUI({
   # --- 1. Create Plotly Renders ---
   walk(selected_metrics, ~{
     current_metric <- .x
-    current_metric_name <- names(metric_choices)[metric_choices == current_metric]
+    # --- *** MODIFIED (Change 2 of 3): Use clean_metric_choices *** ---
+    current_metric_name <- names(clean_metric_choices)[clean_metric_choices == current_metric]
     
     state <- global_drill_state()
     level_name <- stringr::str_to_title(state$level) 
@@ -694,7 +709,8 @@ output$dashboard_grid <- renderUI({
   # --- 2. Create the UI Card Elements ---
   plot_cards <- map(selected_metrics, ~{
     current_metric <- .x
-    current_metric_name <- names(metric_choices)[metric_choices == current_metric]
+    # --- *** MODIFIED (Change 3 of 3): Use clean_metric_choices *** ---
+    current_metric_name <- names(clean_metric_choices)[clean_metric_choices == current_metric]
     summary_card_content <- NULL
     
     # --- UPDATED IF CONDITION ---

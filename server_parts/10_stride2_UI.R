@@ -628,7 +628,7 @@ ease;
       #               col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
       
       nav_panel(
-        title = "Build your Dashboard",
+        title = "Education Resource Dashboard",
         value = "build_dashboard_tab",  
         layout_sidebar(
           sidebar = sidebar(
@@ -710,7 +710,8 @@ ease;
                 title = "No HR Metrics Selected"
               ),
               choices = list(
-                `School Information` = c("School Size Typology" = "School.Size.Typology", 
+                `School Information` = c("Number of Schools" = "Total.Schools",
+                  "School Size Typology" = "School.Size.Typology", 
                                          "Curricular Offering" = "Modified.COC"),
                 `Teaching Data` = c("Total Teachers" = "TotalTeachers", 
                                     "Teacher Excess" = "Total.Excess", 

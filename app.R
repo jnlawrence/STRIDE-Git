@@ -127,7 +127,7 @@ overall_totals <- dfGMIS %>%
 
 # end of dfGMIS data
 
-metric_choices <- c("Total Schools" = "Total.Schools",
+metric_choices <- c("Number of Schools" = "Total.Schools",
                     "Teachers" = "TotalTeachers",
                     "Teacher Shortage" = "Total.Shortage",
                     "Teacher Excess" = "Total.Excess",
