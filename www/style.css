@@ -84,6 +84,7 @@ body.login-bg {
   height: 161px;
   width: auto;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  margin-right: 297px;
 }
 
 /* STRIDE Logo Text Styling (Login Left) */
@@ -104,24 +105,23 @@ body.login-bg {
 .stride-ide { color: #D62828; /* DepEd red */ }
 
 .stride-logo-i { /* Image used for 'I' */
-  height: 474px;
-    /* vertical-align: middle; */
-    margin: -191px -50px;
-    transition: transform 0.3s 
-ease;
-    margin-top: -111px;
-    margin-bottom: -65px;
+  height: 444px;
+    vertical-align: middle;
+    margin: -70px 36px;
+    transition: transform 0.3s ease;
+    margin-top: -183px;
+    filter: drop-shadow(3px 1px 13px white);
 }
 
 /* Login Slogans */
 .slogan-mid {
-  margin-top: -166px;
-    font-size: 45px;
-    color: #a38200;
-    font-weight: 900;
-    text-shadow: 0px 3px #fffde4;
-    letter-spacing: 2px;
-    font-style: italic;
+  margin-top: -156px;
+  font-size: 45px;
+  color: #a38200;
+  font-weight: 900;
+  text-shadow: 0px 3px #fffde4;
+  letter-spacing: 2px;
+  font-style: italic;
 }
 
 .slogan-bottom-row {
@@ -136,6 +136,12 @@ ease;
 
 .slogan-left { color: #2c3895; font-weight: 900; /* deep blue */ }
 .slogan-right { color: #d62828; font-weight: 900; /* red */ }
+
+.slogan-login {
+    margin-block: 38px;
+    font-weight: 700;
+    font-size: 20px;
+}
 
 /* Login Card Styling (Right Side) */
 .login-card {

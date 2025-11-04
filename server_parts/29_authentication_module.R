@@ -26,8 +26,7 @@ authentication_server <- function(input, output, session, user_status,
             class = "login-text-box text-center",
             div(
               class = "login-left-logos",
-              tags$img(src = "logo2.png", class = "left-logo"),
-              tags$img(src = "logo3.png", class = "left-logo")
+              tags$img(src = "logo1.png", class = "left-logo")
             ),
             h2(
               HTML('
@@ -48,7 +47,10 @@ authentication_server <- function(input, output, session, user_status,
           class = "login-right",
           div(
             class = "login-card",
-            tags$img(src = "logo1.png", class = "login-logo-top"),
+            div(
+              class = "slogan-login",
+              span(class = "slogan-login", "Please Log-in.")
+            ),
             textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
             # custom password input with toggle eye (no server action triggered)
             tags$div(class = "input-group mb-2",
@@ -63,7 +65,9 @@ authentication_server <- function(input, output, session, user_status,
             # actionButton(ns("guest_mode"), "Continue as Guest", class = "btn-secondary w-100 mt-2"),
             div(
               class = "login-logos-bottom",
-              tags$img(src = "HROD LOGO1.png", class = "bottom-logo")
+              tags$img(src = "logo2.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "logo3.png", class = "bottom-logo")
             )
           )
         )
