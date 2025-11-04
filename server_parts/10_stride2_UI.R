@@ -262,12 +262,15 @@ output$STRIDE2 <- renderUI({
         }
 
         .stride-banner h1 {
-          font-size: 2.8rem;
-          font-weight: 800;
-          letter-spacing: 1px;
-          margin-bottom: 10px;
-          text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
-        }
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+  white-space: nowrap; /* Ensures it stays on one line */
+}
+
 
         .stride-banner p {
           font-size: 1.2rem;
@@ -277,10 +280,9 @@ output$STRIDE2 <- renderUI({
 
         /* STRIDE Logo (optional if you have one) */
         .stride-logo {
-          width: 100px;
-          height: auto;
-          margin-bottom: 15px;
-          filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.3));
+             height: 156px;
+    margin-bottom: -46px;
+    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.3));
         }
 
         /* Carousel styling (unchanged from your existing code) */
@@ -351,10 +353,16 @@ output$STRIDE2 <- renderUI({
       # --- STRIDE Banner Section ---
       div(
         class = "stride-banner",
-        div(class = "stride-banner-content",
-            h1("STRIDE: Strategic Inventory for Deployment Efficiency"),
-            p("Empowering DepEd with data-driven insights to strengthen education systems, 
-            optimize resources, and promote informed decision-making nationwide.")
+        div(
+          class = "stride-banner-content",
+          tags$img(
+            src = "header-logo1.png",
+            class = "stride-logo"
+          ),
+          h1("Strategic Inventory for Deployment Efficiency"),
+          
+          p("Empowering DepEd with data-driven insights to strengthen its education systems, 
+      optimize resource allocation, and promote informed decision-making nationwide.")
         )
       ),
       # --- Carousel Section ---
@@ -363,20 +371,20 @@ output$STRIDE2 <- renderUI({
         
         # Slide 1
         div(class = "home-slide active",
-            tags$img(src = "1.png"),
+            tags$img(src = "5.png"),
             div(class = "slide-caption", "STRIDE promotes data-driven education reform initiatives.")
         ),
         
         # Slide 2
         div(class = "home-slide",
             tags$img(src = "3.png"),
-            div(class = "slide-caption", "Empowering regions through strategic information dashboards.")
+            div(class = "slide-caption", "Empowering the institutions through strategic information dashboards.")
         ),
         
         # Slide 3
         div(class = "home-slide",
             tags$img(src = "2.png"),
-            div(class = "slide-caption", "Building efficient deployment systems for schools and teachers.")
+            div(class = "slide-caption", "Building efficient deployment strategies for schools and teachers.")
         ),
         
         # Arrows
