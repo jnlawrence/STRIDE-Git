@@ -35,7 +35,8 @@ library(reactablefmtr)
 school_data <- reactiveVal(NULL)
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
 uni <- read_parquet("School-Unique-v2.parquet") %>% 
-  mutate(Municipality = stringr::str_to_title(Municipality)) # School-level Data  
+  mutate(Municipality = stringr::str_to_title(Municipality)) %>% # School-level Data
+  mutate(Leg.Mun = sprintf("%s (%s)", Legislative.District, Municipality))
 # === PRIVATE SCHOOL DATA ===
 PrivateSchools <- read.csv("Private Schools Oct.2025.csv") %>%
   mutate(
@@ -112,7 +113,8 @@ cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 ThirdLevel <- read.csv("2025-Third Level Officials DepEd-cleaned.csv", stringsAsFactors = FALSE)
 
 # dfGMIS data
-dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
+dfGMIS <- read.csv("GMIS-FillingUpPerPosition-Oct2025.csv") %>% filter(GMIS.Region != "<not available>")
+all_available_positions <- unique(dfGMIS$Position)
 
 # Get unique positions for the dropdown
 all_positions <- c("All Positions" = "All", 

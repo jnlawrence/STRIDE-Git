@@ -790,6 +790,29 @@ ease;
           sidebar = sidebar(
             width = 500,
             class = "bg-secondary text-white",
+            tags$div(
+              class = "preset-filters",
+              tags$h5("Position Presets"),
+              # This is the change from 'checkboxGroupInput'
+              awesomeCheckboxGroup(
+                inputId = "plantilla_presets",
+                label = "Click to filter positions:",
+                choices = c(
+                  "Teacher",
+                  "Master Teacher",
+                  "School Principal",
+                  "Head Teacher",
+                  "Guidance Coordinator",
+                  "Guidance Counselor",
+                  "Engineer",
+                  "Administrative Officer",
+                  "Administrative Assistant"
+                ),
+                inline = TRUE, 
+                status = "primary" # Adds a nice blue style
+              )
+            ),
+            hr(), # Separating line
             h5("Select Positions"),
             pickerInput(
               inputId = "selected_positions",
@@ -1057,116 +1080,116 @@ ease;
       
       
       # --- Nav Panel 2: Infrastructure Database ---
-      nav_panel(
-        title = tags$b("Infrastructure Database"),
-        layout_sidebar(
-          sidebar = sidebar(
-            width = 350,
-            h6("EFD Database Filters:"),
-            
-            # Region (single select)
-            pickerInput(
-              inputId = "EFD_Region",
-              label = "Select Region:",
-              choices = sort(unique(EFDDB$Region)),
-              selected = sort(unique(EFDDB$Region))[1],
-              multiple = FALSE,
-              options = pickerOptions(
-                liveSearch = TRUE,
-                header = "Select Region",
-                title = "No Region Selected",
-                dropupAuto = FALSE,
-                dropup = FALSE
-              )
-            ),
-            
-            # Division (multi-select)
-            pickerInput(
-              inputId = "EFD_Division",
-              label = "Select Division:",
-              choices = sort(unique(EFDDB$Division)),
-              multiple = TRUE,
-              options = pickerOptions(
-                `actions-box` = TRUE,
-                liveSearch = TRUE,
-                header = "Select Division(s)",
-                title = "No Division Selected",
-                dropupAuto = FALSE,
-                dropup = FALSE
-              )
-            ),
-            
-            # Legislative District (multi-select)
-            pickerInput(
-              inputId = "EFD_LD",
-              label = "Select Legislative District:",
-              choices = sort(unique(EFDDB$Legislative.District)),
-              multiple = TRUE,
-              options = pickerOptions(
-                `actions-box` = TRUE,
-                liveSearch = TRUE,
-                header = "Select Legislative District(s)",
-                title = "No Legislative District Selected",
-                dropupAuto = FALSE,
-                dropup = FALSE
-              )
-            ),
-            
-            # EFD Toggles
-            pickerInput(
-              inputId = "EFD_Toggles",
-              label = strong("EFD Data Toggles"),
-              choices = names(EFDDB)[!names(EFDDB) %in% c(
-                "Region", "Old.Region", "Division", "SchoolID", "School.Name",
-                "District", "Legislative.District", "Barangay"
-              )],
-              multiple = TRUE,
-              options = pickerOptions(
-                `actions-box` = TRUE,
-                liveSearch = TRUE,
-                header = "Select Data Columns",
-                title = "No Data Column Selected",
-                dropupAuto = FALSE,
-                dropup = FALSE
-              )
-            )
-          ),
-          
-          layout_columns(
-            card(
-              full_screen = TRUE,
-              style = "
-          width: 100%;
-          max-height: 85vh;
-          overflow-y: auto;
-          margin-bottom: 20px;
-        ",
-              card_header(
-                strong("EFD Database Panel"),
-                style = "
-            font-size: 22px;
-            padding: 15px 20px;
-            text-align: center;
-            background-color: #00234d;
-            color: white;
-            border-bottom: 2px solid #dee2e6;
-          "
-              ),
-              card_body(
-                div(
-                  style = "
-              padding: 10px;
-              overflow-x: auto;
-              height: calc(85vh - 80px);
-            ",
-                  dataTableOutput("EFD_Table")
-                )
-              )
-            ),
-            col_widths = c(12)
-          )
-        )
-      ),
+      # nav_panel(
+      #   title = tags$b("Infrastructure Database"),
+      #   layout_sidebar(
+      #     sidebar = sidebar(
+      #       width = 350,
+      #       h6("EFD Database Filters:"),
+      #       
+      #       # Region (single select)
+      #       pickerInput(
+      #         inputId = "EFD_Region",
+      #         label = "Select Region:",
+      #         choices = sort(unique(EFDDB$Region)),
+      #         selected = sort(unique(EFDDB$Region))[1],
+      #         multiple = FALSE,
+      #         options = pickerOptions(
+      #           liveSearch = TRUE,
+      #           header = "Select Region",
+      #           title = "No Region Selected",
+      #           dropupAuto = FALSE,
+      #           dropup = FALSE
+      #         )
+      #       ),
+      #       
+      #       # Division (multi-select)
+      #       pickerInput(
+      #         inputId = "EFD_Division",
+      #         label = "Select Division:",
+      #         choices = sort(unique(EFDDB$Division)),
+      #         multiple = TRUE,
+      #         options = pickerOptions(
+      #           `actions-box` = TRUE,
+      #           liveSearch = TRUE,
+      #           header = "Select Division(s)",
+      #           title = "No Division Selected",
+      #           dropupAuto = FALSE,
+      #           dropup = FALSE
+      #         )
+      #       ),
+      #       
+      #       # Legislative District (multi-select)
+      #       pickerInput(
+      #         inputId = "EFD_LD",
+      #         label = "Select Legislative District:",
+      #         choices = sort(unique(EFDDB$Legislative.District)),
+      #         multiple = TRUE,
+      #         options = pickerOptions(
+      #           `actions-box` = TRUE,
+      #           liveSearch = TRUE,
+      #           header = "Select Legislative District(s)",
+      #           title = "No Legislative District Selected",
+      #           dropupAuto = FALSE,
+      #           dropup = FALSE
+      #         )
+      #       ),
+      #       
+      #       # EFD Toggles
+      #       pickerInput(
+      #         inputId = "EFD_Toggles",
+      #         label = strong("EFD Data Toggles"),
+      #         choices = names(EFDDB)[!names(EFDDB) %in% c(
+      #           "Region", "Old.Region", "Division", "SchoolID", "School.Name",
+      #           "District", "Legislative.District", "Barangay"
+      #         )],
+      #         multiple = TRUE,
+      #         options = pickerOptions(
+      #           `actions-box` = TRUE,
+      #           liveSearch = TRUE,
+      #           header = "Select Data Columns",
+      #           title = "No Data Column Selected",
+      #           dropupAuto = FALSE,
+      #           dropup = FALSE
+      #         )
+      #       )
+      #     ),
+      #     
+      #     layout_columns(
+      #       card(
+      #         full_screen = TRUE,
+      #         style = "
+      #     width: 100%;
+      #     max-height: 85vh;
+      #     overflow-y: auto;
+      #     margin-bottom: 20px;
+      #   ",
+      #         card_header(
+      #           strong("EFD Database Panel"),
+      #           style = "
+      #       font-size: 22px;
+      #       padding: 15px 20px;
+      #       text-align: center;
+      #       background-color: #00234d;
+      #       color: white;
+      #       border-bottom: 2px solid #dee2e6;
+      #     "
+      #         ),
+      #         card_body(
+      #           div(
+      #             style = "
+      #         padding: 10px;
+      #         overflow-x: auto;
+      #         height: calc(85vh - 80px);
+      #       ",
+      #             dataTableOutput("EFD_Table")
+      #           )
+      #         )
+      #       ),
+      #       col_widths = c(12)
+      #     )
+      #   )
+      # ),
       nav_panel(
         title = tags$b("DepEd Officials"),
         layout_sidebar(

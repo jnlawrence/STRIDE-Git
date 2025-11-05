@@ -6,7 +6,88 @@ plantilla_drill_state <- reactiveVal(list(region = NULL))
 plantilla_trigger <- reactiveVal(0)
 
 # --- NEW: Create a master list of all locations ---
-all_locations <- distinct(dfGMIS, Old.Region, Division)
+all_locations <- distinct(dfGMIS, GMIS.Region, GMIS.Division)
+
+# --- SERVER Code (to modify in 23_plantilla_dynamic_db.R) ---
+#
+# INSTRUCTIONS:
+# Replace the 'observeEvent(input$plantilla_presets, ...)' block
+# from last time with this new, improved version.
+
+# --- CRITICAL STEPS: Define your lists ---
+
+# 1. Define the master position list (from your data)
+#    (You must define this for the code to work)
+#    Example: 
+# all_available_positions <- unique(dfGMIS$Position.Title) 
+req(all_available_positions) # Ensures this variable exists
+
+# 2. NEW: Define the *default* selection for your pickerInput
+#    This MUST match the 'selected' value you defined in your 
+#    'pickerInput(inputId = "selected_positions", ...)' in your UI.R file.
+#    This is what the picker will revert to when no presets are checked.
+#
+#    --- EXAMPLES ---
+#    If your picker starts empty:
+default_plantilla_selection <- character(0)
+#
+#    If your picker starts with "Teacher I" selected:
+# default_plantilla_selection <- c("Teacher I")
+#
+#    If your picker starts with all Teacher types selected:
+# default_plantilla_selection <- c("Teacher I", "Teacher II", "Teacher III")
+
+# --- Observer for Plantilla Position Presets ---
+observeEvent(input$plantilla_presets, {
+  
+  # Make sure the master position list is available
+  req(all_available_positions) 
+  
+  selected_presets <- input$plantilla_presets
+  
+  # --- LOGIC CHANGE ---
+  # Start with the default selection.
+  # This is the key change to "retain the initial selected".
+  positions_to_select <- default_plantilla_selection
+  
+  # --- 1. Handle the case where presets ARE checked ---
+  # If any boxes are checked, add them to the default list.
+  if (!is.null(selected_presets)) {
+    
+    # --- 2. Handle the Special "Teacher" Case ---
+    if ("Teacher" %in% selected_presets) {
+      teacher_positions <- all_available_positions[
+        all_available_positions %in% c("Teacher I", "Teacher II", "Teacher III")
+      ]
+      positions_to_select <- c(positions_to_select, teacher_positions)
+    }
+    
+    # --- 3. Handle all OTHER presets ---
+    # These find any position *containing* the text
+    other_presets <- selected_presets[!selected_presets %in% "Teacher"]
+    
+    if (length(other_presets) > 0) {
+      for (preset in other_presets) {
+        # Use grepl() to find positions that *contain* the preset text
+        matched_positions <- all_available_positions[
+          grepl(preset, all_available_positions, ignore.case = TRUE)
+        ]
+        positions_to_select <- c(positions_to_select, matched_positions)
+      }
+    }
+  }
+  
+  # --- 4. Finalize and Update the Picker ---
+  # Get the final unique list (combines default + presets)
+  final_selection <- unique(positions_to_select)
+  
+  updatePickerInput(
+    session,
+    inputId = "selected_positions",
+    selected = final_selection
+  )
+  
+}, ignoreNULL = FALSE, ignoreInit = TRUE) # End of preset observer
 
 observe({
   req(input$selected_positions)
@@ -73,11 +154,11 @@ observe({
       # 2. Get the *actual* data for this position
       actual_data <- dfGMIS %>% 
         filter(Position == pos) %>%
-        select(Position, Old.Region, Division, Total.Filled, Total.Unfilled)
+        select(Position, GMIS.Region, GMIS.Division, Total.Filled, Total.Unfilled)
       
       # 3. Join them. The scaffold ensures all locations are present.
       pos_scaffold %>%
-        left_join(actual_data, by = c("Position", "Old.Region", "Division")) %>%
+        left_join(actual_data, by = c("Position", "GMIS.Region", "GMIS.Division")) %>%
         # 4. Replace NAs with 0s for counts
         mutate(
           Total.Filled = replace_na(Total.Filled, 0),
@@ -102,7 +183,7 @@ observe({
       # 3. Filter the data if a Region has been selected (i.e., drilled down)
       if (!is.null(state$region)) {
         data_to_summarize <- data_to_summarize %>%
-          filter(Old.Region == state$region)
+          filter(GMIS.Region == state$region)
         
         # Update the title to reflect the current view
         title_context <- paste("Total Positions in", state$region)
@@ -139,7 +220,7 @@ observe({
       # --- LEVEL 1: Region View ---
       if (is.null(state$region)) {
         plot_data <- df %>%
-          group_by(Old.Region) %>%
+          group_by(GMIS.Region) %>%
           summarise(
             Filled = sum(Total.Filled, na.rm = TRUE),
             Unfilled = sum(Total.Unfilled, na.rm = TRUE),
@@ -147,13 +228,13 @@ observe({
           ) %>%
           tidyr::pivot_longer(cols = c(Filled, Unfilled),
                               names_to = "Type", values_to = "Count")
-        y_formula <- ~Old.Region
+        y_formula <- ~GMIS.Region
         
-        # --- LEVEL 2: Division View ---
+        # --- LEVEL 2: GMIS.Division View ---
       } else {
         plot_data <- df %>%
-          filter(Old.Region == state$region) %>%
-          group_by(Division) %>%
+          filter(GMIS.Region == state$region) %>%
+          group_by(GMIS.Division) %>%
           summarise(
             Filled = sum(Total.Filled, na.rm = TRUE),
             Unfilled = sum(Total.Unfilled, na.rm = TRUE),
@@ -161,7 +242,7 @@ observe({
           ) %>%
           tidyr::pivot_longer(cols = c(Filled, Unfilled),
                               names_to = "Type", values_to = "Count")
-        y_formula <- ~Division
+        y_formula <- ~GMIS.Division
       }
       
       # Handle empty data
@@ -170,18 +251,18 @@ observe({
       }
       
       # --- FIX 2: Correct max_val calculation for STACKED bars ---
-      # We must now sum the counts for each bar (Region/Division) 
+      # We must now sum the counts for each bar (Region/GMIS.Division) 
       # to find the true maximum for the x-axis.
       
-      # Get the name of the y-axis variable (e.g., "Old.Region" or "Division")
-      # --- Get the name of the y-axis variable (e.g., "Old.Region" or "Division") ---
+      # Get the name of the y-axis variable (e.g., "GMIS.Region" or "GMIS.Division")
+      # --- Get the name of the y-axis variable (e.g., "GMIS.Region" or "GMIS.Division") ---
       y_var_name <- all.vars(y_formula)  
       
       # --- FIX: Define the data used for totals based on the drill state ---
       data_for_totals <- if (is.null(state$region)) {
         df # Level 1: Use all data (already filtered by Position)
       } else {
-        df %>% filter(Old.Region == state$region) # Level 2: Filter by clicked Region
+        df %>% filter(GMIS.Region == state$region) # Level 2: Filter by clicked Region
       }
       
       # Now summarize the correctly filtered data_for_totals
@@ -219,7 +300,7 @@ observe({
           barmode = 'stack',
           xaxis = list(
             title = "Number of Positions", 
-            range = c(0, final_max),
+            range = c(0, final_max*1.25),
             tickformat = ',.0f'
           ),
           yaxis = list(
@@ -280,7 +361,7 @@ observe({
       current_state <- isolate(plantilla_drill_state())
       if (is.null(current_state)) current_state <- list(region = NULL)
       
-      # Only allow 1 drilldown level: Region -> Division
+      # Only allow 1 drilldown level: Region -> GMIS.Division
       if (is.null(current_state$region)) {
         plantilla_drill_state(list(region = as.character(cat_clicked)))
         plantilla_trigger(plantilla_trigger() + 1)
