@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const CACHE_NAME = 'survey-app-shell-v123';
+const CACHE_NAME = 'survey-app-shell-v124';
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznFY8yjIUgaWcEp1RBdgRqEvwUZ4Y2fct_vTrj2ZVufrR78M21i8YHy0zRUlizOxQR/exec"; // <-- ❗ IMPORTANT ❗
 
 const DB_NAME = 'surveyDB';
@@ -7,7 +7,7 @@ const STORE_NAME = 'surveys';
 
 // List all the files (the "App Shell") we want to cache
 const FILES_TO_CACHE = [
-    '/',
+    '.',
     'index.html',
     'style.css',
     'app.js',
