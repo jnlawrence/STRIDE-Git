@@ -1,29 +1,79 @@
-// --- 1. Register the Service Worker ---
+// --- NEW: Robust Instant Update Logic ---
+// This block replaces both the old 'Instant Update Logic'
+// and the old 'Register the Service Worker' blocks.
+let refreshing = false;
 if ('serviceWorker' in navigator) {
+    
+    // 1. This is our "reload" trigger. It fires when the new worker takes control.
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        console.log('New version detected. Reloading page...');
+        refreshing = true;
+        window.location.reload();
+    });
+
+    // 2. We run this on 'load' to register and check for updates
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
             .then((reg) => {
                 console.log('Service worker registered.', reg);
+
+                // 3. This checks if a new worker is already installed and waiting.
+                // If so, we tell it to take over.
+                if (reg.waiting) {
+                    console.log('New worker found waiting. Activating...');
+                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+
+                // 4. This listens for *future* updates that get found
+                reg.addEventListener('updatefound', () => {
+                    console.log('New service worker update found.');
+                    const newWorker = reg.installing;
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        // 5. When the new worker is installed, we tell it to take over.
+                        if (newWorker.state === 'installed') {
+                            console.log('New worker installed. Activating...');
+                            // This message is caught by the 'message' listener in sw.js
+                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    });
+                });
             })
             .catch((err) => {
                 console.error('Service worker registration failed:', err);
             });
-        
-        // --- NEW: Load saved draft ---
-        // We do this here to make sure the elements are loaded
-        loadDraft();
-        // --- END OF NEW PART ---
     });
 }
+// --- END: Robust Instant Update Logic ---
 
-// --- 2. Database Setup (IndexedDB) ---
+
+// --- Landing Page Logic ---
+// (This section is unchanged)
+const landingPage = document.getElementById('landingPage');
+const appContainer = document.getElementById('appContainer');
+const startSurveyBtn = document.getElementById('startSurveyBtn');
+
+if (startSurveyBtn) {
+    startSurveyBtn.addEventListener('click', () => {
+        landingPage.style.display = 'none';
+        appContainer.style.display = 'flex'; // Show the app
+        
+        // Now we show the first page of the form
+        showPage(0); 
+    });
+}
+// --- END: Landing Page Logic ---
+
+
+// --- Database Setup (IndexedDB) ---
+// (This section is unchanged)
 const DB_NAME = 'surveyDB';
 const STORE_NAME = 'surveys';
 let db;
 
-// Function to open the IndexedDB database
 function initDB() {
-    // ... (This function is UNCHANGED) ...
+    // ... (unchanged)
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 1);
         request.onupgradeneeded = (event) => {
@@ -43,9 +93,8 @@ function initDB() {
     });
 }
 
-// Function to add a survey to the database
 function addSurveyToDB(surveyData) {
-    // ... (This function is UNCHANGED) ...
+    // ... (unchanged)
     return new Promise((resolve, reject) => {
         if (!db) {
             console.error('Database is not open.');
@@ -74,83 +123,191 @@ function addSurveyToDB(surveyData) {
     });
 }
 
-// --- 3. Handle Form Submission ---
-
-// --- NEW: Get references to form elements ---
+// --- Multi-Page Form Logic ---
+// (This section is unchanged)
+let currentPage = 0;
+// ... (rest of file is unchanged) ...
 const surveyForm = document.getElementById('surveyForm');
-const nameInput = document.getElementById('name');
-const contactInput = document.getElementById('contact');
+const formPages = document.querySelectorAll('.form-page');
+const nextBtn = document.getElementById('nextBtn');
+const prevBtn = document.getElementById('prevBtn');
+const submitBtn = document.getElementById('submitBtn');
 const clearFormBtn = document.getElementById('clearFormBtn');
-// --- END OF NEW PART ---
+const stepIndicators = document.querySelectorAll('.step');
 
+const totalPages = formPages.length;
+
+function showPage(pageIndex) {
+    // Hide all pages
+    formPages.forEach(page => page.classList.remove('active'));
+    // Show the current page
+    formPages[pageIndex].classList.add('active');
+
+    // Update button visibility
+    prevBtn.style.display = pageIndex === 0 ? 'none' : 'inline-block';
+    nextBtn.style.display = pageIndex === totalPages - 1 ? 'none' : 'inline-block';
+    submitBtn.style.display = pageIndex === totalPages - 1 ? 'inline-block' : 'none';
+
+    // Update step indicator
+    stepIndicators.forEach((step, index) => {
+        if (index === pageIndex) {
+            step.classList.add('active');
+        } else {
+            step.classList.remove('active');
+        }
+    });
+    
+    // Scroll to top of content area
+    const contentArea = document.querySelector('.content-area');
+    if (contentArea) {
+        contentArea.scrollTo(0, 0);
+    }
+    currentPage = pageIndex;
+}
+
+nextBtn.addEventListener('click', () => {
+    if (currentPage < totalPages - 1) {
+        showPage(currentPage + 1);
+    }
+});
+
+prevBtn.addEventListener('click', () => {
+    if (currentPage > 0) {
+        showPage(currentPage - 1);
+    }
+});
+
+// --- Handle Form Submission ---
+// (This section is unchanged)
 surveyForm.addEventListener('submit', (event) => {
-    // Prevent the form from submitting the traditional way
-    event.preventDefault();
+    event.preventDefault(); // Prevent default submission
 
-    const surveyData = {
-        name: nameInput.value,
-        contact: contactInput.value,
-        timestamp: new Date().toISOString()
-    };
+    // Get all form data
+    const formData = new FormData(surveyForm);
+    const surveyData = Object.fromEntries(formData.entries());
+    
+    // Add timestamp
+    surveyData.timestamp = new Date().toISOString();
 
-    // Save the data to IndexedDB
+    // Save the complete data to IndexedDB
     addSurveyToDB(surveyData)
         .then(() => {
-            console.log('Survey saved to IndexedDB.');
-            alert('Thank you! Your survey has been saved offline.');
+            console.log('Full survey saved to IndexedDB.');
+            alert('Thank you! Your survey has been saved and will sync when online.');
 
-            // Clear the form
-            event.target.reset();
-
-            // --- NEW: Clear the saved draft from localStorage ---
+            // Clear the form and the draft
+            surveyForm.reset();
             clearDraft();
-            // --- END OF NEW PART ---
+            
+            // Go back to the first page
+            showPage(0);
         })
         .catch((err) => {
-            console.error('Failed to save survey:', err);
+            console.error('Failed to save full survey:', err);
             alert('There was an error saving your survey.');
         });
 });
 
-// --- 4. Initialize the Database ---
-initDB().catch(err => console.error('Failed to initialize database:', err));
+// --- Draft Saving ---
+// (This section is unchanged)
+const DRAFT_KEY = 'strideSurveyDraft';
 
-// --- 5. NEW: Draft Saving Functions (localStorage) ---
+surveyForm.addEventListener('input', () => {
+    saveDraft();
+});
 
-// Function to load the draft from localStorage
+function saveDraft() {
+    const formData = new FormData(surveyForm);
+    const surveyData = Object.fromEntries(formData.entries());
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(surveyData));
+    // console.log('Draft saved to localStorage.'); // Uncomment for debugging
+}
+
 function loadDraft() {
-    nameInput.value = localStorage.getItem('draftName') || '';
-    contactInput.value = localStorage.getItem('draftContact') || '';
-    if(nameInput.value || contactInput.value) {
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (!draft) {
+        console.log('No draft found.');
+        return;
+    }
+    
+    try {
+        const draftData = JSON.parse(draft);
+        // Loop through saved data and populate form fields
+        for (const key in draftData) {
+            if (draftData.hasOwnProperty(key)) {
+                const element = surveyForm.elements[key];
+                if (element) {
+                    element.value = draftData[key];
+                }
+            }
+        }
+        
+        // Special handling to re-populate the dynamic division dropdown
+        if (draftData['stride_region']) {
+            populateDivisions(draftData['stride_region']);
+            // We must re-set the division value *after* populating
+            surveyForm.elements['stride_division'].value = draftData['stride_division'] || '';
+        }
+        
         console.log('Draft loaded from localStorage.');
+    } catch (err) {
+        console.error('Failed to parse or load draft:', err);
+        clearDraft(); // Clear corrupted draft
     }
 }
 
-// Function to clear the draft from localStorage
 function clearDraft() {
-    localStorage.removeItem('draftName');
-    localStorage.removeItem('draftContact');
+    localStorage.removeItem(DRAFT_KEY);
     console.log('Draft cleared from localStorage.');
 }
 
-// Event listener to save text as the user types
-nameInput.addEventListener('input', () => {
-    localStorage.setItem('draftName', nameInput.value);
-});
-
-contactInput.addEventListener('input', () => {
-    localStorage.setItem('draftContact', contactInput.value);
-});
-
-// Event listener for the new "Clear Draft" button
 clearFormBtn.addEventListener('click', () => {
-    // Clear the visual form
-    nameInput.value = '';
-    contactInput.value = '';
-    
-    // Clear the saved draft
-    clearDraft();
-    
-    console.log('Form and draft cleared by user.');
+    if (confirm('Are you sure you want to clear all data in this form? This cannot be undone.')) {
+        surveyForm.reset();
+        clearDraft();
+        // Manually clear division dropdown
+        populateDivisions('');
+        showPage(0); // Go back to start
+        console.log('Form and draft cleared by user.');
+    }
 });
-// --- END OF NEW SECTION ---
+
+
+// --- Dynamic Dropdown Logic ---
+// (This section is unchanged)
+const divisionData = {
+    "Region I": ["Ilocos Norte", "Ilocos Sur", "La Union", "Pangasinan"],
+    "Region II": ["Batanes", "Cagayan", "Isabela", "Nueva Vizcaya", "Quirino"],
+    "NCR": ["Manila", "Quezon City", "Calocan", "Pasig"],
+    "CAR": ["Abra", "Apayao", "Benguet", "Ifugao", "Kalinga", "Mountain Province"],
+    // ... Add all other regions and their divisions here
+};
+
+const regionSelect = document.getElementById('stride_region');
+const divisionSelect = document.getElementById('stride_division');
+
+function populateDivisions(region) {
+    const divisions = divisionData[region] || [];
+    
+    divisionSelect.innerHTML = '<option value="">--- Select Division ---</option>';
+    
+    divisions.forEach(division => {
+        const option = document.createElement('option');
+        option.value = division;
+        option.textContent = division;
+        divisionSelect.appendChild(option);
+    });
+}
+
+regionSelect.addEventListener('change', (event) => {
+    populateDivisions(event.target.value);
+});
+
+
+// --- Initialize ---
+// (This section is unchanged)
+initDB()
+    .then(() => {
+        loadDraft();
+    })
+    .catch(err => console.error('Failed to initialize database:', err));
