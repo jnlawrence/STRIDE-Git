@@ -815,6 +815,33 @@ ease;
                 dropupAuto = FALSE,
                 dropup = FALSE
               )
+            ),
+            
+            # --- INFRASTRUCTURE PROGRAM PICKER ---
+            shinyWidgets::pickerInput(
+              inputId = "Infra_Programs_Picker_Build",
+              label = "Infrastructure Programs",
+              # Based on your screenshot
+              choices = list(
+                "ALS/CLC" = "ALS.CLC",
+                "Electrification" = "ELECTRIFICATION",
+                "Gabaldon" = "GABALDON",
+                "LibHub" = "LibHub",
+                "LMS" = "LMS",
+                "NC" = "NC",
+                "QRF" = "QRF",
+                "Repair" = "REPAIR",
+                "School Health Facilities" = "SCHOOL.HEALTH.FACILITIES",
+                "SPED/ILRC" = "SPED.ILRC"
+              ),
+              multiple = TRUE, 
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                deselectAllText = "Clear All",
+                selectAllText = "Select All",
+                liveSearch = TRUE,
+                noneSelectedText = "Select Programs..."
+              )
             )
             
           ), # --- End of sidebar ---
