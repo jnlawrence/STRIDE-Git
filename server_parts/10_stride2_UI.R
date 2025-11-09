@@ -27,6 +27,7 @@ output$STRIDE2 <- renderUI({
       base_font = font_google("Poppins")
     ), 
     
+    
     # |> bs_add_rules(
     #   "
     # /* --- Make Navbar Sticky at the Top --- */
@@ -1218,8 +1219,8 @@ ease;
               ),
               multiple = TRUE,
               options = pickerOptions(
-                container = "body",
-                width = "350px",  # <-- ADD THIS LINE to match your sidebar
+                # container = "body",
+                # # width = "fit",  # <-- ADD THIS LINE to match your sidebar
                 actionsBox = TRUE,
                 liveSearch = TRUE,
                 header = "Select Strand(s)",

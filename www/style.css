@@ -87,6 +87,7 @@ body.login-bg {
   margin-right: 297px;
 }
 
+
 /* STRIDE Logo Text Styling (Login Left) */
 .stride-logo-text {
   font-family: 'Poppins', sans-serif;
@@ -410,20 +411,20 @@ body.dashboard-bg::before {
 }
 .bslib-value-box:hover { transform: translateY(-3px); }
 
-.bslib-value-box .value-box-title {
+.bslib-value-box h6.value-box-title {
   font-weight: 700 !important; /* Bold but not excessive */
   font-size: 1em !important;   /* Standard size */
-  color: #002D62 !important;   /* DepEd blue */
+  color: #ffffff !important;   /* DepEd blue */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: none; /* Removed shadow for cleaner look */
   white-space: normal !important; /* Allow wrapping */
   line-height: 1.2; /* Adjust line height */
 }
-.bslib-value-box .value-box-value {
+.bslib-value-box h6.value-box-value {
   font-weight: 800 !important; /* Bold number */
   font-size: 2em !important; /* Larger number */
-  color: #004c99 !important; /* Slightly lighter blue */
+  color: #ffffff !important; /* Slightly lighter blue */
   text-shadow: none; /* Removed shadow */
 }
 

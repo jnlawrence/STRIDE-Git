@@ -108,19 +108,57 @@ observe({
           h4(pos, class = "m-0 pt-1")
         ),
         card_body(
-          # --- THIS IS THE CHANGE ---
-          # We replace layout_column_wrap with layout_columns
-          # to gain more control over positioning.
+          
+          # --- 1. EXISTING TOTAL POSITION CARD (Center Aligned) ---
           layout_columns(
-            # Use a 12-unit grid:
-            # col_width = 4 (which is 1/3)
-            # offset = 4 (which pushes it 1/3 from the left)
-            # This centers the 1/3-width card.
             col_widths = list(4, offset = 4), 
             uiOutput(vbox_id)
           ),
-          # --- END OF CHANGE ---
           
+          # --- FIX: Replace layout_columns with fluidRow and column(width=6) ---
+          fluidRow(
+            # --- Total Filled Card (Width 6) ---
+            column(
+              width = 6, 
+              bslib::value_box(
+                # *** ADD CSS CLASS AND max_height ***
+                class = "no-scroll-card",
+                max_height = "120px", # Use a smaller height
+                
+                # *** USE H6 FOR TITLE AND SMALLER PADDING ***
+                title = tags$h6("Total Filled", style = "color:#FFFFFF; font-weight: bold; margin-bottom: 0;"),
+                
+                # The value output is defined below, ensure the style is compact there too
+                value = uiOutput(paste0("filled_count_ui_", gsub(" ", "_", pos))),
+                
+                # showcase = bsicons::bs_icon("person-check-fill"),
+                theme = "primary", 
+                full_screen = FALSE
+              )
+            ),
+            # --- Total Unfilled Card (Width 6) ---
+            column(
+              width = 6, 
+              bslib::value_box(
+                # *** ADD CSS CLASS AND max_height ***
+                class = "no-scroll-card",
+                max_height = "120px", # Use a smaller height
+                
+                # *** USE H6 FOR TITLE AND SMALLER PADDING ***
+                title = tags$h6("Total Unfilled", style = "color: #FFFFFF; font-weight: bold; margin-bottom: 0;"),
+                
+                # The value output is defined below, ensure the style is compact there too
+                value = uiOutput(paste0("unfilled_count_ui_", gsub(" ", "_", pos))),
+                
+                # showcase = bsicons::bs_icon("person-dash-fill"),
+                theme = "danger",
+                full_screen = FALSE
+              )
+            )
+          ),
+          # --- END OF FIXED CARDS ROW ---
+          
+          # --- 3. EXISTING PLOT ---
           plotlyOutput(plot_id, height = "450px")
         )
       )
@@ -170,6 +208,7 @@ observe({
     # --- Value Box ---
     output[[vbox_id]] <- renderUI({
       
+      
       # 1. Read the global drill state to make this reactive update when the state changes.
       trigger <- plantilla_trigger() # Read the trigger to force re-render
       state <- plantilla_drill_state()
@@ -206,7 +245,69 @@ observe({
         )
       )
     })
+    # =========================================================
+    # --- NEW: Value Box (Total Filled) ---
+    # =========================================================
+    # The output ID must match the one used in renderUI: filled_count_ui_[POS]
+    output[[paste0("filled_count_ui_", gsub(" ", "_", pos))]] <- renderUI({
+      
+      # 1. Read the global drill state to make this reactive update.
+      trigger <- plantilla_trigger() 
+      state <- plantilla_drill_state()
+      if (is.null(state)) state <- list(region = NULL)
+      
+      # 2. Get the base data for the current position
+      data_to_summarize <- df_sub()
+      
+      # 3. Filter the data if a Region has been selected (i.e., drilled down)
+      if (!is.null(state$region)) {
+        data_to_summarize <- data_to_summarize %>%
+          filter(GMIS.Region == state$region)
+      }
+      
+      # 4. Calculate the total Filled count (using your existing data column)
+      total_filled <- data_to_summarize %>%
+        summarise(total = sum(Total.Filled, na.rm = TRUE)) %>% 
+        pull(total)
+      
+      # *** UPDATED: Use h4 tag and smaller font size (1.6em) for compact look ***
+      tags$h4(
+        format(total_filled, big.mark = ","),
+        style = "font-size: 21.6px; font-weight: bold; margin: 0; padding-top: 5px; color:white;"
+      )
+    })
     
+    # =========================================================
+    # --- NEW: Value Box (Total Unfilled) ---
+    # =========================================================
+    # The output ID must match the one used in renderUI: unfilled_count_ui_[POS]
+    output[[paste0("unfilled_count_ui_", gsub(" ", "_", pos))]] <- renderUI({
+      
+      # 1. Read the global drill state to make this reactive update.
+      trigger <- plantilla_trigger() 
+      state <- plantilla_drill_state()
+      if (is.null(state)) state <- list(region = NULL)
+      
+      # 2. Get the base data for the current position
+      data_to_summarize <- df_sub()
+      
+      # 3. Filter the data if a Region has been selected (i.e., drilled down)
+      if (!is.null(state$region)) {
+        data_to_summarize <- data_to_summarize %>%
+          filter(GMIS.Region == state$region)
+      }
+      
+      # 4. Calculate the total Unfilled count (using your existing data column)
+      total_unfilled <- data_to_summarize %>%
+        summarise(total = sum(Total.Unfilled, na.rm = TRUE)) %>% 
+        pull(total)
+      
+      # *** UPDATED: Use h4 tag and smaller font size (1.6em) for compact look ***
+      tags$h4(
+        format(total_unfilled, big.mark = ","),
+        style = "font-size: 21.6px; font-weight: bold; margin: 0; padding-top: 5px; color: white;"
+      )
+    })
     # --- Plot with Global Drilldown ---
     # --- Plot with Global Drilldown ---
     # --- Plot with Global Drilldown ---
@@ -322,20 +423,14 @@ observe({
           data = total_counts,
           y = as.formula(paste0("~`", y_var_name, "`")),
           x = ~TotalCount,
-          # --- UPDATED: Use HTML <i> and <span style> tags for formatting ---
+          # --- UPDATED: Forcing white color with HTML span tag ---
           text = ~paste0(
-            # Total Count (Bold black)
+            "<span style='color: #FFFFFF;'>", 
             formatC(TotalCount, format = "d", big.mark = ","),
-            
-            # Start parenthesis and bold/black space
             " (",
-            
-            # Percentage: Italicized and Blue
-            '<span style="color: #007BFF;"><i>', # Start blue color and italics
             scales::percent(FillingRate, accuracy = 1),
-            '</i></span>', # End italics and blue color
-            
-            ")"
+            ")",
+            "</span>"
           ),
           textposition = "middle right",
           showlegend = FALSE,
@@ -344,7 +439,7 @@ observe({
           
           # We need to remove the "weight = 'bold'" from textfont so the HTML color applies correctly.
           # We will put the bold tag around the TotalCount number for clarity.
-          textfont = list(color = '#000000', size = 11) 
+          # textfont = list(color = '#FFFFFF', size = 11) 
           # Note: The 'weight = bold' is complex to mix with HTML, 
           # so we'll adjust the text string slightly instead:
         )

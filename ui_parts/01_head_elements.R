@@ -22,8 +22,7 @@ ui_head <- tagList(
     # External files (ensure they are in the 'www' folder)
   includeCSS("www/style.css"),
   includeScript("www/script.js"),
-  # Guest-mode client helpers (will be present but inert unless server sets window.STRIDE_IS_GUEST)
-  includeScript("www/guest_mode.js"),
+ 
     
     tags$link(rel = "icon", type = "image/png", href = "deped_logo.png"),
     
