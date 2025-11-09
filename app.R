@@ -33,10 +33,16 @@ library(reactablefmtr)
 # HROD Data Upload
 
 school_data <- reactiveVal(NULL)
+efd2025 <- read.csv("EFD-2025Data.csv") %>%
+  mutate(across(
+    .cols = -1,  # Selects all columns EXCEPT the first one
+    .fns = ~ as.numeric(as.character(.))
+  ))
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
 uni <- read_parquet("School-Unique-v2.parquet") %>% 
   mutate(Municipality = stringr::str_to_title(Municipality)) %>% # School-level Data
-  mutate(Leg.Mun = sprintf("%s (%s)", Legislative.District, Municipality))
+  mutate(Leg.Mun = sprintf("%s (%s)", Legislative.District, Municipality)) %>%
+  left_join(efd2025, by = "SchoolID")
 # === PRIVATE SCHOOL DATA ===
 PrivateSchools <- read.csv("Private Schools Oct.2025.csv") %>%
   mutate(
