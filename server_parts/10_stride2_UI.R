@@ -2098,6 +2098,7 @@ ease;
         ))), # End of CLOUD nav_menu - COMMA is correct here
     
     nav_panel(
+      value = "mystride_nav", # <-- 💡 ADD THIS ID
       title = tags$b("mySTRIDE"), # Pinalitan ang title
       icon = bs_icon("box-arrow-right"), # Pinalitan ang icon
       

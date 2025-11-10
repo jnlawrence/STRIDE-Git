@@ -22,7 +22,6 @@ ui_head <- tagList(
     # External files (ensure they are in the 'www' folder)
   includeCSS("www/style.css"),
   includeScript("www/script.js"),
- 
     
     tags$link(rel = "icon", type = "image/png", href = "deped_logo.png"),
     

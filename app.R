@@ -219,6 +219,20 @@ ui <- page_fluid(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
+  get_dt_dom <- function(default_dom = 'lBfrtip') {
+    # Check for guest status
+    # We use isTRUE() to safely handle NULL values during startup
+    is_guest_user <- isTRUE(authenticated_user() == "guest_user@stride")
+    
+    if (is_guest_user) {
+      # If guest, remove 'B' (Buttons) from the dom string
+      return(gsub("B", "", default_dom, fixed = TRUE))
+    } else {
+      # Otherwise, return the default dom string
+      return(default_dom)
+    }
+  }
+  
   # source("server_parts/01_tutorial_section.R", local = TRUE)
   source("server_parts/02_dashboard_back_button.R", local = TRUE)
   source("server_parts/03_authentication.R", local = TRUE)
@@ -248,6 +262,7 @@ server <- function(input, output, session) {
   source("server_parts/28_login_page.R", local = TRUE)
   source("server_parts/31_build_your_dashboard.R", local = TRUE)
   source("server_parts/32_guest_mode.R", local = TRUE)
+  source("server_parts/33_stride2_guest_UI.R", local = TRUE)
   
   
   

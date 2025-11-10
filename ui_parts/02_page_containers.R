@@ -14,6 +14,13 @@ ui_containers <- tagList(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
   
+  # --- 💡 ADD THIS NEW CONTAINER ---
+  shinyjs::hidden(
+    div(
+      id = "guest_mgmt_content",
+      uiOutput("STRIDE2_guest") # <-- This is for guest users
+    )),
+  
   shinyjs::hidden(
     div(
       id = "data_input_content",
