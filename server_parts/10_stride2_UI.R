@@ -210,230 +210,420 @@ output$STRIDE2 <- renderUI({
     # --- HOME PANEL (with STRIDE Banner + News Carousel) ---
     # ==========================================================
     nav_panel(
-      title = tags$b("Home"),
-      icon = bs_icon("house-door-fill"),
-      value = "home_tab",
+      "Home",
       tagList(
-        useShinyjs(),
         
         # --- Inline CSS (Scoped only to Home Panel) ---
         tags$head(
           tags$style(HTML("
-        /* ================================
-           STRIDE HOME BANNER & CAROUSEL
-        ================================ */
-
-        /* Banner section */
-        .stride-banner {
-          position: relative;
-          width: 100%;
-          height: 300px;
-          background: linear-gradient(135deg, #003366 40%, #FFB81C 100%);
-          color: white;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          overflow: hidden;
-          border-bottom: 6px solid #003366;
-          box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-
-        /* Optional animated pattern overlay */
-        .stride-banner::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
-          background-size: 30px 30px;
-          animation: movePattern 8s linear infinite;
-        }
-
-        @keyframes movePattern {
-          from { background-position: 0 0; }
-          to { background-position: 60px 60px; }
-        }
-
-        .stride-banner-content {
-          position: relative;
-          z-index: 2;
-          max-width: 900px;
-          padding: 0 20px;
-        }
-
-      .stride-banner h1 {
-    font-size: 2.2rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    margin-top: -15px;
-    margin-bottom: 10px;
-    margin-left: -75px;
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
-    white-space: nowrap;
-}
-
-
-        .stride-banner p {
-    font-weight: 400;
-    opacity: 0.95;
-}
-
- /* STRIDE Logo (white shadow only) */
-.stride-logo {
-    height: 243px;
-    margin-top: -23px;
-    margin-bottom: -46px;
-
-    /* ✅ Pure white shadow */
-   filter: drop-shadow(0 0 6px rgba(255,255,255,1))
-        drop-shadow(0 0 12px rgba(255,255,255,0.8));
-
-
-    transition: filter 0.3s ease;
-}
-
-# .stride-logo:hover {
-#   filter:
-#     drop-shadow(0 0 6px rgba(255, 255, 255, 0.6))
-#     drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.8));
-# }
-
-        /* Carousel styling (unchanged from your existing code) */
-        .home-carousel-container {
-          position: relative;
-          width: 100%;
-          max-width: 1000px;
-          margin: 60px auto;
-          overflow: hidden;
-          border-radius: 15px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-          background: #fff;
-        }
-
-        .home-slide { display: none; text-align: center; position: relative; }
-        .home-slide img { width: 100%; height: 500px; object-fit: cover; border-radius: 15px; }
-        .home-slide.active { display: block; animation: fadeIn 1s ease-in-out; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .slide-caption {
-          position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-          background: rgba(0, 51, 102, 0.75); color: #fff; padding: 15px 25px;
-          border-radius: 8px; font-size: 1.2rem; font-weight: 500; max-width: 80%;
-        }
-
-        .carousel-nav {
-          position: absolute; top: 50%; transform: translateY(-50%);
-          background-color: rgba(0,0,0,0.5); color: #fff;
-          font-size: 2rem; border: none; padding: 10px 15px; border-radius: 50%;
-          cursor: pointer; transition: background 0.3s ease;
-        }
-
-        .carousel-nav:hover { background-color: rgba(0,0,0,0.7); }
-        .prev-slide { left: 15px; }
-        .next-slide { right: 15px; }
-
-        .go-dashboard-btn {
-          display: inline-block;
-          margin: 40px auto;
-          padding: 14px 36px;
-          font-size: 1.1rem;
-          font-weight: 600;
-          background-color: #003366;
-          color: #fff !important;
-          border-radius: 8px;
-          border: none;
-          transition: all 0.3s ease;
-          text-decoration: none;
-        }
-
-        .go-dashboard-btn:hover {
-          background-color: #FFB81C;
-          color: #003366 !important;
-          transform: translateY(-3px);
-          box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-        }
-
-        @media (max-width: 768px) {
-          .stride-banner { height: 230px; }
-          .stride-banner h1 { font-size: 2rem; }
-          .stride-banner p { font-size: 1rem; }
-          .home-slide img { height: 320px; }
-          .slide-caption { font-size: 1rem; }
-        }
-      "))
-      ),
-      # --- STRIDE Banner Section ---
-      div(
-        class = "stride-banner",
-        div(
-          class = "stride-banner-content",
-          tags$img(
-            src = "Stridelogo1.png",
-            class = "stride-logo"
-          ),
-          h1("Strategic Resource Inventory for Deployment Efficiency"),
+          /* ================================
+              STRIDE HOME BANNER
+          ================================ */
+          .stride-banner {
+            position: relative; width: 100%; height: 300px;
+            background: linear-gradient(135deg, #003366 40%, #FFB81C 100%);
+            color: white; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            overflow: hidden; border-bottom: 6px solid #003366;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+          }
+          .stride-banner::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+            background-size: 30px 30px;
+            animation: movePattern 8s linear infinite;
+          }
+          @keyframes movePattern {
+            from { background-position: 0 0; }
+            to { background-position: 60px 60px; }
+          }
+          .stride-banner-content {
+            position: relative; z-index: 2; max-width: 900px; padding: 0 20px;
+          }
+          .stride-banner h1 {
+            font-size: 2.2rem; font-weight: 800; letter-spacing: 1px;
+            margin-top: -15px; margin-bottom: 10px; margin-left: -75px;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3); white-space: nowrap;
+          }
+          .stride-banner p { font-weight: 400; opacity: 0.95; }
+          .stride-logo {
+            height: 243px; margin-top: -23px; margin-bottom: -46px;
+            /* Solid white outline */
+            filter: 
+              drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.9))
+              drop-shadow(-1px 1px 0 rgba(255, 255, 255, 0.9))
+              drop-shadow(1px -1px 0 rgba(255, 255, 255, 0.9))
+              drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.9));
+            transition: filter 0.3s ease;
+          }
+  
+          /* ================================
+              ORIGINAL CAROUSEL STYLING
+          ================================ */
+          .home-carousel-container {
+            position: relative; width: 100%; max-width: 1000px;
+            margin: 60px auto; overflow: hidden; border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: #fff;
+          }
+          .home-slide { display: none; text-align: center; position: relative; }
+          .home-slide img { width: 100%; height: 500px; object-fit: cover; border-radius: 15px; }
+          .home-slide.active { display: block; animation: fadeIn 1s ease-in-out; }
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+          .slide-caption {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 51, 102, 0.75); color: #fff; padding: 15px 25px;
+            border-radius: 8px; font-size: 1.2rem; font-weight: 500; max-width: 80%;
+          }
+          .carousel-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5); color: #fff;
+            font-size: 2rem; border: none; padding: 10px 15px; border-radius: 50%;
+            cursor: pointer; transition: background 0.3s ease; z-index: 10;
+          }
+          .carousel-nav:hover { background-color: rgba(0,0,0,0.7); }
+          .prev-slide { left: 15px; }
+          .next-slide { right: 15px; }
           
-          p("Empowering DepEd with data-driven insights to strengthen its education systems, 
-      optimize resource allocation, and promote informed decision-making nationwide.")
-        )
-      ),
-      # --- Carousel Section ---
-      div(
-        class = "home-carousel-container",
-        
-        # Slide 1
-        div(class = "home-slide active",
-            tags$img(src = "5.png"),
-            div(class = "slide-caption", "STRIDE promotes data-driven education reform initiatives.")
+  
+          /* ================================
+              CAPABILITIES SECTION
+          ================================ */
+          .capabilities-section {
+            max-width: 1000px;
+            margin: 60px auto;
+            text-align: center;
+          }
+          .capabilities-section h2 {
+            font-weight: 700;
+            color: #003366;
+            margin-bottom: 40px;
+          }
+          .capabilities-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+          }
+          .capability-card {
+            flex: 1;
+            min-width: 280px;
+            padding: 25px;
+            border-radius: 15px;
+            background: #fff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer; /* <-- Makes it look clickable */
+          }
+          .capability-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+          }
+          .capability-card-icon {
+            font-size: 3.5rem;
+            color: #FFB81C; /* Gold color */
+            margin-bottom: 15px;
+          }
+          .capability-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #003366;
+            margin-bottom: 10px;
+          }
+          
+          /* ================================
+              RESOURCES SECTION (NEW CARD LAYOUT)
+          ================================ */
+          .resources-section {
+            max-width: 1000px;
+            margin: 60px auto;
+          }
+          .resources-section h2 {
+            text-align: center;
+            font-weight: 700;
+            color: #003366;
+            margin-bottom: 40px;
+          }
+          .resource-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+          }
+          .resource-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column; /* Stacks content vertically */
+            min-width: 280px;
+            max-width: 320px;
+            border-radius: 15px;
+            background: #fff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden; /* Ensures border-radius */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+          }
+          .resource-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+          }
+          .resource-card-content {
+            padding: 25px;
+            flex-grow: 1; /* Pushes the button to the bottom */
+          }
+          .resource-card h4 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #003366;
+            margin-bottom: 10px;
+          }
+          .resource-card p {
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            color: #555;
+          }
+          .resource-card-footer {
+            padding: 0 25px 25px 25px; /* Padding for the button */
+          }
+          .resource-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            background-color: #003366;
+            color: #fff !important;
+            border-radius: 5px;
+            border: none;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+          }
+          .resource-btn:hover {
+            background-color: #FFB81C;
+            color: #003366 !important;
+          }
+          
+          /* ================================
+              RESPONSIVE
+          ================================ */
+          @media (max-width: 768px) {
+            .stride-banner { height: auto; padding: 30px 0; }
+            .stride-banner h1 { font-size: 1.8rem; margin-left: 0; white-space: normal; }
+            .stride-banner p { font-size: 1rem; }
+            .home-slide img { height: 320px; }
+            .slide-caption { font-size: 1rem; }
+            .capabilities-row { flex-direction: column; }
+            .resource-row { flex-direction: column; align-items: center; }
+          }
+        "))
         ),
         
-        # Slide 2
-        div(class = "home-slide",
-            tags$img(src = "3.png"),
-            div(class = "slide-caption", "Empowering the institutions through strategic information dashboards.")
+        # --- STRIDE Banner Section (Unchanged) ---
+        div(
+          class = "stride-banner",
+          div(
+            class = "stride-banner-content",
+            tags$img(
+              src = "Stridelogo1.png",
+              class = "stride-logo"
+            ),
+            h1("Strategic Resource Inventory for Deployment Efficiency"),
+            p("Empowering DepEd with data-driven insights to strengthen its education systems, 
+              optimize resource allocation, and promote informed decision-making nationwide.")
+          )
         ),
         
-        # Slide 3
-        div(class = "home-slide",
-            tags$img(src = "2.png"),
-            div(class = "slide-caption", "Building efficient deployment strategies for schools and teachers.")
+        # --- ORIGINAL CAROUSEL (RESTORED) ---
+        div(
+          class = "home-carousel-container",
+          
+          # Slide 1
+          div(class = "home-slide active",
+              tags$img(src = "5.png"),
+              div(class = "slide-caption", "STRIDE promotes data-driven education initiatives.")
+          ),
+          
+          # Slide 2
+          div(class = "home-slide",
+              tags$img(src = "3.png"),
+              div(class = "slide-caption", "Empowering institutions through strategic dashboards.")
+          ),
+          
+          # Slide 3
+          div(class = "home-slide",
+              tags$img(src = "2.png"),
+              div(class = "slide-caption", "Building efficient deployment strategies for schools.")
+          ),
+          
+          # Arrows
+          tags$button(class = "carousel-nav prev-slide", HTML("&#10094;")),
+          tags$button(class = "carousel-nav next-slide", HTML("&#10095;"))
         ),
         
-        # Arrows
-        tags$button(class = "carousel-nav prev-slide", "<"),
-        tags$button(class = "carousel-nav next-slide", ">")
-      ),
+        # --- CAPABILITIES SECTION (with clickable IDs) ---
+        div(
+          class = "capabilities-section",
+          tags$h2("Discover STRIDE's Capabilities"),
+          div(
+            class = "capabilities-row",
+            
+            # Capability 1: Drilldown
+            div(
+              class = "capability-card",
+              id = "showDrilldownModal",  # <-- ID for click event
+              div(class = "capability-card-icon", HTML("&#128269;")),
+              tags$h3("Drilldown Function"),
+              tags$p("Start with a high-level overview and seamlessly drill down into detailed data for regions, divisions, and individual schools.")
+            ),
+            
+            # Capability 2: Reactive Tables
+            div(
+              class = "capability-card",
+              id = "showTablesModal",  # <-- ID for click event
+              div(class = "capability-card-icon", HTML("&#128187;")),
+              tags$h3("Reactive Data Tables"),
+              tags$p("Interact with your data. Our tables are fully searchable, sortable, and filterable, updating in real-time as you make selections.")
+            ),
+            
+            # Capability 3: Maps
+            div(
+              class = "capability-card",
+              id = "showMapModal",  # <-- ID for click event
+              div(class = "capability-card-icon", HTML("&#127758;")),
+              tags$h3("Geospatial Mapping"),
+              tags$p("Visualize resource distribution and key metrics on an interactive map. Understand your data in its geographic context.")
+            )
+          )
+        ),
         
-        # --- Carousel Script ---
+        # --- RESOURCES SECTION (Card Layout) ---
+        div(
+          class = "resources-section",
+          tags$h2("Resources & Toolkits"),
+          div(
+            class = "resource-row",
+            
+            # Resource Card 1
+            div(
+              class = "resource-card",
+              div(
+                class = "resource-card-content",
+                tags$h4("SGC Advocacy Materials"),
+                tags$p("Tools and guides for promoting effective School Governance Council operations.")
+              ),
+              div(
+                class = "resource-card-footer",
+                tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+              )
+            ),
+            
+            # Resource Card 2
+            div(
+              class = "resource-card",
+              div(
+                class = "resource-card-content",
+                tags$h4("SIIF Toolkit"),
+                tags$p("A comprehensive toolkit for the School-Based Integrated Intervention Framework.")
+              ),
+              div(
+                class = "resource-card-footer",
+                tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+              )
+            ),
+            
+            # Resource Card 3
+            div(
+              class = "resource-card",
+              div(
+                class = "resource-card-content",
+                tags$h4("Teacher Workload Toolkit"),
+                tags$p("Resources to help schools analyze and manage teacher workload effectively.")
+              ),
+              div(
+                class = "resource-card-footer",
+                tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+              )
+            )
+          )
+        ),
+        
+        # ---!!!--- IMPORTANT SCRIPT (FIXES CAROUSEL & MODALS) ---!!!---
         tags$script(HTML("
-      let currentSlide = 0;
-      const slides = document.querySelectorAll('.home-slide');
+          // This script will run after the page elements are built
+          
+          // --- 1. CAROUSEL LOGIC ---
+          try {
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.home-slide');
+            const nextBtn = document.querySelector('.next-slide');
+            const prevBtn = document.querySelector('.prev-slide');
 
-      function showSlide(index) {
-        slides.forEach((slide, i) => {
-          slide.classList.remove('active');
-          if (i === index) slide.classList.add('active');
-        });
-      }
+            if (slides.length > 0 && nextBtn && prevBtn) {
+            
+              function showSlide(index) {
+                slides.forEach((slide, i) => {
+                  slide.classList.remove('active');
+                  if (i === index) slide.classList.add('active');
+                });
+              }
+              
+              nextBtn.addEventListener('click', function() {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+              });
+              
+              prevBtn.addEventListener('click', function() {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                showSlide(currentSlide);
+              });
+              
+              let slideInterval = setInterval(function() {
+                 currentSlide = (currentSlide + 1) % slides.length;
+                 showSlide(currentSlide);
+              }, 5000); 
+              
+              const carousel = document.querySelector('.home-carousel-container');
+              if (carousel) {
+                carousel.addEventListener('mouseenter', () => clearInterval(slideInterval));
+                carousel.addEventListener('mouseleave', () => {
+                  slideInterval = setInterval(function() {
+                     currentSlide = (currentSlide + 1) % slides.length;
+                     showSlide(currentSlide);
+                  }, 5000);
+                });
+              }
+            }
+          } catch (e) {
+            console.error('Carousel script failed: ', e);
+          }
+          
+          // --- 2. MODAL CLICK LOGIC ---
+          // This sends a message to the Shiny server when a card is clicked.
+          // We use Math.random() to ensure the value changes, guaranteeing the
+          // observeEvent will fire every single time.
+          try {
+            document.getElementById('showDrilldownModal').addEventListener('click', function() {
+              Shiny.setInputValue('showDrilldownModal', Math.random());
+            });
+            
+            document.getElementById('showTablesModal').addEventListener('click', function() {
+              Shiny.setInputValue('showTablesModal', Math.random());
+            });
+            
+            document.getElementById('showMapModal').addEventListener('click', function() {
+              Shiny.setInputValue('showMapModal', Math.random());
+            });
+          } catch (e) {
+             console.error('Modal click script failed: ', e);
+          }
 
-      document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('next-slide')) {
-          currentSlide = (currentSlide + 1) % slides.length;
-          showSlide(currentSlide);
-        } else if (e.target.classList.contains('prev-slide')) {
-          currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-          showSlide(currentSlide);
-        }
-      });
-    "))
-      )
-      
-    ),
-    # ==========================================================
-    # --- END HOME PANEL ---
-    # ==========================================================
+        "))
+        
+      ) # End tagList
+    ), # End nav_panel("Home")
+        # ==========================================================
+        # --- END HOME PANEL ---
+        # ==========================================================
     
     nav_menu(
       title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
