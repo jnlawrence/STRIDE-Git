@@ -118,6 +118,7 @@ login_register_UI <- function(id) {
 
 
 # 2️⃣  Define the main dynamic page switch
+# 2️⃣  Define the main dynamic page switch
 output$page_ui <- renderUI({
   status <- user_status()
   current_user <- authenticated_user()  # Retrieve logged-in user
@@ -125,15 +126,26 @@ output$page_ui <- renderUI({
   # ✅ AUTHENTICATED USERS
   if (status == "authenticated" && !is.null(current_user)) {
     
+    # --- 💡 MODIFICATION START ---
+    
     # 🟡 Step 1: Check if Guest first
     if (current_user == "guest_user@stride") {
-      print("🟢 Guest accessing STRIDE2 dashboard")
+      print("🟢 Guest accessing STRIDE2_guest dashboard")
       
       showNotification("Welcome to STRIDE (Guest Mode: Read-only Access)", type = "message", duration = 5)
       
-      shinyjs::show("mgmt_content")
+      # SHOW THE GUEST UI
+      shinyjs::show("guest_mgmt_content") 
+      
+      # HIDE all other UIs
+      shinyjs::hide("mgmt_content")
+      shinyjs::hide("data_input_content")
+      shinyjs::hide("main_content")
+      
       return(NULL)
     }
+    
+    # --- 💡 MODIFICATION END ---
     
     
     # 🟢 Step 2: Handle authenticated users from Google Sheet
@@ -145,19 +157,16 @@ output$page_ui <- renderUI({
       
       if (station == "Central Office") {
         shinyjs::hide("data_input_content")
-        shinyjs::show("mgmt_content")
+        shinyjs::show("mgmt_content") # <-- This shows the regular STRIDE2 UI
         shinyjs::hide("main_content")
+        shinyjs::hide("guest_mgmt_content") # <-- Also hide guest UI
       } else if (station == "School") {
         shinyjs::show("data_input_content")
         shinyjs::hide("main_content")
         shinyjs::hide("mgmt_content")
+        shinyjs::hide("guest_mgmt_content") # <-- Also hide guest UI
       } else {
-        # Default fallback for other station types
-        return(card(
-          card_header("Application Dashboard"),
-          h2(paste("Welcome,", station, "User!")),
-          actionButton("main_app-logout", "Logout", class = "btn-danger")
-        ))
+        # ... (rest of your logic) ...
       }
       
       return(NULL)

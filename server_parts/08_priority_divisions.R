@@ -189,7 +189,7 @@ output$priority_division_erdb <- DT::renderDataTable({
     options = list(
       # --- Layout & Features ---
       # 'l'=length, 'B'=buttons, 'f'=filter, 'r'=processing, 't'=table, 'i'=info, 'p'=pagination
-      dom = 'lBfrtip',
+      dom = get_dt_dom('lBfrtip'),
       buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), # Download buttons
       ordering = TRUE,              # <-- 'sortable = TRUE' (default)
       

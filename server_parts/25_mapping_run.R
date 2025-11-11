@@ -242,7 +242,7 @@ observeEvent(input$Mapping_Run, {
     
     datatable(
       finalLMS,
-      options = list(scrollX = TRUE, pageLength = 10, dom = 'Bfrtip',
+      options = list(scrollX = TRUE, pageLength = 10, dom = get_dt_dom('Bfrtip'),
                      buttons = list('csv', 'excel', 'pdf', 'print'), columnDefs = list(list(className = 'dt-center', targets = "_all"))),
       selection = "single",  # allow single row selection
       extension = 'Buttons',
@@ -445,7 +445,7 @@ observeEvent(input$Mapping_Run, {
     }
   })
   
-  output$TeacherShortage_Table <- DT::renderDT(server = FALSE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+  output$TeacherShortage_Table <- DT::renderDT(server = FALSE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = get_dt_dom('Bfrtip'), buttons = list('csv','excel','pdf','print')))})
   
   # ... (All your renderValueBox and other outputs) ...
   
@@ -518,7 +518,7 @@ observeEvent(input$Mapping_Run, {
     }
   })
   
-  output$AO2Table <- DT::renderDT(Ao21() %>% select("School.Name","Clustering.Status","PDOI_Deployment") %>% rename("School" = School.Name, "AO II Deployment" = Clustering.Status, "PDOI Deployment" = PDOI_Deployment), rownames = FALSE, filter = 'top', options = list(scrollX = TRUE, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+  output$AO2Table <- DT::renderDT(Ao21() %>% select("School.Name","Clustering.Status","PDOI_Deployment") %>% rename("School" = School.Name, "AO II Deployment" = Clustering.Status, "PDOI Deployment" = PDOI_Deployment), rownames = FALSE, filter = 'top', options = list(scrollX = TRUE, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = get_dt_dom('Bfrtip'), buttons = list('csv','excel','pdf','print')))
   
   output$f2 <- renderValueBox({
     valueBox(tags$p(strong(sum(mainreactreg$Clustering.Status == "Clustered")), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
@@ -596,7 +596,7 @@ observeEvent(input$Mapping_Run, {
     }
   })
   
-  output$CLTable <- DT::renderDT(server = FALSE, {datatable(dfreact_CL() %>% select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE,scrollY= "300px", columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+  output$CLTable <- DT::renderDT(server = FALSE, {datatable(dfreact_CL() %>% select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE,scrollY= "300px", columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = get_dt_dom('Bfrtip'), buttons = list('csv','excel','pdf','print')))})
   
   dfreact_SHS <- reactive({
     
@@ -612,7 +612,7 @@ observeEvent(input$Mapping_Run, {
     }
   })
   
-  output$SHSListTable <- DT::renderDT(server = FALSE, {datatable(dfreact_SHS() %>% select("School.Name", "TotalEnrolment") %>% rename("School" = School.Name, "Total Enrolment" = TotalEnrolment), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+  output$SHSListTable <- DT::renderDT(server = FALSE, {datatable(dfreact_SHS() %>% select("School.Name", "TotalEnrolment") %>% rename("School" = School.Name, "Total Enrolment" = TotalEnrolment), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = get_dt_dom('Bfrtip'), buttons = list('csv','excel','pdf','print')))})
   
   output$SHSCount <- renderValueBox({
     valueBox(tags$p(strong(nrow(mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
@@ -693,7 +693,7 @@ observeEvent(input$Mapping_Run, {
                 rename("School" = School.Name, "Funding Year" = FundingYear),
               extension = 'Buttons',
               rownames = FALSE,
-              options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+              options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = get_dt_dom('Bfrtip'), buttons = list('csv','excel','pdf','print')))
   })
   
   color_palette_cong <- colorFactor(
@@ -745,7 +745,7 @@ observeEvent(input$Mapping_Run, {
                 rename("School" = School.Name, "Instructional Rooms" = Instructional.Rooms.2023.2024, "Total Enrolment" = Enrolment.2023.2024, "Congestion Index" = Congestion.Index),
               extension = 'Buttons',
               rownames = FALSE,
-              options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+              options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = get_dt_dom('Bfrtip'), buttons = list('csv','excel','pdf','print')))
   })
   
 })

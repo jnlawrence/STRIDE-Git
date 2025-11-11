@@ -10,19 +10,8 @@ observe({
   }
 })
 
-
-
 observe({
   mode <- if (user_status() == "authenticated") "app" else "login"
   session$sendCustomMessage("setLoginMode", ifelse(mode == "login", "login", "app"))
 })
 
-observe({
-  if (user_status() == "authenticated") {
-    shinyjs::show("app_header")
-    shinyjs::show("app_footer")
-  } else {
-    shinyjs::hide("app_header")
-    shinyjs::hide("app_footer")
-  }
-})

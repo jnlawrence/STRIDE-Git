@@ -36,7 +36,7 @@ output$ThirdLevel_Table <- DT::renderDT(server = FALSE, {
       fixedColumns = list(leftColumns = 5),
       pageLength = 10,
       columnDefs = list(list(className = 'dt-center', targets = "_all")),
-      dom = 'Bfrtip',
+      dom = get_dt_dom('Bfrtip'),
       buttons = list(
         list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
         list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),

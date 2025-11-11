@@ -37,7 +37,7 @@ output$HROD_Table <- DT::renderDT(server = FALSE, {
       pageLength = 10,
       columnDefs = list(list(className = 'dt-center', targets = "_all")),
       rownames = FALSE,
-      dom = 'Bfrtip',
+      dom = get_dt_dom('Bfrtip'),
       buttons = list(
         list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
         list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),

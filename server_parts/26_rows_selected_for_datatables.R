@@ -390,7 +390,7 @@ observeEvent(input$SHSListTable_rows_selected, {
         fixedHeader = TRUE,
         fixedColumns = list(leftColumns = 2),
         pageLength = 10,
-        dom = 'Bfrtip',
+        dom = get_dt_dom('Bfrtip'),
         buttons = list(
           list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
           list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),

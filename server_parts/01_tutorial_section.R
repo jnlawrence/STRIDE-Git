@@ -402,7 +402,7 @@ output$school_details_ui <- renderUI({
             extensions = 'Buttons',               # <-- Enables the Buttons extension
             options = list(
               # --- Feature: Download Buttons & Filter (Search) ---
-              dom = 'Bfrti', # 'B'=Buttons, 'f'=filter, 'r'=processing, 't'=table, 'i'=info
+              dom = get_dt_dom('Bfrti'), # 'B'=Buttons, 'f'=filter, 'r'=processing, 't'=table, 'i'=info
               buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), # Specify buttons
               
               # --- Feature: Disable Pagination ---
@@ -510,7 +510,7 @@ output$feature_3_table <- DT::renderDataTable(server = FALSE, {
       # 't' = the table
       # 'i' = info
       # 'p' = pagination
-      dom = 'lBfrtip', 
+      dom = get_dt_dom('lBfrtip'), 
       buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), # Download buttons
       
       # --- Pagination ---
