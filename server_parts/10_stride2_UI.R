@@ -1411,12 +1411,85 @@ output$STRIDE2 <- renderUI({
     ), # End of Data Explorer nav_menu - COMMA is correct here
     
     nav_panel(
-      title = tags$b("Quick School Search"),
+      title = tags$b("Quick Search"),
       icon = bs_icon("search"),
       layout_sidebar(
         sidebar = sidebar(
           textInput("text","Enter School Name"),
-          input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
+          
+          # --- ADDED: A place to show the warning text ---
+          # This UI element is updated by your server logic
+          uiOutput("text_warning_ui"), 
+          
+          input_task_button("TextRun", 
+                            icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), 
+                            strong("Show Selection"), 
+                            class = "btn-warning"),
+          
+          # --- UPDATED: Advanced Search Section ---
+          hr(),
+          h5("Advanced Search (Optional)"),
+          
+          # 1. Region Filter (Unchanged)
+          pickerInput(
+            inputId = "qss_region",
+            label = "Filter by Region:",
+            choices = sort(unique(uni$Region)), # Assumes 'uni' is available
+            selected = NULL,
+            multiple = TRUE,
+            options = pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              title = "All Regions"
+            )
+          ),
+          
+          # 2. Division Filter (NOW A FULL pickerInput)
+          # We populate it with ALL divisions initially
+          pickerInput(
+            inputId = "qss_division",
+            label = "Filter by Division:",
+            choices = sort(unique(uni$Division)), # Initial choices
+            selected = NULL,
+            multiple = TRUE,
+            options = pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              title = "All Divisions" # Title changed
+            )
+          ),
+          
+          # 3. Legislative District Filter (NOW A FULL pickerInput)
+          pickerInput(
+            inputId = "qss_legdist",
+            label = "Filter by Legislative District:",
+            choices = sort(unique(uni$Legislative.District)), # Initial choices
+            selected = NULL,
+            multiple = TRUE,
+            options = pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              title = "All Districts" # Title changed
+            )
+          ),
+          
+          # 4. Municipality Filter (NOW A FULL pickerInput)
+          pickerInput(
+            inputId = "qss_municipality",
+            label = "Filter by Municipality:",
+            choices = sort(unique(uni$Municipality)), # Initial choices
+            selected = NULL,
+            multiple = TRUE,
+            options = pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              title = "All Municipalities" # Title changed
+            )
+          )
+          # --- END: Advanced Search Section ---
+          
+        ),
+        # --- Main content panel is unchanged ---
         layout_columns(
           card(
             card_header(strong("Search Output")),
@@ -1446,7 +1519,8 @@ output$STRIDE2 <- renderUI({
                                       ))),
                       tableOutput("schooldetails5")),
                  col_widths = c(6,6,6,6))),
-          col_widths = c(6,6,12)))), # End of Quick Search nav_panel - COMMA is correct here
+          col_widths = c(6,6,12)))
+    ), # End of Quick Search nav_panel
     
     nav_panel(
       title = tags$b("Resource Mapping"),
