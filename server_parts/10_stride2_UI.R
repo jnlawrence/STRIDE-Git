@@ -1,5 +1,5 @@
 # stride2 UI
-
+#nov11
 output$STRIDE2 <- renderUI({
   
   # --- Define the Title/Brand UI Element ---
@@ -279,20 +279,25 @@ output$STRIDE2 <- renderUI({
     opacity: 0.95;
 }
 
-        /* STRIDE Logo (enhanced visibility) */
+ /* STRIDE Logo (white shadow only) */
 .stride-logo {
     height: 243px;
     margin-top: -23px;
     margin-bottom: -46px;
-    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4)) /* soft white glow */ drop-shadow(2px 2px 6px rgba(0, 0, 0, 0.6));
-    transition: filter 0.3s 
-ease;
+
+    /* ✅ Pure white shadow */
+   filter: drop-shadow(0 0 6px rgba(255,255,255,1))
+        drop-shadow(0 0 12px rgba(255,255,255,0.8));
+
+
+    transition: filter 0.3s ease;
 }
-.stride-logo:hover {
-  filter:
-    drop-shadow(0 0 6px rgba(255, 255, 255, 0.6))
-    drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.8));
-}
+
+# .stride-logo:hover {
+#   filter:
+#     drop-shadow(0 0 6px rgba(255, 255, 255, 0.6))
+#     drop-shadow(2px 2px 8px rgba(0, 0, 0, 0.8));
+# }
 
         /* Carousel styling (unchanged from your existing code) */
         .home-carousel-container {
@@ -695,7 +700,7 @@ ease;
                 inputId = "preset_roomcondition",
                 label = tags$div(
                   style = "display: flex; align-items: center;", 
-                  tags$span("Room Condition", style = "margin-left: 10px; font-size: 1.1rem;")
+                  tags$span("Classroom Condition", style = "margin-left: 10px; font-size: 1.1rem;")
                 ),
                 value = FALSE 
               )
@@ -784,13 +789,13 @@ ease;
                                       "Good Condition (Building)" = "Building.Count_Good.Condition",
                                       "For Major Repairs (Building)" = "Building.Count_Needs.Major.Repair",
                                       "For Minor Repairs (Building)" = "Building.Count_Needs.Minor.Repair"),
-                `Classroom Status` = c("Condemned (Room)" = "Number.of.Rooms_Condemned...For.Demolition",
-                                       "For Condemnation (Room)" = "Number.of.Rooms_For.Condemnation",
-                                       "For Completion (Room)" = "Number.of.Rooms_For.Completion",
-                                       "On-going Construction (Room)" = "Number.of.Rooms_On.going.Construction",
-                                       "Good Condition (Room)" = "Number.of.Rooms_Good.Condition",
-                                       "For Major Repairs (Room)" = "Number.of.Rooms_Needs.Major.Repair",
-                                       "For Minor Repairs (Room)" = "Number.of.Rooms_Needs.Minor.Repair")
+                `Classroom Status` = c("Condemned (Classroom)" = "Number.of.Rooms_Condemned...For.Demolition",
+                                       "For Condemnation (Classroom)" = "Number.of.Rooms_For.Condemnation",
+                                       "For Completion (Classroom)" = "Number.of.Rooms_For.Completion",
+                                       "On-going Construction (Classroom)" = "Number.of.Rooms_On.going.Construction",
+                                       "Good Condition (Classroom)" = "Number.of.Rooms_Good.Condition",
+                                       "For Major Repairs (Classroom)" = "Number.of.Rooms_Needs.Major.Repair",
+                                       "For Minor Repairs (Classroom)" = "Number.of.Rooms_Needs.Minor.Repair")
                 ),
               multiple = TRUE,
               options = pickerOptions(

@@ -76,13 +76,13 @@ condition_metric_choices <- list(
                         "Good Condition (Building)" = "Building.Count_Good.Condition",
                         "For Major Repairs (Building)" = "Building.Count_Needs.Major.Repair",
                         "For Minor Repairs (Building)" = "Building.Count_Needs.Minor.Repair"),
-  `Classroom Status` = c("Condemned (Room)" = "Number.of.Rooms_Condemned...For.Demolition",
-                         "For Condemnation (Room)" = "Number.of.Rooms_For.Condemnation",
-                         "For Completion (Room)" = "Number.of.Rooms_For.Completion",
-                         "On-going Construction (Room)" = "Number.of.Rooms_On.going.Construction",
-                         "Good Condition (Room)" = "Number.of.Rooms_Good.Condition",
-                         "For Major Repairs (Room)" = "Number.of.Rooms_Needs.Major.Repair",
-                         "For Minor Repairs (Room)" = "Number.of.Rooms_Needs.Minor.Repair")
+  `Classroom Status` = c("Condemned (Classroom)" = "Number.of.Rooms_Condemned...For.Demolition",
+                         "For Condemnation (Classroom)" = "Number.of.Rooms_For.Condemnation",
+                         "For Completion (Classroom)" = "Number.of.Rooms_For.Completion",
+                         "On-going Construction (Classroom)" = "Number.of.Rooms_On.going.Construction",
+                         "Good Condition (Classroom)" = "Number.of.Rooms_Good.Condition",
+                         "For Major Repairs (Classroom)" = "Number.of.Rooms_Needs.Major.Repair",
+                         "For Minor Repairs (Classroom)" = "Number.of.Rooms_Needs.Minor.Repair")
   
 )
 
