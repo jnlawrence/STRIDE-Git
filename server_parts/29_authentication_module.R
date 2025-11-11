@@ -63,11 +63,23 @@ authentication_server <- function(input, output, session, user_status,
             br(),
             actionLink(ns("btn_register"), "Create an account", class = "register-link"),
             br(),
+            
             div(
               class = "text-center mt-3",
-              actionButton("guest_mode_btn", "Continue as Guest", 
-                           class = "btn btn-outline-secondary w-100 mt-3")
+              actionButton(
+                "guest_mode_btn", 
+                "Continue as Guest", 
+                
+                # --- 💡 MODIFICATION ---
+                class = "w-100 mt-3", # <-- Removed btn-guest, just keep layout classes
+                
+                # Add the CSS styles directly here.
+                # I've used the light blue/teal color from your CSS file.
+                style = "background-color: #e0a800; border-color: #e0a800; color: white; font-weight: 600;" 
+                # --- END MODIFICATION ---
+              )
             ),
+            
             
             
             # actionButton(ns("guest_mode"), "Continue as Guest", class = "btn-secondary w-100 mt-2"),
