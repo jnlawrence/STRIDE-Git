@@ -1,5 +1,5 @@
 # stride2 UI
-
+#nov11
 output$STRIDE2 <- renderUI({
   
   # --- Define the Title/Brand UI Element ---
