@@ -1,32 +1,22 @@
-# --- Load Required Libraries ---
-library(shiny)
-library(dplyr)
-library(tibble)
-library(ggplot2)
-library(scales)
+
 
 # --- 1. VALIDATE METADATA ---
 if (!exists("col_info_adv_static")) {
-  stop("FATAL ERROR: 'col_info_adv_static' object not found. 
-       Please add the pre-analysis code to your main server.R or global.R file
-       AFTER you load the 'uni' database.")
+  stop("FATAL ERROR: 'col_info_adv_static' object not found...")
 } else {
   print("--- ADVANCED ANALYTICS: Server logic is loading. Metadata found. ---")
 }
 
 
 # --- 2. Dynamic Filter Management ---
-
+# (This section is unchanged)
 active_filter_ids <- reactiveVal(c()) 
 adv_filter_counter <- reactiveVal(0) 
 
-# --- 2a. OBSERVER: "Add Filter" Button ---
 observeEvent(input$add_adv_filter_btn, {
-  
   new_id <- isolate(adv_filter_counter()) + 1
   adv_filter_counter(new_id)
   ui_id <- paste0("adv_filter_row_", new_id)
-  
   insertUI(
     selector = "#adv_filter_container",
     where = "beforeEnd",
@@ -34,77 +24,71 @@ observeEvent(input$add_adv_filter_btn, {
       id = ui_id,
       class = "adv-filter-group",
       style = "border: 1px solid #ddd; border-radius: 5px; padding: 10px; margin-bottom: 10px;",
-      
       actionButton(paste0("adv_remove_", new_id), "Remove", 
                    icon = icon("times"), class = "btn-danger btn-sm float-end"),
-      
       selectInput(paste0("adv_col_", new_id), 
                   label = paste("Filter", new_id, ": Select Column"),
                   choices = adv_analytics_choices),
-      
       uiOutput(paste0("adv_filter_val_ui_", new_id))
     )
   )
-  
   active_filter_ids(c(isolate(active_filter_ids()), new_id))
   
-  # --- 2b. DYNAMIC OBSERVERS ---
   local({
-    
     current_filter_id <- new_id
-    
-    # --- DYNAMIC RENDER: Create the filter's value input (WITH FIX) ---
     output[[paste0("adv_filter_val_ui_", current_filter_id)]] <- renderUI({
-      
       col_name <- input[[paste0("adv_col_", current_filter_id)]]
       req(col_name) 
-      
-      # --- FIX HERE: Changed 'column_name' to 'Raw_Name' ---
       col_type <- col_info_adv_static$type[col_info_adv_static$Raw_Name == col_name]
       col_data <- uni[[col_name]] 
       
       if (col_type == "Numeric") {
         min_val <- min(col_data, na.rm = TRUE)
         max_val <- max(col_data, na.rm = TRUE)
-        
         if (is.infinite(min_val) || is.infinite(max_val)) {
-          tags$p("This column has no valid numeric data to filter.", 
-                 style = "color: #dc3545; font-style: italic;")
+          tags$p("No valid numeric data.", style = "color: #dc3545;")
         } else {
           tagList(
-            numericInput(paste0("adv_num_min_", current_filter_id), "Min Value:", value = min_val),
-            numericInput(paste0("adv_num_max_", current_filter_id), "Max Value:", value = max_val)
+            numericInput(paste0("adv_num_min_", current_filter_id), "Min:", value = min_val),
+            numericInput(paste0("adv_num_max_", current_filter_id), "Max:", value = max_val)
           )
         }
-        
       } else if (col_type %in% c("Categorical", "Binary")) {
-        choices <- unique(col_data)
-        choices <- choices[!is.na(choices)]
-        
+        choices <- sort(unique(col_data[!is.na(col_data)]))
         if (length(choices) == 0) {
-          tags$p("This column has no valid categories to filter.", 
-                 style = "color: #dc3545; font-style: italic;")
+          tags$p("No valid categories.", style = "color: #dc3545;")
         } else {
-          choices <- sort(choices)
           selectInput(paste0("adv_select_", current_filter_id), "Select Value(s):",
                       choices = choices, selected = choices, multiple = TRUE)
         }
       }
     })
-    
-    # --- DYNAMIC OBSERVER: "Remove" Button ---
     observeEvent(input[[paste0("adv_remove_", current_filter_id)]], {
-      print(paste("Removing filter:", current_filter_id))
       removeUI(selector = paste0("#adv_filter_row_", current_filter_id))
       active_filter_ids(setdiff(isolate(active_filter_ids()), current_filter_id))
     })
-    
   }) # End local()
-  
 }) # End observeEvent(add_adv_filter_btn)
 
 
-# --- 3. Filter Data when "Apply" button is clicked ---
+# --- 3. Filter Data and Manage State ---
+
+# --- 3a. Add state management for the interactive drilldown ---
+adv_drill_state <- reactiveVal(list(level = "Region", filters = list()))
+
+# --- MODIFIED: 3b. Define the drilldown hierarchy (STOPPED at District) ---
+# We REMOVED "School" from this list
+drill_levels <- c("Region", "Division", "Legislative", "District")
+col_name_map <- c(
+  "Region" = "Region",
+  "Division" = "Division",
+  "Legislative" = "Legislative.District",
+  "District" = "District"
+  # "School" = "School.Name" # No longer drilling to school
+)
+
+# --- 3c. 'Apply' button now filters data AND resets the drilldown ---
+# --- MODIFIED: 3c. 'Apply' button now filters data AND resets drilldown to Region ---
 filtered_data_adv <- eventReactive(input$adv_analytics_run, {
   
   req(global_drill_state())
@@ -113,10 +97,16 @@ filtered_data_adv <- eventReactive(input$adv_analytics_run, {
   data_filtered <- uni 
   drill_state <- global_drill_state()
   
+  # --- MODIFIED: Force the start level to be "Region" ---
+  start_level <- "Region"
+  adv_drill_state(list(level = start_level, filters = list()))
+  print(paste("--- ADVANCED ANALYTICS: Drilldown reset to:", start_level, "---"))
+  
   # --- 1. Apply all filters from the main dashboard ---
   if (!is.null(drill_state$ownership_filter)) {
     data_filtered <- data_filtered %>% filter(OwnershipType %in% drill_state$ownership_filter)
   }
+  # ... (rest of this filter logic is unchanged) ...
   if (!is.null(drill_state$electricity_filter)) {
     data_filtered <- data_filtered %>% filter(ElectricitySource %in% drill_state$electricity_filter)
   }
@@ -135,30 +125,22 @@ filtered_data_adv <- eventReactive(input$adv_analytics_run, {
   
   # --- 2. Apply ALL dynamic filters from this panel ---
   filter_ids_to_apply <- isolate(active_filter_ids())
-  
   if (length(filter_ids_to_apply) > 0) {
     for (id in filter_ids_to_apply) {
       col_name <- isolate(input[[paste0("adv_col_", id)]])
       if (is.null(col_name)) next 
-      
-      # --- FIX HERE: Changed 'column_name' to 'Raw_Name' ---
       col_type <- col_info_adv_static$type[col_info_adv_static$Raw_Name == col_name]
       
       if (col_type == "Numeric") {
         min_val <- isolate(input[[paste0("adv_num_min_", id)]])
         max_val <- isolate(input[[paste0("adv_num_max_", id)]])
-        
         if (is.null(min_val) || is.null(max_val)) next 
-        
         data_filtered <- data_filtered %>%
           filter(!is.na(!!sym(col_name))) %>% 
           filter(!!sym(col_name) >= min_val, !!sym(col_name) <= max_val)
-        
       } else if (col_type %in% c("Categorical", "Binary")) {
         selected_choices <- isolate(input[[paste0("adv_select_", id)]])
-        
         if (is.null(selected_choices)) next 
-        
         data_filtered <- data_filtered %>%
           filter(!!sym(col_name) %in% selected_choices)
       }
@@ -166,6 +148,7 @@ filtered_data_adv <- eventReactive(input$adv_analytics_run, {
   }
   
   # --- 3. Apply geographic drilldown filters ---
+  # These filters *from the main dashboard* should still apply
   if (drill_state$level %in% c("Division", "Legislative", "District", "School")) {
     req(drill_state$region)
     data_filtered <- data_filtered %>% filter(Region == drill_state$region)
@@ -179,97 +162,392 @@ filtered_data_adv <- eventReactive(input$adv_analytics_run, {
     data_filtered <- data_filtered %>% filter(Legislative.District == drill_state$legislative_district)
   }
   
-  print("--- ADVANCED ANALYTICS: Filtering complete. ---")
+  print("--- ADVANCED ANALYTICS: Base filtering complete. ---")
   return(data_filtered)
 })
 
+# --- 3d. Create a reactive for the drilldown data ---
+drilled_data_and_level <- reactive({
+  data <- filtered_data_adv()
+  state <- adv_drill_state()
+  
+  if (length(state$filters) > 0) {
+    print("--- ADVANCED ANALYTICS: Applying drilldown filters... ---")
+    for (col_name in names(state$filters)) {
+      filter_value <- state$filters[[col_name]]
+      print(paste("     ... filtering", col_name, "==", filter_value))
+      data <- data %>% filter(!!sym(col_name) == !!filter_value)
+    }
+  }
+  return(list(data = data, level = state$level))
+})
 
-# --- 4. Render the Drilldown Plot ---
-output$advanced_drilldown_plot <- renderPlot({
+# --- 3e. Create a reactive for the plot data ---
+plot_data_r <- reactive({
+  req(drilled_data_and_level())
+  info <- drilled_data_and_level()
+  data_to_plot <- info$data
+  drill_level <- info$level
   
-  req(filtered_data_adv())
-  print("--- ADVANCED ANALYTICS: Rendering plot. ---")
-  
-  data_to_plot <- filtered_data_adv()
-  drill_level <- global_drill_state()$level 
-  
-  group_col_sym <- switch(drill_level,
-                          "Region" = sym("Region"),
-                          "Division" = sym("Division"),
-                          "Legislative" = sym("Legislative.District"),
-                          "District" = sym("District"),
-                          "School" = sym("School.Name"),
-                          sym("Region") 
-  )
-  
-  if (nrow(data_to_plot) == 0) {
-    print("--- ADVANCED ANALYTICS: No data to plot after filtering. ---")
-    return(
-      ggplot() + 
-        labs(title = "No Data",
-             subtitle = "No schools match all selected filters.") +
-        theme_minimal()
-    )
+  # If we are at the last level ("District"), don't show a plot
+  # just show the schools in the table/map
+  if (drill_level == "District") {
+    # We still need to group by District for the *click* to work
+    # but the plot will be updated to say "End of drilldown"
+    group_col_name <- col_name_map[drill_level]
+  } else {
+    # Otherwise, get the *next* level to display
+    current_index <- match(drill_level, drill_levels)
+    next_level <- drill_levels[current_index + 1]
+    group_col_name <- col_name_map[next_level]
   }
   
+  group_col_sym <- sym(group_col_name)
+  
+  if (nrow(data_to_plot) == 0) return(NULL) 
+  
   plot_data <- data_to_plot %>%
-    group_by(!!sym(group_col_sym)) %>%
+    group_by(!!group_col_sym) %>%
     summarise(School_Count = n(), .groups = 'drop') %>%
-    rename(Group = !!sym(group_col_sym)) %>%
+    rename(Group = !!group_col_sym) %>%
     filter(!is.na(Group)) %>% 
     arrange(desc(School_Count)) %>% 
     head(25) 
   
-  ggplot(plot_data, aes(x = reorder(Group, -School_Count), y = School_Count)) +
-    geom_bar(stat = "identity", fill = "#007bff") +
-    geom_text(aes(label = School_Count), vjust = -0.5, size = 3) +
+  return(plot_data)
+})
+
+
+# --- 4. Plot, Controls, and Click Logic ---
+
+# --- MODIFIED: 4a. UI for "Reset" AND "Back" buttons ---
+# --- MODIFIED: 4a. UI for "Reset" AND "Back" buttons ---
+output$adv_drill_controls_ui <- renderUI({
+  
+  state <- adv_drill_state()
+  
+  # --- MODIFIED: The "start level" is always Region ---
+  start_level <- "Region"
+  
+  show_reset <- state$level != start_level || length(state$filters) > 0
+  show_back <- length(state$filters) > 0 # Show back if any filters are applied
+  
+  div(style = "display: flex; gap: 10px; margin-bottom: 10px;",
+      if (show_reset) {
+        actionButton("adv_drill_reset_btn", "Reset Drilldown View", 
+                     icon = icon("undo"), class = "btn-secondary btn-sm")
+      },
+      if (show_back) {
+        actionButton("adv_drill_back_btn", "Go Back One Level", 
+                     icon = icon("arrow-left"), class = "btn-info btn-sm")
+      }
+  )
+})
+
+# --- 4b. Observer for the "Reset" button ---
+# --- MODIFIED: 4b. Observer for the "Reset" button ---
+observeEvent(input$adv_drill_reset_btn, {
+  print("--- ADVANCED ANALYTICS: Drilldown reset button clicked. ---")
+  
+  # --- MODIFIED: Always reset to Region ---
+  start_level <- "Region"
+  adv_drill_state(list(level = start_level, filters = list()))
+})
+
+# --- NEW: 4c. Observer for the "Back" button ---
+observeEvent(input$adv_drill_back_btn, {
+  print("--- ADVANCED ANALYTICS: Drilldown 'Back' button clicked. ---")
+  
+  current_state <- isolate(adv_drill_state())
+  
+  # If no filters, do nothing (button shouldn't be visible, but as a safeguard)
+  if (length(current_state$filters) == 0) return()
+  
+  # 1. Get the name of the *current* level
+  current_level <- current_state$level
+  
+  # 2. Get the *previous* level
+  current_index <- match(current_level, drill_levels)
+  # This should not happen, but safeguard
+  if (current_index == 1) return() 
+  prev_level <- drill_levels[current_index - 1]
+  
+  # 3. Remove the *last* filter from the list
+  new_filters <- current_state$filters
+  new_filters[[length(new_filters)]] <- NULL
+  
+  print(paste("--- Going back to level:", prev_level))
+  
+  # 4. Set the new state
+  adv_drill_state(list(level = prev_level, filters = new_filters))
+})
+
+
+# --- MODIFIED: 4d. Render the interactive plot ---
+output$advanced_drilldown_plot <- renderPlot({
+  
+  req(drilled_data_and_level())
+  
+  plot_data <- plot_data_r()
+  drill_level <- drilled_data_and_level()$level
+  
+  if (is.null(plot_data) || nrow(plot_data) == 0) {
+    print("--- ADVANCED ANALYTICS: No data to plot. ---")
+    return(
+      ggplot() + 
+        labs(title = "No Data to Display",
+             subtitle = "No schools match all selected filters. Try broadening your search.") +
+        theme_minimal()
+    )
+  }
+  
+  # --- MODIFIED: Adjust plot title and subtitle based on level ---
+  current_index <- match(drill_level, drill_levels)
+  
+  # If we are at the last level, we are *viewing* Districts
+  if (current_index == length(drill_levels)) {
+    title_text <- paste("School Count by", drill_level, "(Top 25)")
+    subtitle_text <- "End of drilldown. See table and map below."
+  } else {
+    # Otherwise, we are viewing the *next* level
+    next_level <- drill_levels[current_index + 1]
+    title_text <- paste("School Count by", next_level, "(Top 25)")
+    subtitle_text <- paste("Click a bar to drill down into a", next_level)
+  }
+  
+  ggplot(plot_data, aes(x = School_Count, y = reorder(Group, School_Count))) +
+    geom_col(fill = "#007bff") + 
+    geom_text(aes(label = School_Count), hjust = -0.1, size = 3.5) +
     labs(
-      title = paste("School Count by", drill_level, "(Top 25)"),
-      x = drill_level,
-      y = "Number of Schools"
+      title = title_text,
+      subtitle = subtitle_text,
+      x = "Number of Schools",
+      y = if(current_index < length(drill_levels)) drill_levels[current_index+1] else drill_level
     ) +
+    scale_x_continuous(expand = expansion(mult = c(0, .1))) + 
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 10))
+    theme(axis.text.y = element_text(size = 10), 
+          axis.text.x = element_text(size = 10))
   
 }, res = 96)
 
 
-# --- 5. Render the Data Description Text ---
-# --- 5. Render the Filtered Data Table (REPLACED DESCRIPTION) ---
+# --- MODIFIED: 4e. Observer for plot clicks (stops at District) ---
+observeEvent(input$adv_plot_click, {
+  
+  print("--- PLOT CLICK DETECTED! ---") 
+  
+  plot_data_for_click <- plot_data_r()
+  if (is.null(plot_data_for_click) || nrow(plot_data_for_click) == 0) {
+    print("--- DEBUG: plot_data_r() is NULL. Aborting. ---")
+    return()
+  }
+  
+  current_state <- adv_drill_state()
+  current_index <- match(current_state$level, drill_levels)
+  
+  # --- MODIFIED: Check if we are at the *second to last* level ---
+  # We stop if the *current* level is "Legislative", because the
+  # *next* level ("District") is the end.
+  if (is.na(current_index) || current_index == length(drill_levels)) {
+    print(paste("--- DEBUG: At final drill level (", current_state$level, "). No action. ---"))
+    return()
+  }
+  
+  # --- Manual click calculation (unchanged) ---
+  plot_data_sorted_asc <- plot_data_for_click %>% arrange(School_Count)
+  clicked_y_index <- round(input$adv_plot_click$y)
+  
+  if (clicked_y_index < 1 || clicked_y_index > nrow(plot_data_sorted_asc)) {
+    print("--- DEBUG: Click index out of bounds. Aborting. ---")
+    return()
+  }
+  
+  clicked_bar_data <- plot_data_sorted_asc[clicked_y_index, ]
+  clicked_x_value <- input$adv_plot_click$x
+  bar_x_max <- clicked_bar_data$School_Count
+  
+  if (clicked_x_value < 0 || clicked_x_value > (bar_x_max * 1.1)) {
+    print("--- DEBUG: Click x-coordinate outside bar area. Aborting. ---")
+    return()
+  }
+  
+  clicked_value <- as.character(clicked_bar_data$Group)
+  print(paste("--- DEBUG: Click is valid. Group:", clicked_value, "---"))
+  
+  # --- Prepare the NEW state ---
+  
+  # --- MODIFIED: Get correct levels ---
+  # The *next* level is the one we are drilling *to*
+  next_level <- drill_levels[current_index + 1]
+  # The *column to filter* is the one we just clicked
+  col_to_filter <- col_name_map[next_level] # We clicked on a "Division" bar
+  
+  new_filters <- current_state$filters
+  new_filters[[col_to_filter]] <- clicked_value
+  
+  print(paste("--- ADVANCED ANALYTICS: Drilling down to", next_level, 
+              "where", col_to_filter, "=", clicked_value, "---"))
+  
+  new_state_list <- list(level = next_level, filters = new_filters)
+  adv_drill_state(new_state_list)
+})
+
+
+# --- 5. Data Table and Map ---
+
+# --- 5a. Render the Filtered Data Table ---
 output$advanced_data_table <- DT::renderDataTable({
   
-  # Wait for the button press
-  req(filtered_data_adv())
+  req(drilled_data_and_level())
   print("--- ADVANCED ANALYTICS: Rendering data table. ---")
   
-  data_to_show <- filtered_data_adv()
+  data_to_show <- drilled_data_and_level()$data
   
-  # --- Select key columns to display ---
-  # We show identifiers and the columns the user can filter on
-  
-  # First, get the raw column names of the active filters
+  # Select key columns
   filter_cols <- col_info_adv_static$Raw_Name
+  data_to_show <- tryCatch({
+    data_to_show %>%
+      select(
+        School.Name, 
+        Region, 
+        Division, 
+        Municipality,
+        all_of(filter_cols) 
+      )
+  }, error = function(e) {
+    print(paste("Error selecting columns for table:", e$message))
+    data_to_show 
+  })
   
-  # Select key columns + the filterable columns
-  data_to_show <- data_to_show %>%
-    select(
-      School.Name, 
-      Region, 
-      Division, 
-      Municipality,
-      all_of(filter_cols) # Selects all 12 of your filterable columns
-    )
-  
-  # --- Render the interactive table ---
   datatable(
     data_to_show,
+    selection = 'single', # Keep single row selection
     options = list(
-      scrollX = TRUE,  # Allows horizontal scrolling
-      pageLength = 10, # Show 10 rows per page
+      scrollX = TRUE,  
+      pageLength = 10, 
       autoWidth = TRUE
     ),
     rownames = FALSE,
-    filter = 'top' # Adds column filters to the table
+    filter = 'top' 
   )
+})
+
+# --- MODIFIED: 5b. Render the Leaflet Map (With Enhanced Debugging) ---
+output$advanced_school_map <- renderLeaflet({
+  
+  print("--- MAP RENDER: Starting... ---")
+  
+  req(drilled_data_and_level())
+  data_for_map <- drilled_data_and_level()$data
+  
+  print(paste("--- MAP RENDER: Data received with", nrow(data_for_map), "rows. ---"))
+  
+  # --- !!! ACTION REQUIRED !!! ---
+  # Replace these with your actual latitude and longitude column names
+  lat_col <- "Latitude" 
+  lon_col <- "Longitude"
+  
+  # --- NEW: Check if you changed the placeholders ---
+  if (lat_col == "Latitude" || lon_col == "Longitude") {
+    print("--- MAP RENDER ERROR: You have not replaced the placeholder lat/lon column names in section 5b. ---")
+    return(leaflet() %>% addTiles() %>% 
+             addControl("MAP ERROR: Latitude/Longitude column names are not set in server.R", 
+                        position = "topright", className = "map-error-box"))
+  }
+  
+  # Check if columns exist
+  if (!all(c(lat_col, lon_col) %in% names(data_for_map))) {
+    print(paste("--- MAP RENDER ERROR: Lat/Lon columns (", lat_col, ",", lon_col, ") not found in data. ---"))
+    return(leaflet() %>% addTiles() %>% 
+             addControl(paste("MAP ERROR: Columns", lat_col, "or", lon_col, "not found."), 
+                        position = "topright", className = "map-error-box"))
+  }
+  
+  # Filter out rows with missing coordinates
+  data_for_map_filtered <- data_for_map %>%
+    filter(!is.na(!!sym(lat_col)) & !is.na(!!sym(lon_col)))
+  
+  print(paste("--- MAP RENDER: Filtered to", nrow(data_for_map_filtered), "rows with valid coordinates. ---"))
+  
+  if (nrow(data_for_map_filtered) == 0) {
+    print("--- MAP RENDER: No schools with valid coordinates to plot. ---")
+    return(leaflet() %>% addTiles() %>% 
+             addControl("No schools with valid coordinates match your filters.", 
+                        position = "topright"))
+  }
+  
+  print("--- MAP RENDER: Rendering map with points... ---")
+  
+  leaflet(data = data_for_map_filtered) %>%
+    addTiles() %>%
+    addCircleMarkers(
+      lng = ~!!sym(lon_col),
+      lat = ~!!sym(lat_col),
+      radius = 5,
+      stroke = FALSE,
+      fillOpacity = 0.7,
+      popup = ~School.Name # Show school name on click
+    )
+})
+
+
+# --- MODIFIED: 5c. Observer for table row selection (to control map) ---
+observeEvent(input$advanced_data_table_rows_selected, {
+  
+  req(input$advanced_data_table_rows_selected)
+  
+  selected_row_index <- input$advanced_data_table_rows_selected
+  
+  print("--- TABLE ROW SELECTED! ---")
+  
+  # --- !!! ACTION REQUIRED !!! ---
+  # Replace these with your actual latitude and longitude column names
+  lat_col <- "Latitude" 
+  lon_col <- "Longitude"
+  
+  # --- NEW: Check if you changed the placeholders ---
+  if (lat_col == "Latitude" || lon_col == "Longitude") {
+    print("--- MAP SETVIEW ERROR: You have not replaced the placeholder lat/lon column names in section 5c. ---")
+    return()
+  }
+  
+  # Get the data for the selected row
+  tryCatch({
+    data_from_table <- drilled_data_and_level()$data
+    
+    if (!all(c(lat_col, lon_col) %in% names(data_from_table))) {
+      print("--- MAP SETVIEW ERROR: Lat/Lon columns not found. ---")
+      return()
+    }
+    
+    selected_row_data <- data_from_table[selected_row_index, ]
+    
+    selected_lat <- selected_row_data[[lat_col]]
+    selected_lon <- selected_row_data[[lon_col]]
+    
+    if (is.na(selected_lat) || is.na(selected_lon)) {
+      print("--- MAP SETVIEW: Selected row has NA coordinates. ---")
+      return()
+    }
+    
+    print(paste("--- MAP SETVIEW: Zooming to", selected_row_data$School.Name, "---"))
+    
+    leafletProxy("advanced_school_map") %>%
+      clearPopups() %>% 
+      setView(
+        lng = selected_lon,
+        lat = selected_lat,
+        zoom = 15
+      ) %>%
+      addPopups(
+        lng = selected_lon,
+        lat = selected_lat,
+        popup = selected_row_data$School.Name
+      )
+    
+  }, error = function(e) {
+    print(paste("--- MAP SETVIEW ERROR:", e$message, "---"))
+  })
   
 })

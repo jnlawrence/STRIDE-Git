@@ -68,11 +68,13 @@ analytics_column_map <- tibble(
     "WaterSource", 
     "Total.Excess", 
     "Total.Shortage", 
-    "TotalTeachers"
+    "TotalTeachers",
+    "Classroom.Shortage",
+    "With_Buildable_space"
   ),
   Clean_Name = c(
     "Implementing Unit", 
-    "Category of Concern (COC)", 
+    "Curricular Offering", 
     "Total Enrolment", 
     "School Head Position", 
     "School Size", 
@@ -80,9 +82,11 @@ analytics_column_map <- tibble(
     "Ownership Type", 
     "Electricity Source", 
     "Water Source", 
-    "Total Teacher Excess", 
-    "Total Teacher Shortage", 
-    "Total Teachers"
+    "Teacher Excess", 
+    "Teacher Shortage", 
+    "Total Teachers",
+    "Classroom Shortage",
+    "Buildable Space"
   )
 )
 
@@ -337,6 +341,7 @@ server <- function(input, output, session) {
   source("server_parts/28_login_page.R", local = TRUE)
   source("server_parts/31_build_your_dashboard.R", local = TRUE)
   source("server_parts/32_guest_mode.R", local = TRUE)
+  #source("server_parts/33_stride2_guest_UI.R", local = TRUE)
   source("server_parts/34_home.R", local = TRUE)
   source("server_parts/AdvancedAnalytics_Server.R", local = TRUE)
   

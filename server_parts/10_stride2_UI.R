@@ -377,7 +377,7 @@ output$STRIDE2 <- renderUI({
               inputId = "Combined_Infra_Toggles_Build",
               label = strong("Select Infrastructure Metrics"),
               choices = list(
-                `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024", "Classroom Requirement" =  "Classroom.Requirement", "Classroom Shortage" = "Est.CS", "Shifting" = "Shifting", "Buildings" = "Buildings", "Buildable Space" = "Buidable_space", "Major Repairs Needed" = "Major.Repair.2023.2024"),
+                `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024", "Classroom Requirement" =  "Classroom.Requirement", "Classroom Shortage" = "Classroom.Shortage", "Shifting" = "Shifting", "Buildings" = "Buildings", "Buildable Space" = "With_Buildable_space", "Major Repairs Needed" = "Major.Repair.2023.2024"),
                 `Facilities` = c("Seats Inventory" = "Total.Total.Seat", "Seats Shortage" = "Total.Seats.Shortage"),
                 `Resources` = c("Ownership Type" = "OwnershipType", "Electricity Source" = "ElectricitySource", "Water Source" = "WaterSource")
               ),
@@ -467,7 +467,6 @@ output$STRIDE2 <- renderUI({
             )
           )
         )
-<<<<<<< HEAD
       ),
       # --- *** END OF NEW LAYLUT *** ---
       # --- ADVANCED ANALYTICS PANEL (UPDATED) ---
@@ -495,29 +494,48 @@ output$STRIDE2 <- renderUI({
           
           # --- Main Panel for Plot and Description ---
           # --- Main Panel for Plot and Description (UPDATED) ---
-          layout_column_wrap(
-            width = 1/2, # This creates two equal columns (col-6)
-            
-            # --- Card 1 (Column 1) ---
-            card(
-              card_header("Drilldown Analytics"),
-              card_body(
-                plotOutput("advanced_drilldown_plot")
-              )
-            ),
-            
-            # --- Card 2 (Column 2) ---
-            card(
-              card_header("Data Description"),
-              card_body(
-                DT::dataTableOutput("advanced_data_table")              )
+          fluidRow(
+            column(12,
+                   # This card will hold the plot
+                   card(
+                     card_header("Drilldown Plot"),
+                     card_body(
+                       # The Reset and Back buttons
+                       uiOutput("adv_drill_controls_ui"),
+                       
+                       # The plot (with the click ID)
+                       plotOutput("advanced_drilldown_plot", click = "adv_plot_click")
+                     )
+                   )
             )
-          ) # End layout_column_wrap
+          ),
+          fluidRow(
+            column(6,
+                   # This card will hold the data table
+                   card(
+                     card_header("Filtered Data"),
+                     card_body(
+                       DT::dataTableOutput("advanced_data_table")
+                     ),
+                     # Set a fixed height for better alignment
+                     style = "height: 700px;" 
+                   )
+            ),
+            column(6,
+                   # This card will hold the map
+                   card(
+                     card_header("School Map"),
+                     card_body(
+                       # The map
+                       leafletOutput("advanced_school_map", height = "600px") 
+                     ),
+                     # Set a fixed height for better alignment
+                     style = "height: 700px;" 
+                   )
+            )
+          )
         ) # End layout_sidebar
-      ), # End nav_panel("Advanced Analytics")
-=======
-      ), 
->>>>>>> 014cc647235af24e20d8d05914b9af37736a05ca
+      ), # End nav_panel("Advanced Analytics") 
       nav_panel(
         "Plantilla Positions",
         layout_sidebar(

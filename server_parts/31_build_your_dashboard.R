@@ -12,6 +12,7 @@ global_drill_state <- reactiveVal(list(
   ownership_filter = NULL,
   electricity_filter = NULL,
   water_filter = NULL,
+  buildable_filter = NULL, # <-- NEW: Filter for buildable space
   # --- END NEW FILTERS ---
   
   coc_filter = NULL,      
@@ -62,10 +63,10 @@ hr_metric_choices <- list(
 infra_metric_choices <- list(
   `Classroom` = c("Number of Classrooms" = "Instructional.Rooms.2023.2024",
                   "Classroom Requirement" =  "Classroom.Requirement",
-                  "Classroom Shortage" = "Est.CS",
+                  "Classroom Shortage" = "Classroom.Shortage",
                   "Shifting" = "Shifting",
                   "Number of Buildings" = "Buildings",
-                  "Buildable Space" = "With_Buildable_space", # --- MODIFIED --- (Was "Buidable_space")
+                  "Buildable Space" = "With_Buildable_space", # --- This was your correct change
                   "Major Repairs Needed" = "Major.Repair.2023.2024"),
   `Facilities` = c("Seats Inventory" = "Total.Total.Seat",
                    "Seats Shortage" = "Total.Seats.Shortage"),
@@ -105,7 +106,7 @@ program_metric_choices <- list(
     "Electrification (2024)" = "ELECTRIFICATION.2024"
   ),
   "Gabaldon" = c(
-    "Gabaldon (220)" = "GABALDON.2020",
+    "Gabaldon (2020)" = "GABALDON.2020",
     "Gabaldon (2021)" = "GABALDON.2021",
     "Gabaldon (2022)" = "GABALDON.2022",
     "Gabaldon (2023)" = "GABALDON.2023",
@@ -553,6 +554,9 @@ output$back_button_ui <- renderUI({
   } else if (!is.null(state$coc_filter)) {
     label_text <- stringr::str_trunc(state$coc_filter, 20)
     undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
+  } else if (!is.null(state$buildable_filter)) { # --- NEW ---
+    label_text <- stringr::str_trunc(state$buildable_filter, 20)
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
   } else if (!is.null(state$water_filter)) { 
     label_text <- stringr::str_trunc(state$water_filter, 20)
     undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
@@ -613,11 +617,13 @@ observeEvent(input$back_button, {
     new_state$typology_filter <- NULL 
   } else if (!is.null(state$coc_filter)) {
     new_state$coc_filter <- NULL      
-  } else if (!is.null(state$water_filter)) { # --- NEW ---
+  } else if (!is.null(state$buildable_filter)) { # --- NEW ---
+    new_state$buildable_filter <- NULL
+  } else if (!is.null(state$water_filter)) { 
     new_state$water_filter <- NULL
-  } else if (!is.null(state$electricity_filter)) { # --- NEW ---
+  } else if (!is.null(state$electricity_filter)) { 
     new_state$electricity_filter <- NULL
-  } else if (!is.null(state$ownership_filter)) { # --- NEW ---
+  } else if (!is.null(state$ownership_filter)) { 
     new_state$ownership_filter <- NULL
   } else if (state$level == "District") {
     new_state$level <- "Legislative.District"; new_state$legislative_district <- NULL 
@@ -649,6 +655,7 @@ observeEvent(input$reset_to_region_button, {
     ownership_filter = NULL,
     electricity_filter = NULL,
     water_filter = NULL,
+    buildable_filter = NULL, # <-- NEW
     coc_filter = NULL,      
     typology_filter = NULL, 
     shifting_filter = NULL,
@@ -690,6 +697,7 @@ observe({
   ownership_source <- paste0("ownership_click_", current_trigger_val)
   electricity_source <- paste0("electricity_click_", current_trigger_val)
   water_source <- paste0("water_click_", current_trigger_val)
+  buildable_source <- paste0("buildable_click_", current_trigger_val) # <-- NEW
   
   # --- Create a list to hold all new observer handles ---
   new_handles_list <- list()
@@ -741,6 +749,13 @@ observe({
   new_handles_list$water_observer <- observeEvent(event_data("plotly_click", source = water_source), {
     d <- event_data("plotly_click", source = water_source); if (is.null(d$y)) return()
     state <- isolate(global_drill_state()); state$water_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  # --- NEW: Observer for Buildable Space ---
+  new_handles_list$buildable_observer <- observeEvent(event_data("plotly_click", source = buildable_source), {
+    d <- event_data("plotly_click", source = buildable_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$buildable_filter <- d$y
     global_drill_state(state); global_trigger(global_trigger() + 1)
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
   
@@ -801,9 +816,10 @@ filtered_data <- reactive({
   if (!is.null(state$shifting_filter)) { temp_data <- temp_data %>% filter(Shifting == state$shifting_filter) }
   if (!is.null(state$outlier_filter)) { temp_data <- temp_data %>% filter(Outlier.Status == state$outlier_filter) }
   if (!is.null(state$clustering_filter)) { temp_data <- temp_data %>% filter(Clustering.Status == state$clustering_filter) }
-  if (!is.null(state$ownership_filter)) { temp_data <- temp_data %>% filter(OwnershipType == state$ownership_filter) } # --- NEW ---
-  if (!is.null(state$electricity_filter)) { temp_data <- temp_data %>% filter(ElectricitySource == state$electricity_filter) } # --- NEW ---
-  if (!is.null(state$water_filter)) { temp_data <- temp_data %>% filter(WaterSource == state$water_filter) } # --- NEW ---
+  if (!is.null(state$ownership_filter)) { temp_data <- temp_data %>% filter(OwnershipType == state$ownership_filter) } 
+  if (!is.null(state$electricity_filter)) { temp_data <- temp_data %>% filter(ElectricitySource == state$electricity_filter) } 
+  if (!is.null(state$water_filter)) { temp_data <- temp_data %>% filter(WaterSource == state$water_filter) } 
+  if (!is.null(state$buildable_filter)) { temp_data <- temp_data %>% filter(With_Buildable_space == state$buildable_filter) } # <-- NEW
   
   temp_data
 })
@@ -860,6 +876,9 @@ output$current_filter_text <- renderText({
   if (!is.null(state$water_filter)) {
     filter_parts <- c(filter_parts, paste("Water:", state$water_filter))
   }
+  if (!is.null(state$buildable_filter)) { # <-- NEW
+    filter_parts <- c(filter_parts, paste("Buildable Space:", state$buildable_filter))
+  }
   if (!is.null(state$outlier_filter)) {
     filter_parts <- c(filter_parts, paste("Outlier:", state$outlier_filter))
   }
@@ -912,7 +931,7 @@ summarized_data_long <- reactive({
   
   # --- UPDATED: Added new metrics to categorical list ---
   categorical_metrics <- c("Modified.COC", "School.Size.Typology", "Total.Schools","Shifting", "Completion",
-                           "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource")
+                           "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource") # <-- NEW
   
   numeric_metrics_to_process <- setdiff(metrics_to_process, categorical_metrics)
   existing_metrics <- intersect(numeric_metrics_to_process, names(data_in))
@@ -998,17 +1017,18 @@ output$dashboard_grid <- renderUI({
     if (!is.null(state$shifting_filter)) { filter_parts <- c(filter_parts, state$shifting_filter) }
     if (!is.null(state$outlier_filter)) { filter_parts <- c(filter_parts, state$outlier_filter) }
     if (!is.null(state$clustering_filter)) { filter_parts <- c(filter_parts, state$clustering_filter) }
-    if (!is.null(state$ownership_filter)) { filter_parts <- c(filter_parts, state$ownership_filter) } # --- NEW ---
-    if (!is.null(state$electricity_filter)) { filter_parts <- c(filter_parts, state$electricity_filter) } # --- NEW ---
-    if (!is.null(state$water_filter)) { filter_parts <- c(filter_parts, state$water_filter) } # --- NEW ---
+    if (!is.null(state$ownership_filter)) { filter_parts <- c(filter_parts, state$ownership_filter) } 
+    if (!is.null(state$electricity_filter)) { filter_parts <- c(filter_parts, state$electricity_filter) } 
+    if (!is.null(state$water_filter)) { filter_parts <- c(filter_parts, state$water_filter) } 
+    if (!is.null(state$buildable_filter)) { filter_parts <- c(filter_parts, state$buildable_filter) } # <-- NEW
     
     if (length(filter_parts) > 0) {
       plot_title <- paste0(plot_title, " (Filtered by: ", paste(filter_parts, collapse = ", "), ")")
     }
     
-    # --- UPDATED IF CONDITION ---
+    # --- UPDATED IF CONDITION (Added With_Buildable_space) ---
     if (current_metric %in% c("Modified.COC", "School.Size.Typology", "Shifting", "Total.Schools", "Completion", 
-                              "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource")) {
+                              "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource")) { # <-- NEW
       
       output[[paste0("plot_", current_metric)]] <- renderPlotly({
         tryCatch({
@@ -1047,13 +1067,24 @@ output$dashboard_grid <- renderUI({
             if (!is.null(state$ownership_filter) && current_metric != "OwnershipType") { data_for_this_plot <- data_for_this_plot %>% filter(OwnershipType == state$ownership_filter) }
             if (!is.null(state$electricity_filter) && current_metric != "ElectricitySource") { data_for_this_plot <- data_for_this_plot %>% filter(ElectricitySource == state$electricity_filter) }
             if (!is.null(state$water_filter) && current_metric != "WaterSource") { data_for_this_plot <- data_for_this_plot %>% filter(WaterSource == state$water_filter) }
+            if (!is.null(state$buildable_filter) && current_metric != "With_Buildable_space") { data_for_this_plot <- data_for_this_plot %>% filter(With_Buildable_space == state$buildable_filter) } # <-- NEW
             
             # 5. Now, count based on this *specially filtered* data
             if (nrow(data_for_this_plot) > 0) {
-              bar_data <- data_for_this_plot %>%
-                count(!!sym(current_metric), name = "Count") %>%
-                filter(!is.na(!!sym(current_metric))) %>%
-                rename(Category = !!sym(current_metric)) 
+              
+              # --- SPECIAL HANDLING for list-column ---
+              if (current_metric == "With_Buildable_space") {
+                bar_data <- data_for_this_plot %>%
+                  # Unlist the column to make it countable
+                  mutate(Category = unlist(!!sym(current_metric))) %>% 
+                  count(Category, name = "Count") %>%
+                  filter(!is.na(Category))
+              } else {
+                bar_data <- data_for_this_plot %>%
+                  count(!!sym(current_metric), name = "Count") %>%
+                  filter(!is.na(!!sym(current_metric))) %>%
+                  rename(Category = !!sym(current_metric)) 
+              }
             }
             # --- *** END: FIX 2 *** ---
           }
@@ -1062,7 +1093,7 @@ output$dashboard_grid <- renderUI({
             return(plot_ly() %>% layout(title = list(text = plot_title, x = 0.05), annotations = list(x = 0.5, y = 0.5, text = "No data available", showarrow = FALSE)))
           }
           
-          # --- UPDATED CASE_WHEN ---
+          # --- UPDATED CASE_WHEN (Added With_Buildable_space) ---
           # <-- BUG FIX (Change 3): Make plot source names dynamic
           plot_source <- dplyr::case_when(
             current_metric == "Modified.COC" ~ paste0("coc_pie_click_", current_trigger_val),
@@ -1073,11 +1104,9 @@ output$dashboard_grid <- renderUI({
             current_metric == "OwnershipType" ~ paste0("ownership_click_", current_trigger_val),
             current_metric == "ElectricitySource" ~ paste0("electricity_click_", current_trigger_val),
             current_metric == "WaterSource" ~ paste0("water_click_", current_trigger_val),
+            current_metric == "With_Buildable_space" ~ paste0("buildable_click_", current_trigger_val), # <-- NEW
             TRUE ~ paste0("plot_source_", current_metric, "_", current_trigger_val) 
           )
-          
-          # This logic is no longer needed
-          # click_source_name <- if (plot_source %in% c("coc_pie_click", ...))
           
           plot_ly(
             data = bar_data, y = ~Category, x = ~Count,
@@ -1143,9 +1172,9 @@ output$dashboard_grid <- renderUI({
     current_metric_name <- names(clean_metric_choices)[clean_metric_choices == current_metric]
     summary_card_content <- NULL
     
-    # --- UPDATED IF CONDITION ---
+    # --- UPDATED IF CONDITION (Added With_Buildable_space) ---
     if (current_metric %in% c("Modified.COC", "School.Size.Typology", "Shifting", "Total.Schools", "Completion", 
-                              "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource")) {
+                              "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource")) { # <-- NEW
       
       total_count <- tryCatch({
         if (current_metric == "Total.Schools") {
@@ -1314,7 +1343,8 @@ output$schooldetails_build3 <- renderTable({
     Value = as.character(c(
       data$Buildings, data$Instructional.Rooms.2023.2024,
       data$Classroom.Requirement, data$Est.CS,
-      data$With_Buildable_space, data$Major.Repair.2023.2024, # --- MODIFIED --- (Was data$Buidable_space)
+      unlist(data$With_Buildable_space), # <-- *** THIS IS THE FIX for "object object" ***
+      data$Major.Repair.2023.2024, 
       data$SBPI, data$Shifting, data$OwnershipType,
       data$ElectricitySource, data$WaterSource, data$Total.Seats.2023.2024,
       data$Total.Seats.Shortage.2023.2024
