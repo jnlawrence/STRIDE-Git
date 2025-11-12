@@ -33,7 +33,7 @@ library(reactablefmtr)
 # HROD Data Upload
 
 school_data <- reactiveVal(NULL)
-efd2025 <- read.csv("EFD-2025Data.csv") %>%
+efd2025 <- read.csv("EFD-2025Data1.csv") %>%
   mutate(across(
     .cols = -1,  # Selects all columns EXCEPT the first one
     .fns = ~ as.numeric(as.character(.))
@@ -43,6 +43,81 @@ uni <- read_parquet("School-Unique-v2.parquet") %>%
   mutate(Municipality = stringr::str_to_title(Municipality)) %>% # School-level Data
   mutate(Leg.Mun = sprintf("%s (%s)", Legislative.District, Municipality)) %>%
   left_join(efd2025, by = "SchoolID")
+
+# --- START: One-Time Analysis for Advanced Analytics ---
+# This runs ONCE when the app starts, right after 'uni' is loaded.
+# --- START: One-Time Analysis for Advanced Analytics (v2 - Clean Names) ---
+# This runs ONCE when the app starts, right after 'uni' is loaded.
+
+print("--- ADVANCED ANALYTICS: Starting column analysis... (This may take a moment) ---")
+
+# --- 1. DEFINE a map of raw column names to clean display names ---
+# CRITICAL: The 'Raw_Name' must EXACTLY match the column name in your 'uni'
+# database, including capitalization (e.g., 'TotalEnrolment' vs 'totalenrolment').
+# I have made my best guess based on your CSV snippets.
+analytics_column_map <- tibble(
+  Raw_Name = c(
+    "Implementing.Unit", 
+    "Modified.COC", 
+    "TotalEnrolment", 
+    "SH.Position", 
+    "School.Size.Typology", 
+    "Shifting", 
+    "OwnershipType", 
+    "ElectricitySource", 
+    "WaterSource", 
+    "Total.Excess", 
+    "Total.Shortage", 
+    "TotalTeachers"
+  ),
+  Clean_Name = c(
+    "Implementing Unit", 
+    "Category of Concern (COC)", 
+    "Total Enrolment", 
+    "School Head Position", 
+    "School Size", 
+    "Shifting", 
+    "Ownership Type", 
+    "Electricity Source", 
+    "Water Source", 
+    "Total Teacher Excess", 
+    "Total Teacher Shortage", 
+    "Total Teachers"
+  )
+)
+
+# 2. Define the helper function (same as before)
+get_col_type_adv <- function(column) {
+  num_unique <- n_distinct(column)
+  if (num_unique == 2) "Binary"
+  else if (is.numeric(column) && num_unique > 20) "Numeric"
+  else if (is.character(column) || is.factor(column) || num_unique <= 20) "Categorical"
+  else "Other"
+}
+
+# 3. Run the analysis ONLY on our 12 columns
+# We use `uni[analytics_column_map$Raw_Name]` to select just those columns
+types_adv <- sapply(uni[analytics_column_map$Raw_Name], get_col_type_adv)
+
+# 4. Create the static (non-reactive) metadata object
+# This now includes the clean names
+col_info_adv_static <- analytics_column_map %>%
+  mutate(type = types_adv) %>%
+  filter(!type == "Other") # Remove any that failed the type check
+
+# 5. CREATE THE NAMED VECTOR FOR THE UI
+# This is the key for Step 2.
+# It will look like: c("Implementing Unit" = "Implementing.Unit", ...)
+adv_analytics_choices <- setNames(
+  col_info_adv_static$Raw_Name, 
+  col_info_adv_static$Clean_Name
+)
+
+print("--- ADVANCED ANALYTICS: Column analysis COMPLETE. ---")
+
+# --- END: One-Time Analysis ---
+
+# --- END: One-Time Analysis ---
 # === PRIVATE SCHOOL DATA ===
 PrivateSchools <- read.csv("Private Schools Oct.2025.csv") %>%
   mutate(
@@ -264,6 +339,7 @@ server <- function(input, output, session) {
   source("server_parts/32_guest_mode.R", local = TRUE)
   source("server_parts/33_stride2_guest_UI.R", local = TRUE)
   source("server_parts/34_home.R", local = TRUE)
+  source("server_parts/AdvancedAnalytics_Server.R", local = TRUE)
   
   
   # COMMENTED PARTS
