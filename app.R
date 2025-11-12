@@ -263,7 +263,7 @@ server <- function(input, output, session) {
   source("server_parts/31_build_your_dashboard.R", local = TRUE)
   source("server_parts/32_guest_mode.R", local = TRUE)
   source("server_parts/33_stride2_guest_UI.R", local = TRUE)
-  
+  source("server_parts/34_home.R", local = TRUE)
   
   
   # COMMENTED PARTS

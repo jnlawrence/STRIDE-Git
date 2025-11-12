@@ -28,6 +28,13 @@ drilldown_observers <- reactiveVal(list())
 # --- *** NEW: Reactive to store SchoolID from map or table click *** ---
 reactive_selected_school_id <- reactiveVal(NULL)
 
+# --- NEW: Output to power conditionalPanel ---
+# This exposes the current drill level to the UI for conditionalPanel
+output$current_drill_level <- reactive({
+  global_drill_state()$level
+})
+outputOptions(output, "current_drill_level", suspendWhenHidden = FALSE)
+
 
 # --- *** NEW: Define Metric Choices for Plot Titles *** ---
 # This must match the 'choices' in your 10_stride2_UI.R pickers
@@ -76,13 +83,13 @@ condition_metric_choices <- list(
                         "Good Condition (Building)" = "Building.Count_Good.Condition",
                         "For Major Repairs (Building)" = "Building.Count_Needs.Major.Repair",
                         "For Minor Repairs (Building)" = "Building.Count_Needs.Minor.Repair"),
-  `Classroom Status` = c("Condemned (Room)" = "Number.of.Rooms_Condemned...For.Demolition",
-                         "For Condemnation (Room)" = "Number.of.Rooms_For.Condemnation",
-                         "For Completion (Room)" = "Number.of.Rooms_For.Completion",
-                         "On-going Construction (Room)" = "Number.of.Rooms_On.going.Construction",
-                         "Good Condition (Room)" = "Number.of.Rooms_Good.Condition",
-                         "For Major Repairs (Room)" = "Number.of.Rooms_Needs.Major.Repair",
-                         "For Minor Repairs (Room)" = "Number.of.Rooms_Needs.Minor.Repair")
+  `Classroom Status` = c("Condemned (Classroom)" = "Number.of.Rooms_Condemned...For.Demolition",
+                         "For Condemnation (Classroom)" = "Number.of.Rooms_For.Condemnation",
+                         "For Completion (Classroom)" = "Number.of.Rooms_For.Completion",
+                         "On-going Construction (Classroom)" = "Number.of.Rooms_On.going.Construction",
+                         "Good Condition (Classroom)" = "Number.of.Rooms_Good.Condition",
+                         "For Major Repairs (Classroom)" = "Number.of.Rooms_Needs.Major.Repair",
+                         "For Minor Repairs (Classroom)" = "Number.of.Rooms_Needs.Minor.Repair")
   
 )
 
@@ -425,31 +432,25 @@ output$school_map <- leaflet::renderLeaflet({
     )
 })
 
-# --- data_in_bounds (Unchanged) ---
-data_in_bounds <- reactive({
-  data_to_filter <- filtered_data()
-  req(nrow(data_to_filter) > 0)
-  req("Latitude" %in% names(data_to_filter), "Longitude" %in% names(data_to_filter))
-  
-  bounds <- input$school_map_bounds
-  if (is.null(bounds)) {
-    return(data_to_filter)
-  }
-  
-  data_to_filter %>%
-    filter(
-      Latitude >= bounds$south & Latitude <= bounds$north &
-        Longitude >= bounds$west & Longitude <= bounds$east
-    )
-})
-
 # --- school_table (Unchanged) ---
+# --- school_table (UPDATED) ---
 output$school_table <- DT::renderDataTable({
   req(global_trigger() > 0)
-  data_for_table <- data_in_bounds()
+  
+  # --- CHANGE: Use filtered_data() directly ---
+  data_for_table <- filtered_data() 
+  
   cols_to_show <- c("SchoolID", "School.Name", "Division", "Region", "TotalTeachers", "Modified.COC")
   cols_to_show <- intersect(cols_to_show, names(data_for_table))
-  req(length(cols_to_show) > 0)
+  
+  # --- ROBUSTNESS: Handle empty data ---
+  if (nrow(data_for_table) == 0 || length(cols_to_show) == 0) {
+    return(DT::datatable(
+      data.frame(Message = "No data available for the current selection."),
+      rownames = FALSE,
+      options = list(paging = FALSE, searching = FALSE, info = FALSE)
+    ))
+  }
   
   DT::datatable(
     data_for_table[, cols_to_show],
@@ -459,7 +460,7 @@ output$school_table <- DT::renderDataTable({
       pageLength = 10,
       scrollY = "400px", 
       scrollCollapse = TRUE,
-      paging = FALSE 
+      paging = TRUE # Changed to TRUE for better handling of long lists
     )
   )
 })
@@ -467,25 +468,48 @@ output$school_table <- DT::renderDataTable({
 # --- *** NEW: Observers for Map/Table Clicks *** ---
 
 # --- Observer for Table Clicks (UPDATED) ---
+# --- Observer for Table Clicks (UPDATED for robustness) ---
+# --- Observer for Table Clicks (NEW ROBUST VERSION + DEBUGGING) ---
+# --- Observer for Table Clicks (ROBUST FIX FOR DATA TYPES) ---
+# --- Observer for Table Clicks (Using flyTo for robustness) ---
 observeEvent(input$school_table_rows_selected, {
+  
   selected_row_index <- input$school_table_rows_selected
   req(selected_row_index)
   
-  table_data <- data_in_bounds()
+  # Get the data that was used to render the table
+  table_data <- filtered_data() 
+  
+  # Robustness Check 1: Index is valid
+  if (selected_row_index > nrow(table_data)) {
+    showNotification("Error: Table index is out of bounds.", type = "error")
+    return()
+  }
+  
   selected_row_data <- table_data[selected_row_index, ]
   
   # Set the reactive ID for school details
   reactive_selected_school_id(selected_row_data$SchoolID)
   
-  req("Latitude" %in% names(selected_row_data), "Longitude" %in% names(selected_row_data))
+  # --- Data Type Conversion (Best Practice) ---
+  current_lat <- as.numeric(selected_row_data$Latitude)
+  current_lng <- as.numeric(selected_row_data$Longitude)
   
-  # Zoom the map
+  # Robustness Check 2: Coordinates are valid
+  if (is.na(current_lng) || is.na(current_lat)) {
+    showNotification("Selected school has no map coordinates.", type = "warning")
+    return()
+  }
+  
+  # --- *** THE CHANGE: Use flyTo instead of setView *** ---
   leafletProxy("school_map", session) %>%
-    setView(
-      lng = selected_row_data$Longitude,
-      lat = selected_row_data$Latitude,
-      zoom = 15 
+    flyTo(
+      lng = current_lng,
+      lat = current_lat,
+      zoom = 15,
+      options = leafletOptions(duration = 0.5) # Fly animation in 0.5 sec
     )
+  
 }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 # --- Observer for Map Marker Clicks ---
@@ -502,49 +526,75 @@ observeEvent(global_trigger(), {
 
 
 # --- Back Button Logic (UPDATED) ---
+# In 31_build_your_dashboard.R
+
+# --- Back Button Logic (UPDATED to support two buttons) ---
 output$back_button_ui <- renderUI({
   state <- global_drill_state() 
-  button_label <- ""  
-  show_button <- FALSE 
   
-  # --- UPDATED: Added new filters to precedence list ---
+  # --- Logic for Button 1: Undo ---
+  undo_button <- NULL # Start as NULL
+  undo_button_label <- ""  
+  show_undo_button <- FALSE 
+  
+  # (This is your existing logic, unchanged)
   if (!is.null(state$clustering_filter)) {
     label_text <- stringr::str_trunc(state$clustering_filter, 20) 
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
   } else if (!is.null(state$outlier_filter)) {
     label_text <- stringr::str_trunc(state$outlier_filter, 20) 
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
   } else if (!is.null(state$shifting_filter)) {
     label_text <- stringr::str_trunc(state$shifting_filter, 20) 
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
   } else if (!is.null(state$typology_filter)) {
     label_text <- stringr::str_trunc(state$typology_filter, 20) 
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
   } else if (!is.null(state$coc_filter)) {
     label_text <- stringr::str_trunc(state$coc_filter, 20)
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
-  } else if (!is.null(state$water_filter)) { # --- NEW ---
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
+  } else if (!is.null(state$water_filter)) { 
     label_text <- stringr::str_trunc(state$water_filter, 20)
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
-  } else if (!is.null(state$electricity_filter)) { # --- NEW ---
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
+  } else if (!is.null(state$electricity_filter)) { 
     label_text <- stringr::str_trunc(state$electricity_filter, 20)
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
-  } else if (!is.null(state$ownership_filter)) { # --- NEW ---
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
+  } else if (!is.null(state$ownership_filter)) { 
     label_text <- stringr::str_trunc(state$ownership_filter, 20)
-    button_label <- paste("Undo Filter:", label_text); show_button <- TRUE
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
   } else if (state$level == "District") {
-    button_label <- "Undo Drilldown"; show_button <- TRUE
+    undo_button_label <- "Undo Drilldown"; show_undo_button <- TRUE
   } else if (state$level == "Legislative.District") {
-    button_label <- "Undo Drilldown"; show_button <- TRUE
+    undo_button_label <- "Undo Drilldown"; show_undo_button <- TRUE
   } else if (state$level == "Municipality") {
-    button_label <- "Undo Drilldown"; show_button <- TRUE
+    undo_button_label <- "Undo Drilldown"; show_undo_button <- TRUE
   } else if (state$level == "Division") {
-    button_label <- "Undo Drilldown"; show_button <- TRUE
+    undo_button_label <- "Undo Drilldown"; show_undo_button <- TRUE
   }
   
-  if (show_button) { 
-    actionButton("back_button", button_label, icon = icon("undo"), class = "btn-danger") 
+  if (show_undo_button) { 
+    undo_button <- actionButton("back_button", undo_button_label, icon = icon("undo"), class = "btn-danger") 
   }
+  
+  # --- Logic for Button 2: Reset to Region (NEW) ---
+  reset_button <- NULL # Start as NULL
+  
+  # Condition: Show only if level is "beyond Division"
+  if (state$level %in% c("Municipality", "Legislative.District", "District")) {
+    reset_button <- actionButton(
+      "reset_to_region_button", 
+      "Go back to Regional View", 
+      icon = icon("home"), 
+      class = "btn-warning" # Using warning to stand out
+    )
+  }
+  
+  # --- Return a tagList of both buttons ---
+  # NULL buttons will not be rendered
+  tagList(
+    undo_button,
+    reset_button
+  )
 })
 
 # --- Back Button Observer (UPDATED) ---
@@ -583,73 +633,127 @@ observeEvent(input$back_button, {
   global_trigger(global_trigger() + 1) 
 })
 
+# In 31_build_your_dashboard.R
 
-# --- *** UPDATED: DYNAMIC OBSERVER MANAGER (REVERTED) *** ---
+# --- *** NEW: Reset to Region Button Observer *** ---
+observeEvent(input$reset_to_region_button, {
+  
+  # Define the default (top-level) state
+  # This is the same list you use to initialize global_drill_state
+  default_state <- list(
+    level = "Region", 
+    region = NULL,    
+    division = NULL,
+    municipality = NULL,         
+    legislative_district = NULL, 
+    ownership_filter = NULL,
+    electricity_filter = NULL,
+    water_filter = NULL,
+    coc_filter = NULL,      
+    typology_filter = NULL, 
+    shifting_filter = NULL,
+    outlier_filter = NULL,
+    clustering_filter = NULL
+  )
+  
+  # Set the state back to default
+  global_drill_state(default_state)
+  
+  # Increment the trigger to force all elements to update
+  global_trigger(global_trigger() + 1) 
+  
+}, ignoreNULL = TRUE, ignoreInit = TRUE)
+# --- *** END NEW OBSERVER *** ---
+
+
+# --- *** START: FIXED DYNAMIC OBSERVER MANAGER *** ---
 observe({
+  
+  # React to trigger to force re-creation
+  global_trigger() 
+  
   selected_metrics <- all_selected_metrics() 
   
+  # Destroy old observers
   old_handles <- isolate(drilldown_observers())
   walk(old_handles, ~ .x$destroy()) 
   
-  new_handles <- map(selected_metrics, ~{
+  # Get the *current* trigger value ONCE
+  current_trigger_val <- isolate(global_trigger())
+  
+  # --- Define dynamic categorical sources ONCE ---
+  coc_source <- paste0("coc_pie_click_", current_trigger_val)
+  typology_source <- paste0("typology_bar_click_", current_trigger_val)
+  shifting_source <- paste0("shifting_bar_click_", current_trigger_val)
+  outlier_source <- paste0("outlier_click_", current_trigger_val) 
+  clustering_source <- paste0("clustering_click_", current_trigger_val)
+  ownership_source <- paste0("ownership_click_", current_trigger_val)
+  electricity_source <- paste0("electricity_click_", current_trigger_val)
+  water_source <- paste0("water_click_", current_trigger_val)
+  
+  # --- Create a list to hold all new observer handles ---
+  new_handles_list <- list()
+  
+  # --- Create Categorical Filter Observers (ONCE) ---
+  
+  new_handles_list$coc_observer <- observeEvent(event_data("plotly_click", source = coc_source), {
+    d <- event_data("plotly_click", source = coc_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$coc_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$typology_observer <- observeEvent(event_data("plotly_click", source = typology_source), {
+    d <- event_data("plotly_click", source = typology_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$typology_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$shifting_observer <- observeEvent(event_data("plotly_click", source = shifting_source), {
+    d <- event_data("plotly_click", source = shifting_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$shifting_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$outlier_observer <- observeEvent(event_data("plotly_click", source = outlier_source), {
+    d <- event_data("plotly_click", source = outlier_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$outlier_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$clustering_observer <- observeEvent(event_data("plotly_click", source = clustering_source), {
+    d <- event_data("plotly_click", source = clustering_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$clustering_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$ownership_observer <- observeEvent(event_data("plotly_click", source = ownership_source), {
+    d <- event_data("plotly_click", source = ownership_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$ownership_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$electricity_observer <- observeEvent(event_data("plotly_click", source = electricity_source), {
+    d <- event_data("plotly_click", source = electricity_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$electricity_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$water_observer <- observeEvent(event_data("plotly_click", source = water_source), {
+    d <- event_data("plotly_click", source = water_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$water_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  
+  # --- Create Geographic Drilldown Observers (One per selected metric) ---
+  geo_handles <- map(selected_metrics, ~{
     current_metric <- .x
-    current_metric_source <- paste0("plot_source_", current_metric)
     
-    # --- Categorical Filter Observers (UPDATED) ---
-    observeEvent(event_data("plotly_click", source = "coc_pie_click"), {
-      d <- event_data("plotly_click", source = "coc_pie_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$coc_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+    # Define the dynamic geographic source name
+    current_metric_source <- paste0("plot_source_", current_metric, "_", current_trigger_val)
     
-    observeEvent(event_data("plotly_click", source = "typology_bar_click"), {
-      d <- event_data("plotly_click", source = "typology_bar_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$typology_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    
-    observeEvent(event_data("plotly_click", source = "shifting_bar_click"), {
-      d <- event_data("plotly_click", source = "shifting_bar_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$shifting_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    
-    observeEvent(event_data("plotly_click", source = "outlier_click"), {
-      d <- event_data("plotly_click", source = "outlier_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$outlier_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    
-    observeEvent(event_data("plotly_click", source = "clustering_click"), {
-      d <- event_data("plotly_click", source = "clustering_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$clustering_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    
-    # --- *** NEW OBSERVERS ADDED *** ---
-    observeEvent(event_data("plotly_click", source = "ownership_click"), {
-      d <- event_data("plotly_click", source = "ownership_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$ownership_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    
-    observeEvent(event_data("plotly_click", source = "electricity_click"), {
-      d <- event_data("plotly_click", source = "electricity_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$electricity_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    
-    observeEvent(event_data("plotly_click", source = "water_click"), {
-      d <- event_data("plotly_click", source = "water_click"); if (is.null(d$y)) return() 
-      state <- isolate(global_drill_state()); state$water_filter <- d$y
-      global_drill_state(state); global_trigger(global_trigger() + 1)
-    }, ignoreNULL = TRUE, ignoreInit = TRUE)
-    # --- *** END NEW OBSERVERS *** ---
-    
-    
-    # --- Geographic Drilldown Observer (Unchanged) ---
-    # This now applies to ALL metrics, including programs
-    observeEvent(event_data("plotly_click", source = current_metric_source), {
+    # --- Geographic Drilldown Observer ---
+    observeEvent(event_data("plotly_click", source = current_metric_source), { 
       state <- isolate(global_drill_state()); if (state$level == "District") return() 
       d <- event_data("plotly_click", source = current_metric_source); if (is.null(d$y)) return()
       
@@ -667,8 +771,12 @@ observe({
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
   })
   
-  drilldown_observers(new_handles)
+  # --- Combine all handles and save them ---
+  all_new_handles <- c(new_handles_list, geo_handles)
+  drilldown_observers(all_new_handles)
+  
 })
+# --- *** END: FIXED DYNAMIC OBSERVER MANAGER *** ---
 
 
 # --- Reactive Data (filtered_data) (UPDATED) ---
@@ -699,6 +807,82 @@ filtered_data <- reactive({
   
   temp_data
 })
+
+# In 31_build_your_dashboard.R
+
+# ... (put this after your filtered_data reactive) ...
+
+# --- *** NEW: Current Filter Text Display *** ---
+# In 31_build_your_dashboard.R
+
+# --- *** NEW: Current Filter Text Display (Corrected) *** ---
+output$current_filter_text <- renderText({
+  
+  # Re-run whenever the state or trigger changes
+  global_trigger()
+  state <- global_drill_state()
+  
+  # Start with an empty vector
+  filter_parts <- c()
+  
+  # Add geographic drilldown filters (only if not at the top "Region" level)
+  if (state$level != "Region") {
+    if (!is.null(state$region)) {
+      filter_parts <- c(filter_parts, state$region) # No "Region:" prefix
+    }
+    if (!is.null(state$division)) {
+      filter_parts <- c(filter_parts, state$division) # No "Division:" prefix
+    }
+    if (!is.null(state$municipality)) {
+      filter_parts <- c(filter_parts, state$municipality) # No "Municipality:" prefix
+    }
+    if (!is.null(state$legislative_district)) {
+      filter_parts <- c(filter_parts, state$legislative_district) # No "Leg. District:" prefix
+    }
+  }
+  
+  # Add all other categorical filters
+  if (!is.null(state$coc_filter)) {
+    filter_parts <- c(filter_parts, paste("Offering:", state$coc_filter))
+  }
+  if (!is.null(state$typology_filter)) {
+    filter_parts <- c(filter_parts, paste("Typology:", state$typology_filter))
+  }
+  if (!is.null(state$shifting_filter)) {
+    filter_parts <- c(filter_parts, paste("Shifting:", state$shifting_filter))
+  }
+  if (!is.null(state$ownership_filter)) {
+    filter_parts <- c(filter_parts, paste("Ownership:", state$ownership_filter))
+  }
+  if (!is.null(state$electricity_filter)) {
+    filter_parts <- c(filter_parts, paste("Electricity:", state$electricity_filter))
+  }
+  if (!is.null(state$water_filter)) {
+    filter_parts <- c(filter_parts, paste("Water:", state$water_filter))
+  }
+  if (!is.null(state$outlier_filter)) {
+    filter_parts <- c(filter_parts, paste("Outlier:", state$outlier_filter))
+  }
+  if (!is.null(state$clustering_filter)) {
+    filter_parts <- c(filter_parts, paste("Clustering:", state$clustering_filter))
+  }
+  
+  # --- *** THIS IS THE FIX *** ---
+  # Check if length is 0 (not 1)
+  if (length(filter_parts) == 0 && state$level == "Region") {
+    # If no filters and at top level
+    final_text <- "Viewing All Regions"
+  } else {
+    # Otherwise, show all active filters separated by " -> "
+    final_text <- paste(filter_parts, collapse = " -> ")
+  }
+  
+  # Add the "Current Filter:" prefix
+  paste("Current Filter:", final_text)
+  
+})
+# --- *** END CORRECTED SECTION *** ---
+# --- *** END NEW SECTION *** ---
 
 # --- Reactive Data (summarized_data_long) (UPDATED) ---
 summarized_data_long <- reactive({
@@ -758,7 +942,7 @@ summarized_data_long <- reactive({
 })
 
 
-# --- Dynamic UI Dashboard Grid (REVERTED) ---
+# --- Dynamic UI Dashboard Grid (FIXED) ---
 output$dashboard_grid <- renderUI({
   
   selected_metrics <- all_selected_metrics() 
@@ -785,6 +969,10 @@ output$dashboard_grid <- renderUI({
   # --- 1. Create Plotly Renders ---
   walk(selected_metrics, ~{
     current_metric <- .x
+    
+    # <-- BUG FIX (Change 3): Get current trigger value
+    current_trigger_val <- isolate(global_trigger())
+    
     # --- *** MODIFIED (Change 2 of 3): Use clean_metric_choices *** ---
     current_metric_name <- names(clean_metric_choices)[clean_metric_choices == current_metric]
     
@@ -830,13 +1018,44 @@ output$dashboard_grid <- renderUI({
               filter(Metric == "Total.Schools", !is.na(Category)) %>%
               rename(Count = Value) 
           } else {
-            plot_data_bar <- filtered_data()
-            if (nrow(plot_data_bar) > 0) {
-              bar_data <- plot_data_bar %>%
+            
+            # --- *** START: FIX 2 (AVOID SELF-FILTERING) *** ---
+            
+            # 1. Get the current state
+            state <- global_drill_state()
+            
+            # 2. Start with the base 'uni' data
+            data_for_this_plot <- uni
+            
+            # 3. Apply GEOGRAPHIC filters (from filtered_data() logic)
+            if (state$level == "Division") {
+              req(state$region); data_for_this_plot <- data_for_this_plot %>% filter(Region == state$region)
+            } else if (state$level == "Municipality") { 
+              req(state$region, state$division); data_for_this_plot <- data_for_this_plot %>% filter(Region == state$region, Division == state$division)
+            } else if (state$level == "Legislative.District") { 
+              req(state$region, state$division, state$municipality); data_for_this_plot <- data_for_this_plot %>% filter(Region == state$region, Division == state$division, Municipality == state$municipality)
+            } else if (state$level == "District") { 
+              req(state$region, state$division, state$municipality, state$legislative_district); data_for_this_plot <- data_for_this_plot %>% filter(Region == state$region, Division == state$division, Municipality == state$municipality, Legislative.District == state$legislative_district)
+            }
+            
+            # 4. Apply ALL OTHER CATEGORICAL filters (i.e., every filter *except* the one for the current plot)
+            if (!is.null(state$coc_filter) && current_metric != "Modified.COC") { data_for_this_plot <- data_for_this_plot %>% filter(Modified.COC == state$coc_filter) }
+            if (!is.null(state$typology_filter) && current_metric != "School.Size.Typology") { data_for_this_plot <- data_for_this_plot %>% filter(School.Size.Typology == state$typology_filter) }
+            if (!is.null(state$shifting_filter) && current_metric != "Shifting") { data_for_this_plot <- data_for_this_plot %>% filter(Shifting == state$shifting_filter) }
+            if (!is.null(state$outlier_filter) && current_metric != "Outlier.Status") { data_for_this_plot <- data_for_this_plot %>% filter(Outlier.Status == state$outlier_filter) }
+            if (!is.null(state$clustering_filter) && current_metric != "Clustering.Status") { data_for_this_plot <- data_for_this_plot %>% filter(Clustering.Status == state$clustering_filter) }
+            if (!is.null(state$ownership_filter) && current_metric != "OwnershipType") { data_for_this_plot <- data_for_this_plot %>% filter(OwnershipType == state$ownership_filter) }
+            if (!is.null(state$electricity_filter) && current_metric != "ElectricitySource") { data_for_this_plot <- data_for_this_plot %>% filter(ElectricitySource == state$electricity_filter) }
+            if (!is.null(state$water_filter) && current_metric != "WaterSource") { data_for_this_plot <- data_for_this_plot %>% filter(WaterSource == state$water_filter) }
+            
+            # 5. Now, count based on this *specially filtered* data
+            if (nrow(data_for_this_plot) > 0) {
+              bar_data <- data_for_this_plot %>%
                 count(!!sym(current_metric), name = "Count") %>%
                 filter(!is.na(!!sym(current_metric))) %>%
                 rename(Category = !!sym(current_metric)) 
             }
+            # --- *** END: FIX 2 *** ---
           }
           
           if (nrow(bar_data) == 0) {
@@ -844,30 +1063,28 @@ output$dashboard_grid <- renderUI({
           }
           
           # --- UPDATED CASE_WHEN ---
+          # <-- BUG FIX (Change 3): Make plot source names dynamic
           plot_source <- dplyr::case_when(
-            current_metric == "Modified.COC" ~ "coc_pie_click",
-            current_metric == "School.Size.Typology" ~ "typology_bar_click",
-            current_metric == "Shifting" ~ "shifting_bar_click",
-            current_metric == "Outlier.Status" ~ "outlier_click", 
-            current_metric == "Clustering.Status" ~ "clustering_click",
-            current_metric == "OwnershipType" ~ "ownership_click", # --- NEW ---
-            current_metric == "ElectricitySource" ~ "electricity_click", # --- NEW ---
-            current_metric == "WaterSource" ~ "water_click", # --- NEW ---
-            TRUE ~ paste0("plot_source_", current_metric) 
+            current_metric == "Modified.COC" ~ paste0("coc_pie_click_", current_trigger_val),
+            current_metric == "School.Size.Typology" ~ paste0("typology_bar_click_", current_trigger_val),
+            current_metric == "Shifting" ~ paste0("shifting_bar_click_", current_trigger_val),
+            current_metric == "Outlier.Status" ~ paste0("outlier_click_", current_trigger_val), 
+            current_metric == "Clustering.Status" ~ paste0("clustering_click_", current_trigger_val),
+            current_metric == "OwnershipType" ~ paste0("ownership_click_", current_trigger_val),
+            current_metric == "ElectricitySource" ~ paste0("electricity_click_", current_trigger_val),
+            current_metric == "WaterSource" ~ paste0("water_click_", current_trigger_val),
+            TRUE ~ paste0("plot_source_", current_metric, "_", current_trigger_val) 
           )
           
-          click_source_name <- if (plot_source %in% c("coc_pie_click", "typology_bar_click", "shifting_bar_click", "outlier_click", "clustering_click", "ownership_click", "electricity_click", "water_click")) {
-            plot_source
-          } else {
-            paste0("plot_source_", current_metric) 
-          }
+          # This logic is no longer needed
+          # click_source_name <- if (plot_source %in% c("coc_pie_click", ...))
           
           plot_ly(
             data = bar_data, y = ~Category, x = ~Count,
             type = "bar", orientation = 'h', name = current_metric_name,
             texttemplate = '%{x:,.0f}', textposition = "outside",
             cliponaxis = FALSE, textfont = list(color = '#000000', size = 10),
-            source = click_source_name 
+            source = plot_source # <-- MODIFIED
           ) %>%
             layout(
               title = list(text = plot_title, x = 0.05), 
@@ -898,7 +1115,10 @@ output$dashboard_grid <- renderUI({
           plot_ly(
             data = plot_data, y = ~Category, x = ~Value, type = "bar",
             orientation = 'h', name = current_metric_name,
-            source = paste0("plot_source_", current_metric), 
+            
+            # <-- BUG FIX (Change 3): Make plot source name dynamic
+            source = paste0("plot_source_", current_metric, "_", current_trigger_val), 
+            
             texttemplate = '%{x:,.0f}', textposition = "outside",
             cliponaxis = FALSE, textfont = list(color = '#000000', size = 10)
           ) %>%
@@ -931,6 +1151,8 @@ output$dashboard_grid <- renderUI({
         if (current_metric == "Total.Schools") {
           metric_plot_data %>% filter(Metric == "Total.Schools") %>% pull(Value) %>% sum(na.rm = TRUE)
         } else {
+          # --- FIX for summary card ---
+          # We need to count from the *filtered* data, not the "self-filtered" data
           nrow(filtered_data()) 
         }
       }, error = function(e) { 0 }) 
@@ -982,6 +1204,10 @@ output$dashboard_grid <- renderUI({
   plot_grid <- do.call(bslib::layout_columns, c(list(col_widths = 4), plot_cards))
   tagList(
     tags$h3("Interactive Education Resource Dashboard", style = "text-align: center; font-weight: bold; margin-bottom: 20px;"),
+    tags$div(
+      style = "text-align: center; font-size: 1.1em; font-weight: 500; color: #333; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 10px; margin-bottom: 20px;",
+      textOutput("current_filter_text")
+    ),
     plot_grid 
   )
 })
@@ -1028,7 +1254,7 @@ output$build_dashboard_school_details_ui <- renderUI({
     
     card(full_screen = TRUE,
          card_header(strong("Classroom Data")),
-         tableOutput("schooldCSS_build3")),
+         tableOutput("schooldetails_build3")),
     
     card(full_screen = TRUE,
          card_header(div(strong("Specialization Data"),
