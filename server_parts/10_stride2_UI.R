@@ -27,7 +27,13 @@ output$STRIDE2 <- renderUI({
       base_font = font_google("Poppins")
     ), 
     
-    
+    tags$head(
+      tags$style(HTML("
+      .js-plotly-plot .plotly .modebar {
+         top: -30px !important;
+      }
+    "))
+    ),
     # |> bs_add_rules(
     #   "
     # /* --- Make Navbar Sticky at the Top --- */
@@ -460,42 +466,65 @@ output$STRIDE2 <- renderUI({
           tags$button(class = "carousel-nav next-slide", HTML("&#10095;"))
         ),
         
-        # --- CAPABILITIES SECTION (with clickable IDs) ---
+        # --- CAPABILITIES SECTION (Static Containers) ---
         div(
           class = "capabilities-section",
-          tags$h2("Discover STRIDE's Capabilities"),
+          tags$h2("Discover STRIDE's Features"),
           div(
             class = "capabilities-row",
             
             # Capability 1: Drilldown
             div(
               class = "capability-card",
-              id = "showDrilldownModal",  # <-- ID for click event
               div(class = "capability-card-icon", HTML("&#128269;")),
               tags$h3("Drilldown Function"),
-              tags$p("Start with a high-level overview and seamlessly drill down into detailed data for regions, divisions, and individual schools.")
+              
+              # --- UPDATED DRILLDOWN DESCRIPTION (with details): ---
+              tags$p("Explore data by clicking to drill down through the full hierarchy:"),
+              tags$ul(
+                style = "text-align: left; padding-left: 20px; font-size: 0.9rem;", # Your style
+                tags$li(tags$strong("Regional View:"), " See data aggregated by region."),
+                tags$li(tags$strong("Division View:"), " Drill down to see SDO/Division data."),
+                tags$li(tags$strong("Municipality View:"), " Filter data by city or municipality."),
+                tags$li(tags$strong("Legislative District View:"), " Analyze data by legislative district."),
+                tags$li(tags$strong("District View:"), " View metrics for specific school districts."),
+                tags$li(tags$strong("School View:"), " Select an individual school for a detailed profile.")
+              )
+              # --- END UPDATE ---
             ),
             
-            # Capability 2: Reactive Tables
+            # Capability 2: Reactive Tables (No changes)
             div(
               class = "capability-card",
-              id = "showTablesModal",  # <-- ID for click event
               div(class = "capability-card-icon", HTML("&#128187;")),
               tags$h3("Reactive Data Tables"),
-              tags$p("Interact with your data. Our tables are fully searchable, sortable, and filterable, updating in real-time as you make selections.")
+              tags$p("The data tables in STRIDE are dynamic and respond instantly to your inputs."),
+              tags$ul(
+                style = "text-align: left; padding-left: 20px; font-size: 0.9rem;",
+                tags$li(tags$strong("Sort:"), " Click any column header to sort the data."),
+                tags$li(tags$strong("Filter:"), " Use the selection inputs to narrow down the data."),
+                tags$li(tags$strong("Search:"), " Use the search box to find specific records instantly.")
+              )
             ),
             
             # Capability 3: Maps
             div(
               class = "capability-card",
-              id = "showMapModal",  # <-- ID for click event
               div(class = "capability-card-icon", HTML("&#127758;")),
               tags$h3("Geospatial Mapping"),
-              tags$p("Visualize resource distribution and key metrics on an interactive map. Understand your data in its geographic context.")
+              
+              # --- UPDATED MAP DESCRIPTION (with markers): ---
+              tags$p("Visualize your data in its geographic context to uncover spatial patterns."),
+              tags$ul(
+                style = "text-align: left; padding-left: 20px; font-size: 0.9rem;",
+                tags$li(tags$strong("Interactive Leaflet Map:"), " Pan, zoom, and click on map features."),
+                tags$li(tags$strong("Data-Driven Markers:"), " See locations plotted as interactive markers."),
+                tags$li(tags$strong("School Locations:"), " Pinpoint individual schools and access their data.")
+              )
+              # --- END UPDATE ---
             )
           )
         ),
-        
         # --- RESOURCES SECTION (Card Layout) ---
         div(
           class = "resources-section",
@@ -513,7 +542,7 @@ output$STRIDE2 <- renderUI({
               ),
               div(
                 class = "resource-card-footer",
-                tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                tags$a(href = "#", class = "resource-btn", "Access Toolkit", target = "_blank")
               )
             ),
             
@@ -523,11 +552,11 @@ output$STRIDE2 <- renderUI({
               div(
                 class = "resource-card-content",
                 tags$h4("SIIF Toolkit"),
-                tags$p("A comprehensive toolkit for the School-Based Integrated Intervention Framework.")
+                tags$p("Provides online forms and monitoring tools to help schools implement the School Innovation and Improvement Fund (SIIF) and track data-driven interventions.")
               ),
               div(
                 class = "resource-card-footer",
-                tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                tags$a(href = "SIIF.pdf", class = "resource-btn", "Access Toolkit", target = "_blank")
               )
             ),
             
@@ -537,11 +566,11 @@ output$STRIDE2 <- renderUI({
               div(
                 class = "resource-card-content",
                 tags$h4("Teacher Workload Toolkit"),
-                tags$p("Resources to help schools analyze and manage teacher workload effectively.")
+                tags$p("A practical reference for school heads to implement workload policies. Includes step-by-step guides, templates, FAQs, and a Teaching Load Simulator.")
               ),
               div(
                 class = "resource-card-footer",
-                tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                tags$a(href = "TWP-TOOLKIT.pdf", class = "resource-btn", "Access Toolkit", target = "_blank")
               )
             )
           )

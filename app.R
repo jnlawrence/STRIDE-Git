@@ -257,7 +257,7 @@ server <- function(input, output, session) {
   source("server_parts/23_plantilla_dynamic_db.R", local = TRUE)
   source("server_parts/24_renderleaflet_resource_mapping.R", local = TRUE)
   source("server_parts/25_mapping_run.R", local = TRUE)
-  source("server_parts/26_rows_selected_for_datatables.R", local = TRUE)
+  # source("server_parts/26_rows_selected_for_datatables.R", local = TRUE)
   source("server_parts/27_cloud_graphs_and_tables.R", local = TRUE)
   source("server_parts/28_login_page.R", local = TRUE)
   source("server_parts/31_build_your_dashboard.R", local = TRUE)
