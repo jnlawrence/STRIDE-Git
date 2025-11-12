@@ -1169,7 +1169,51 @@ output$STRIDE2 <- renderUI({
         )
       ),
       # --- *** END OF NEW LAYLUT *** ---
-      
+      # --- ADVANCED ANALYTICS PANEL (UPDATED) ---
+      nav_panel(
+        title = "Advanced Analytics",
+        icon = icon("chart-line"),
+        layout_sidebar(
+          sidebar = sidebar(width = 350,
+            title = "Advanced Filters",
+            
+            # 1. Container for dynamic filters
+            # New filters will be added here by the server
+            div(id = "adv_filter_container"),
+            
+            # 2. "Add Filter" Button
+            actionButton("add_adv_filter_btn", "Add Variable Filter", 
+                         icon = icon("plus"), class = "btn-default w-100 mb-3"),
+            
+            hr(),
+            
+            # 3. "Apply" Button
+            actionButton("adv_analytics_run", "Apply Filters & Plot", 
+                         icon = icon("play"), class = "btn-primary w-100")
+          ),
+          
+          # --- Main Panel for Plot and Description ---
+          # --- Main Panel for Plot and Description (UPDATED) ---
+          layout_column_wrap(
+            width = 1/2, # This creates two equal columns (col-6)
+            
+            # --- Card 1 (Column 1) ---
+            card(
+              card_header("Drilldown Analytics"),
+              card_body(
+                plotOutput("advanced_drilldown_plot")
+              )
+            ),
+            
+            # --- Card 2 (Column 2) ---
+            card(
+              card_header("Data Description"),
+              card_body(
+                DT::dataTableOutput("advanced_data_table")              )
+            )
+          ) # End layout_column_wrap
+        ) # End layout_sidebar
+      ), # End nav_panel("Advanced Analytics")
       nav_panel(
         "Plantilla Positions",
         layout_sidebar(

@@ -65,7 +65,7 @@ infra_metric_choices <- list(
                   "Classroom Shortage" = "Est.CS",
                   "Shifting" = "Shifting",
                   "Number of Buildings" = "Buildings",
-                  "Buildable Space" = "Buidable_space",
+                  "Buildable Space" = "With_Buildable_space", # --- MODIFIED --- (Was "Buidable_space")
                   "Major Repairs Needed" = "Major.Repair.2023.2024"),
   `Facilities` = c("Seats Inventory" = "Total.Total.Seat",
                    "Seats Shortage" = "Total.Seats.Shortage"),
@@ -105,7 +105,7 @@ program_metric_choices <- list(
     "Electrification (2024)" = "ELECTRIFICATION.2024"
   ),
   "Gabaldon" = c(
-    "Gabaldon (2020)" = "GABALDON.2020",
+    "Gabaldon (220)" = "GABALDON.2020",
     "Gabaldon (2021)" = "GABALDON.2021",
     "Gabaldon (2022)" = "GABALDON.2022",
     "Gabaldon (2023)" = "GABALDON.2023",
@@ -1314,7 +1314,7 @@ output$schooldetails_build3 <- renderTable({
     Value = as.character(c(
       data$Buildings, data$Instructional.Rooms.2023.2024,
       data$Classroom.Requirement, data$Est.CS,
-      data$Buidable_space, data$Major.Repair.2023.2024,
+      data$With_Buildable_space, data$Major.Repair.2023.2024, # --- MODIFIED --- (Was data$Buidable_space)
       data$SBPI, data$Shifting, data$OwnershipType,
       data$ElectricitySource, data$WaterSource, data$Total.Seats.2023.2024,
       data$Total.Seats.Shortage.2023.2024
