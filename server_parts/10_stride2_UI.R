@@ -21,79 +21,9 @@ output$STRIDE2 <- renderUI({
     )
   ) # End of navbar_title_ui tags$a
   
-  # --- Build the page_navbar ---
-  page_navbar(
-    id = "STRIDE2_navbar",
-    title = navbar_title_ui,
-    
-    theme = bs_theme(
-      version = 5,
-      bootswatch = "sandstone",
-      font_scale = 0.9,
-      base_font = font_google("Poppins")
-    ), 
-    
-    tags$head(
-      tags$style(HTML("
-      .js-plotly-plot .plotly .modebar {
-         top: -30px !important;
-      }
-    "))
-    ),
-    # |> bs_add_rules(
-    #   "
-    # /* --- Make Navbar Sticky at the Top --- */
-    # .bslib-navbar,
-    # .navbar {
-    #   position: sticky !important;
-    #   position: -webkit-sticky !important; /* Safari */
-    #   top: 0px !important;                 /* Stick to the very top */
-    #   z-index: 4 !important;
-    #   background-color: #ffffff !important; /* White background */
-    #   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important; /* Shadow */
-    #   padding-top: 0.5rem !important;
-    #   padding-bottom: 0.5rem !important;
-    #   border-bottom: 2px solid #dee2e6 !important; /* Add a subtle gray line */
-    # }
-    # 
-    # /* --- Style the Brand/Title Area --- */
-    # .navbar-brand { padding-top: 0; padding-bottom: 0; }
-    # .navbar-brand span { color: #003366 !important; text-shadow: 1px 1px 1px rgba(0,0,0,0.1); }
-    # .navbar-brand small { color: #495057 !important; }
-    # 
-    # /* --- Style Navigation Links --- */
-    # .navbar-nav .nav-link {
-    #   color: #003366 !important; font-weight: 500;
-    #   padding-left: 1rem !important; padding-right: 1rem !important;
-    #   transition: color 0.2s ease, background-color 0.2s ease;
-    # }
-    # .navbar-nav .nav-link:hover,
-    # .navbar-nav .nav-link:focus {
-    #   color: #0056b3 !important; background-color: rgba(0, 51, 102, 0.05); border-radius: 4px;
-    # }
-    # 
-    # /* --- Style Active Navigation Link --- */
-    # .navbar-nav .nav-link.active {
-    #   color: #D62828 !important; font-weight: 700;
-    #   border-bottom: 3px solid #D62828; background-color: transparent !important;
-    # }
-    # 
-    # /* --- Style Dropdown Menus --- */
-    # .dropdown-menu { border: none !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border-radius: 0 0 8px 8px !important; }
-    # .dropdown-item { color: #003366 !important; font-weight: 500; }
-    # .dropdown-item:hover, .dropdown-item:focus { background-color: rgba(0, 51, 102, 0.08) !important; color: #0056b3 !important; }
-    # 
-    # /* --- Ensure Right Alignment of Nav Items --- */
-    # .navbar-collapse { justify-content: flex-end !important; }
-    # .navbar-nav { margin-left: auto; }
-    # 
-    # /* Include other specific rules if needed */
-    # .nav-tabs .nav-link, .nav-pills .nav-link, .accordion-button { font-weight: bold; }
-    # .sidebar-title { color: #002D62; font-weight: bold; }
-    # .sidebar h4 { color: #002D62; font-weight: bold; }
-    # 
-    # " # End of CSS string
-    # ), # End of bs_add_rules
+  
+  # --- 3. Define the list of nav items ALL users can see ---
+  nav_list_base <- list(
     nav_spacer(),
     
     # --- HOME PANEL ---
@@ -308,113 +238,27 @@ output$STRIDE2 <- renderUI({
           tags$button(class = "carousel-nav next-slide", HTML("&#10095;"))
         ),
         
-        # --- CAPABILITIES SECTION (Static Containers) ---
+        # --- CAPABILITIES SECTION (with clickable IDs) ---
         div(
           class = "capabilities-section",
-          tags$h2("Discover STRIDE's Features"),
+          tags$h2("Discover STRIDE's Capabilities"),
           div(
             class = "capabilities-row",
-            
-            # Capability 1: Drilldown
-            div(
-              class = "capability-card",
-              div(class = "capability-card-icon", HTML("&#128269;")),
-              tags$h3("Drilldown Function"),
-              
-              # --- UPDATED DRILLDOWN DESCRIPTION (with details): ---
-              tags$p("Explore data by clicking to drill down through the full hierarchy:"),
-              tags$ul(
-                style = "text-align: left; padding-left: 20px; font-size: 0.9rem;", # Your style
-                tags$li(tags$strong("Regional View:"), " See data aggregated by region."),
-                tags$li(tags$strong("Division View:"), " Drill down to see SDO/Division data."),
-                tags$li(tags$strong("Municipality View:"), " Filter data by city or municipality."),
-                tags$li(tags$strong("Legislative District View:"), " Analyze data by legislative district."),
-                tags$li(tags$strong("District View:"), " View metrics for specific school districts."),
-                tags$li(tags$strong("School View:"), " Select an individual school for a detailed profile.")
-              )
-              # --- END UPDATE ---
-            ),
-            
-            # Capability 2: Reactive Tables (No changes)
-            div(
-              class = "capability-card",
-              div(class = "capability-card-icon", HTML("&#128187;")),
-              tags$h3("Reactive Data Tables"),
-              tags$p("The data tables in STRIDE are dynamic and respond instantly to your inputs."),
-              tags$ul(
-                style = "text-align: left; padding-left: 20px; font-size: 0.9rem;",
-                tags$li(tags$strong("Sort:"), " Click any column header to sort the data."),
-                tags$li(tags$strong("Filter:"), " Use the selection inputs to narrow down the data."),
-                tags$li(tags$strong("Search:"), " Use the search box to find specific records instantly.")
-              )
-            ),
-            
-            # Capability 3: Maps
-            div(
-              class = "capability-card",
-              div(class = "capability-card-icon", HTML("&#127758;")),
-              tags$h3("Geospatial Mapping"),
-              
-              # --- UPDATED MAP DESCRIPTION (with markers): ---
-              tags$p("Visualize your data in its geographic context to uncover spatial patterns."),
-              tags$ul(
-                style = "text-align: left; padding-left: 20px; font-size: 0.9rem;",
-                tags$li(tags$strong("Interactive Leaflet Map:"), " Pan, zoom, and click on map features."),
-                tags$li(tags$strong("Data-Driven Markers:"), " See locations plotted as interactive markers."),
-                tags$li(tags$strong("School Locations:"), " Pinpoint individual schools and access their data.")
-              )
-              # --- END UPDATE ---
-            )
+            div(class = "capability-card", id = "showDrilldownModal", div(class = "capability-card-icon", HTML("&#128269;")), tags$h3("Drilldown Function"), tags$p("Start with a high-level overview and seamlessly drill down into detailed data for regions, divisions, and individual schools.")),
+            div(class = "capability-card", id = "showTablesModal", div(class = "capability-card-icon", HTML("&#128187;")), tags$h3("Reactive Data Tables"), tags$p("Interact with your data. Our tables are fully searchable, sortable, and filterable, updating in real-time as you make selections.")),
+            div(class = "capability-card", id = "showMapModal", div(class = "capability-card-icon", HTML("&#127758;")), tags$h3("Geospatial Mapping"), tags$p("Visualize resource distribution and key metrics on an interactive map. Understand your data in its geographic context."))
           )
         ),
+        
         # --- RESOURCES SECTION (Card Layout) ---
         div(
           class = "resources-section",
           tags$h2("Resources & Toolkits"),
           div(
             class = "resource-row",
-            
-            # Resource Card 1
-            div(
-              class = "resource-card",
-              div(
-                class = "resource-card-content",
-                tags$h4("SGC Advocacy Materials"),
-                tags$p("Tools and guides for promoting effective School Governance Council operations.")
-              ),
-              div(
-                class = "resource-card-footer",
-                tags$a(href = "#", class = "resource-btn", "Access Toolkit", target = "_blank")
-              )
-            ),
-            
-            # Resource Card 2
-            div(
-              class = "resource-card",
-              div(
-                class = "resource-card-content",
-                tags$h4("SIIF Toolkit"),
-                tags$p("Provides online forms and monitoring tools to help schools implement the School Innovation and Improvement Fund (SIIF) and track data-driven interventions.")
-              ),
-              div(
-                class = "resource-card-footer",
-                tags$a(href = "SIIF.pdf", class = "resource-btn", "Access Toolkit", target = "_blank")
-              )
-            ),
-            
-            # Resource Card 3
-            div(
-              class = "resource-card",
-              div(
-                class = "resource-card-content",
-                tags$h4("Teacher Workload Toolkit"),
-                tags$p("A practical reference for school heads to implement workload policies. Includes step-by-step guides, templates, FAQs, and a Teaching Load Simulator.")
-              ),
-              div(
-                class = "resource-card-footer",
-                tags$a(href = "TWP-TOOLKIT.pdf", class = "resource-btn", "Access Toolkit", target = "_blank")
-              )
-            )
+            div(class = "resource-card", div(class = "resource-card-content", tags$h4("SGC Advocacy Materials"), tags$p("Tools and guides for promoting effective School Governance Council operations.")), div(class = "resource-card-footer", tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank"))),
+            div(class = "resource-card", div(class = "resource-card-content", tags$h4("SIIF Toolkit"), tags$p("A comprehensive toolkit for the School-Based Integrated Intervention Framework.")), div(class = "resource-card-footer", tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank"))),
+            div(class = "resource-card", div(class = "resource-card-content", tags$h4("Teacher Workload Toolkit"), tags$p("Resources to help schools analyze and manage teacher workload effectively.")), div(class = "resource-card-footer", tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")))
           )
         ),
         
