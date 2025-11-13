@@ -263,13 +263,13 @@ output$STRIDE2 <- renderUI({
           div(
             class = "resource-row",
             div(class = "resource-card",
-                tags$img(class = "resource-card-image", src = "sgc.png"), # <-- ADDED
+                tags$img(class = "resource-card-image", src = "ecp.png"), # <-- ADDED
                 div(class = "resource-card-content", 
-                    tags$h4("SGC Advocacy Materials"), 
-                    tags$p("Tools and guides for promoting effective School Governance Council operations.")
+                    tags$h4("ECP System Toolkit"), 
+                    tags$p("An implementation guide for teachers on The expanded career progression system.")
                 ), 
                 div(class = "resource-card-footer", 
-                    tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                    tags$a(href = "https://drive.google.com/file/d/1D2_0UAMqOMNoD25Z_ga6R_gTPrmqxI4f/view?usp=drive_link", class = "resource-btn", "Learn More", target = "_blank")
                 )
             ),
             div(class = "resource-card",
@@ -279,7 +279,7 @@ output$STRIDE2 <- renderUI({
                     tags$p("A comprehensive toolkit for the School-Based Integrated Intervention Framework.")
                 ), 
                 div(class = "resource-card-footer", 
-                    tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                    tags$a(href = "https://drive.google.com/file/d/12ogJNwkXO6cxWJFftQ7CcXCly21C5PR2/view?usp=drive_link", class = "resource-btn", "Learn More", target = "_blank")
                 )
             ),
             div(class = "resource-card",
@@ -289,7 +289,7 @@ output$STRIDE2 <- renderUI({
                     tags$p("Resources to help schools analyze and manage teacher workload effectively.")
                 ), 
                 div(class = "resource-card-footer", 
-                    tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                    tags$a(href = "https://drive.google.com/file/d/1Z1PqaNG67MfXL1dG14sOMI4EFWj-2nes/view?usp=drive_link", class = "resource-btn", "Learn More", target = "_blank")
                 )
             )
           )
