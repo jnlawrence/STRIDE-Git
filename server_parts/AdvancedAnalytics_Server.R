@@ -10,6 +10,8 @@ if (!exists("col_info_adv_static")) {
 
 # --- 2. Dynamic Filter Management ---
 # (This section is unchanged)
+# --- 2. Dynamic Filter Management ---
+# (This section is unchanged)
 active_filter_ids <- reactiveVal(c()) 
 adv_filter_counter <- reactiveVal(0) 
 
@@ -17,6 +19,11 @@ observeEvent(input$add_adv_filter_btn, {
   new_id <- isolate(adv_filter_counter()) + 1
   adv_filter_counter(new_id)
   ui_id <- paste0("adv_filter_row_", new_id)
+  
+  # --- MODIFICATION: Added a "Select..." option ---
+  # This makes the req() function work more predictably.
+  choices_with_prompt <- c("Select a column..." = "", adv_analytics_choices)
+  
   insertUI(
     selector = "#adv_filter_container",
     where = "beforeEnd",
@@ -28,7 +35,7 @@ observeEvent(input$add_adv_filter_btn, {
                    icon = icon("times"), class = "btn-danger btn-sm float-end"),
       selectInput(paste0("adv_col_", new_id), 
                   label = paste("Filter", new_id, ": Select Column"),
-                  choices = adv_analytics_choices),
+                  choices = choices_with_prompt), # Use the modified choices
       uiOutput(paste0("adv_filter_val_ui_", new_id))
     )
   )
@@ -36,19 +43,51 @@ observeEvent(input$add_adv_filter_btn, {
   
   local({
     current_filter_id <- new_id
+    
+    # --- MODIFIED: Added defensive checks and debug messages to this renderUI ---
     output[[paste0("adv_filter_val_ui_", current_filter_id)]] <- renderUI({
+      
       col_name <- input[[paste0("adv_col_", current_filter_id)]]
-      req(col_name) 
-      col_type <- col_info_adv_static$type[col_info_adv_static$Raw_Name == col_name]
+      
+      # This req() now correctly waits until the user selects something
+      # *other* than the blank "Select a column..." option.
+      req(col_name, col_name != "") 
+      
+      print(paste("--- Generating UI for filter", current_filter_id, "---"))
+      print(paste("Selected col_name:", col_name))
+      
+      # --- Check 1: Does metadata exist for this column? ---
+      col_type_vec <- col_info_adv_static$type[col_info_adv_static$Raw_Name == col_name]
+      
+      if (length(col_type_vec) == 0) {
+        print(paste("DEBUG: No 'type' found in col_info_adv_static for Raw_Name:", col_name))
+        return(tags$p(
+          style = "color: #dc3545; font-weight: bold;",
+          paste("Error: Metadata for column '", col_name, "' not found.")
+        ))
+      }
+      
+      col_type <- col_type_vec[1]
+      print(paste("Found col_type:", col_type))
+      
+      # --- Check 2: Does this column exist in the 'uni' dataframe? ---
+      if (!col_name %in% names(uni)) {
+        print(paste("DEBUG: Column '", col_name, "' not found in 'uni' dataframe."))
+        return(tags$p(
+          style = "color: #dc3545; font-weight: bold;",
+          paste("Error: Data for column '", col_name, "' not found.")
+        ))
+      }
+      
       col_data <- uni[[col_name]] 
       
+      # --- Your original logic (now protected by the checks above) ---
       if (col_type == "Numeric") {
         min_val <- min(col_data, na.rm = TRUE)
         max_val <- max(col_data, na.rm = TRUE)
         if (is.infinite(min_val) || is.infinite(max_val)) {
           tags$p("No valid numeric data.", style = "color: #dc3545;")
         } else {
-          # Use fluidRow to put Min/Max in one row
           fluidRow(
             column(6,
                    numericInput(paste0("adv_num_min_", current_filter_id), 
@@ -67,33 +106,36 @@ observeEvent(input$add_adv_filter_btn, {
         if (length(choices) == 0) {
           tags$p("No valid categories.", style = "color: #dc3545;")
         } else {
-          
-          # --- MODIFICATION: Replaced selectInput with pickerInput ---
-          # Make sure you have library(shinyWidgets) loaded!
           pickerInput(
             inputId = paste0("adv_select_", current_filter_id),
             label = "Select Value(s):",
             choices = choices,
             selected = choices,
-            multiple = TRUE, # This fulfills your requirement
+            multiple = TRUE, 
             options = list(
-              `actions-box` = TRUE,  # Adds "Select All" and "Deselect All"
-              `live-search` = TRUE,  # Adds a search bar
-              `selected-text-format` = "count > 3" # e.g., "4 selected"
+              `actions-box` = TRUE,
+              `live-search` = TRUE,
+              `selected-text-format` = "count > 3"
             )
           )
-          # --- END OF MODIFICATION ---
-          
         }
+      } else {
+        # --- Check 3: Catch-all for unknown types ---
+        print(paste("DEBUG: Unknown col_type '", col_type, "' for column:", col_name))
+        return(tags$p(
+          style = "color: #ffc107; font-weight: bold;",
+          paste("Warning: No UI defined for column type '", col_type, "'.")
+        ))
       }
     })
+    # --- END OF MODIFICATION ---
+    
     observeEvent(input[[paste0("adv_remove_", current_filter_id)]], {
       removeUI(selector = paste0("#adv_filter_row_", current_filter_id))
       active_filter_ids(setdiff(isolate(active_filter_ids()), current_filter_id))
     })
   }) # End local()
 }) # End observeEvent(add_adv_filter_btn)
-
 
 # --- 3. Filter Data and Manage State ---
 
@@ -584,7 +626,7 @@ output$advanced_school_map <- renderLeaflet({
 })
 
 
-# --- MODIFIED: 5c. Observer for table row selection (to control map) ---
+# --- 5c. Observer for table row selection (MERGED AND CORRECTED) ---
 observeEvent(input$advanced_data_table_rows_selected, {
   
   req(input$advanced_data_table_rows_selected)
@@ -598,14 +640,14 @@ observeEvent(input$advanced_data_table_rows_selected, {
   lat_col <- "Latitude" 
   lon_col <- "Longitude"
   
-  # --- NOTE: Removed the confusing "if (lat_col == 'Latitude')" check ---
+
   
   # Get the data for the selected row
   tryCatch({
     data_from_table <- drilled_data_and_level()$data
     
     if (!all(c(lat_col, lon_col) %in% names(data_from_table))) {
-      print("--- MAP SETVIEW ERROR: Lat/Lon columns not found. ---")
+      print(paste("--- MAP SETVIEW ERROR: Lat/Lon columns (", lat_col, ",", lon_col, ") not found. ---"))
       return()
     }
     
@@ -615,15 +657,13 @@ observeEvent(input$advanced_data_table_rows_selected, {
     selected_lat <- as.numeric(selected_row_data[[lat_col]])
     selected_lon <- as.numeric(selected_row_data[[lon_col]])
     
-    # --- THIS IS THE FIX ---
-    # This check now handles NAs AND length(0) errors (from NULL columns)
+    # This check now robustly handles NA, NULL, or 0-length values
     if (length(selected_lat) == 0 || is.na(selected_lat) || 
         length(selected_lon) == 0 || is.na(selected_lon)) {
-      # This will now catch both original NAs and conversion failures
-      print("--- MAP SETVIEW: Selected row has NA or non-numeric coordinates. ---")
+      
+      print("--- MAP SETVIEW: Selected row has NA, NULL, or non-numeric coordinates. ---")
       return()
     }
-    # --- END OF FIX ---
     
     print(paste("--- MAP SETVIEW: Zooming to", selected_row_data$School.Name, "---"))
     
@@ -639,7 +679,7 @@ observeEvent(input$advanced_data_table_rows_selected, {
     print(paste("--- MAP SETVIEW ERROR:", e$message, "---"))
   })
   
-})
+}) # <-- Make sure this is the ONLY observer for advanced_data_table_rows_selected
 
 
 # --- MODIFIED: 5c. Observer for table row selection (to control map) ---
@@ -657,10 +697,6 @@ observeEvent(input$advanced_data_table_rows_selected, {
   lon_col <- "Longitude"
   
   # --- NEW: Check if you changed the placeholders ---
-  if (lat_col == "Latitude" || lon_col == "Longitude") {
-    print("--- MAP SETVIEW ERROR: You have not replaced the placeholder lat/lon column names in section 5c. ---")
-    return()
-  }
   
   # Get the data for the selected row
   tryCatch({

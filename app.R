@@ -34,11 +34,11 @@ library(reactablefmtr)
 
 school_data <- reactiveVal(NULL)
 uni48k <- read.csv("School-Unique-48k.csv")
-efd2025 <- read.csv("EFD-2025Data1.csv") %>%
-  mutate(across(
-    .cols = -1,  # Selects all columns EXCEPT the first one
-    .fns = ~ as.numeric(as.character(.))
-  ))
+# efd2025 <- read.csv("EFD-2025Data1.csv") %>%
+#   mutate(across(
+#     .cols = -1,  # Selects all columns EXCEPT the first one
+#     .fns = ~ as.numeric(as.character(.))
+#   ))
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
 uni45k <- read_parquet("School-Unique-v2.parquet") %>% 
   mutate(Municipality = stringr::str_to_title(Municipality)) %>% # School-level Data
@@ -59,7 +59,15 @@ uni <- left_join(uni48k,uni45k, by = "SchoolID") %>% mutate(
     # NA_real_ ensures the column type is numeric (double).
     TRUE ~ NA_real_
   )
-)
+) %>%
+  select(
+    1,          # Column 1
+    73,         # Column 73
+    69:72,      # Columns 69 through 72
+    74:84,      # Columns 74 through 84
+    2:4,62,64,68,85:116,123:129,153:168,186:197,
+    everything() # All remaining columns, in their original order
+  )
 
 # --- START: One-Time Analysis for Advanced Analytics ---
 # This runs ONCE when the app starts, right after 'uni' is loaded.

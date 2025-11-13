@@ -204,7 +204,7 @@ all_selected_metrics <- reactive({
 # --- Define Metric Groups ---
 teacher_metrics <- c("TotalTeachers", "Total.Shortage", "Total.Excess")
 school_metrics <- c("Total.Schools","School.Size.Typology", "Modified.COC") 
-classroom_metrics <- c("Instructional.Rooms.2023.2024", "Classroom.Requirement", "Shifting","Classroom_Shortage","Buildable_Space")
+classroom_metrics <- c("Instructional.Rooms.2023.2024", "Classroom.Requirement", "Shifting","Classroom.Shortage","Buildable_Space")
 enrolment_metrics <- c("G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12")
 buildingcondition_metrics <- c("Building.Count_Condemned...For.Demolition","Building.Count_For.Completion",             
                                "Building.Count_For.Condemnation","Building.Count_Good.Condition",             
@@ -485,17 +485,15 @@ output$school_map <- leaflet::renderLeaflet({
 
 # --- school_table (Unchanged) ---
 # --- school_table (UPDATED) ---
+# --- school_table (UPDATED with All Columns & FixedColumns) ---
 output$school_table <- DT::renderDataTable({
   req(global_trigger() > 0)
   
-  # --- CHANGE: Use filtered_data() directly ---
-  data_for_table <- filtered_data() 
-  
-  cols_to_show <- c("SchoolID", "School.Name", "Division", "Region", "TotalTeachers", "Modified.COC")
-  cols_to_show <- intersect(cols_to_show, names(data_for_table))
+  # --- Use filtered_data() directly ---
+  data_for_table_raw <- filtered_data() 
   
   # --- ROBUSTNESS: Handle empty data ---
-  if (nrow(data_for_table) == 0 || length(cols_to_show) == 0) {
+  if (nrow(data_for_table_raw) == 0) {
     return(DT::datatable(
       data.frame(Message = "No data available for the current selection."),
       rownames = FALSE,
@@ -503,15 +501,23 @@ output$school_table <- DT::renderDataTable({
     ))
   }
   
+  # --- NEW: Re-order data to put key columns first for freezing ---
+  # This ensures SchoolID and School.Name are the first two columns
+  data_for_table <- data_for_table_raw %>%
+    dplyr::select(SchoolID, School.Name, dplyr::everything())
+  
   DT::datatable(
-    data_for_table[, cols_to_show],
+    data_for_table, # --- CHANGED: Use the full, re-ordered data ---
     selection = 'single', 
     rownames = FALSE,
+    extensions = 'FixedColumns', # --- NEW: Add the FixedColumns extension ---
     options = list(
       pageLength = 10,
       scrollY = "400px", 
       scrollCollapse = TRUE,
-      paging = TRUE # Changed to TRUE for better handling of long lists
+      paging = TRUE,
+      scrollX = TRUE, # --- NEW: Enable horizontal scrolling ---
+      fixedColumns = list(leftColumns = 2) # --- NEW: Freeze the 2 left columns ---
     )
   )
 })
