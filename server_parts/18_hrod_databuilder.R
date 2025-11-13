@@ -27,7 +27,8 @@ output$HROD_Table <- DT::renderDT(server = FALSE, {
              input$Teaching_Data_Toggles,
              input$NTP_Data_Toggles,
              input$Enrolment_Data_Toggles,
-             input$Specialization_Data_Toggles) %>%
+             input$Specialization_Data_Toggles,
+             input$Infrastructure_Data_Toggles) %>%
       arrange(desc(District)),
     extension = 'Buttons',
     filter = 'top',

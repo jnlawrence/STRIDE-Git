@@ -1,6 +1,6 @@
 {
-    "name": "SID",
-    "short_name": "SID",
+    "name": "InsightEd",
+    "short_name": "InsightEd",
     "start_url": "index.html",
     "display": "standalone",
     "background_color": "#ffffff",

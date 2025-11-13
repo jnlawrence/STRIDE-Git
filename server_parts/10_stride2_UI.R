@@ -678,7 +678,7 @@ output$STRIDE2 <- renderUI({
             radioButtons(
               inputId = "resource_type_selection",
               label = NULL,
-              choices = c("Teaching Deployment", "Non-teaching Deployment", "Classroom Inventory", "Learner Congestion", "Industries", "Facilities", "Last Mile School"),
+              choices = c("Teaching Deployment", "Non-teaching Deployment", "Classroom Inventory", "Learner Congestion", "Industries", "Last Mile School"),
               selected = "Teaching Deployment"
             )
           )
@@ -739,7 +739,7 @@ output$STRIDE2 <- renderUI({
       icon = bs_icon("table"),
       
       nav_panel(
-        title = tags$b("Human Resource Database"),
+        title = tags$b("Information Database"),
         layout_sidebar(
           sidebar = sidebar(
             width = 350,
@@ -750,7 +750,8 @@ output$STRIDE2 <- renderUI({
             pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), choices = c("Total Teachers" = "TotalTeachers", "Teacher Excess" = "Total.Excess", "Teacher Shortage" = "Total.Shortage"), multiple = TRUE, options = pickerOptions(`actions-box` = TRUE, dropupAuto = FALSE, dropup = FALSE)),
             pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), choices = c("COS" = "Outlier.Status", "AOII Clustering Status" = "Clustering.Status"), multiple = TRUE, options = pickerOptions(`actions-box` = TRUE, dropupAuto = FALSE, dropup = FALSE)),
             pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", "Grade 7" = "G7", "Grade 8" = "G8", "Grade 9" = "G9", "Grade 10" = "G10", "Grade 11" = "G11", "Grade 12" = "G12"), multiple = TRUE, options = pickerOptions(`actions-box` = TRUE, dropupAuto = FALSE, dropup = FALSE)),
-            pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), choices = c("English" = "English", "Mathematics" = "Mathematics", "Science" = "Science", "Biological Sciences" = "Biological.Sciences", "Physical Sciences" = "Physical.Sciences"), multiple = TRUE, options = pickerOptions(`actions-box` = TRUE, dropupAuto = FALSE, dropup = FALSE))
+            pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), choices = c("English" = "English", "Mathematics" = "Mathematics", "Science" = "Science", "Biological Sciences" = "Biological.Sciences", "Physical Sciences" = "Physical.Sciences"), multiple = TRUE, options = pickerOptions(`actions-box` = TRUE, dropupAuto = FALSE, dropup = FALSE)),
+            pickerInput("Infrastructure_Data_Toggles", strong("Infrastructure Data Toggles"), choices = c("Classroom Shortage" = "Classroom.Shortage", "Buildable Space" = "With_Buildable_space", "Last Mile Schools" = "LMS.School"), multiple = TRUE, options = pickerOptions(`actions-box` = TRUE, dropupAuto = FALSE, dropup = FALSE))
           ), # End sidebar
           layout_columns(
             card(card_header(strong("HROD Data Panel")), dataTableOutput("HROD_Table")),
@@ -759,55 +760,64 @@ output$STRIDE2 <- renderUI({
         ) # End layout_sidebar
       ), # End nav_panel
       
-      nav_panel(
-        title = tags$b("DepEd Officials"),
-        layout_sidebar(
-          sidebar = sidebar(
-            width = 350,
-            h6("Strand Filter:"),
-            pickerInput(inputId = "ThirdLevel_Strands", label = "Select Strand(s):", width = "100%", choices = c("Administration", "Deped Attached Agencies", "Finance", "Human Resource And Organizational Development", "Learning System", "Legal And Legislative Affairs", "Office Of The Secretary", "Operations", "Procurement", "Strategic Management", "Teachers And Education Council Secretariat"), selected = c("Administration", "Deped Attached Agencies", "Finance", "Human Resource And Organizational Development", "Learning System", "Legal And Legislative Affairs", "Office Of The Secretary", "Operations", "Procurement", "Strategic Management", "Teachers And Education Council Secretariat"), multiple = TRUE, options = pickerOptions(container = "body", width = "350px", actionsBox = TRUE, liveSearch = TRUE, header = "Select Strand(s)", title = "No Strand Selected", selectedTextFormat = "count > 3", dropupAuto = FALSE, dropup = FALSE), choicesOpt = list(style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"))
-          ), # End sidebar
-          layout_columns(
-            card(
-              full_screen = TRUE,
-              style = "width: 100%; max-height: 85vh; overflow-y: auto; margin-bottom: 20px;",
-              card_header(strong("HROD Data Panel"), style = "font-size: 22px; padding: 15px 20px; text-align: center; background-color: #00234d; border-bottom: 2px solid #dee2e6;"),
-              card_body(div(style = "padding: 10px; overflow-x: auto; height: calc(85vh - 80px);", dataTableOutput("ThirdLevel_Table")))
-            ),
-            col_widths = c(12)
-          )
-        ) # End layout_sidebar
-      ) # End nav_panel
+      # nav_panel(
+      #   title = tags$b("DepEd Officials"),
+      #   layout_sidebar(
+      #     sidebar = sidebar(
+      #       width = 350,
+      #       h6("Strand Filter:"),
+      #       pickerInput(inputId = "ThirdLevel_Strands", label = "Select Strand(s):", width = "100%", choices = c("Administration", "Deped Attached Agencies", "Finance", "Human Resource And Organizational Development", "Learning System", "Legal And Legislative Affairs", "Office Of The Secretary", "Operations", "Procurement", "Strategic Management", "Teachers And Education Council Secretariat"), selected = c("Administration", "Deped Attached Agencies", "Finance", "Human Resource And Organizational Development", "Learning System", "Legal And Legislative Affairs", "Office Of The Secretary", "Operations", "Procurement", "Strategic Management", "Teachers And Education Council Secretariat"), multiple = TRUE, options = pickerOptions(container = "body", width = "350px", actionsBox = TRUE, liveSearch = TRUE, header = "Select Strand(s)", title = "No Strand Selected", selectedTextFormat = "count > 3", dropupAuto = FALSE, dropup = FALSE), choicesOpt = list(style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"))
+      #     ), # End sidebar
+      #     layout_columns(
+      #       card(
+      #         full_screen = TRUE,
+      #         style = "width: 100%; max-height: 85vh; overflow-y: auto; margin-bottom: 20px;",
+      #         card_header(strong("HROD Data Panel"), style = "font-size: 22px; padding: 15px 20px; text-align: center; background-color: #00234d; border-bottom: 2px solid #dee2e6;"),
+      #         card_body(div(style = "padding: 10px; overflow-x: auto; height: calc(85vh - 80px);", dataTableOutput("ThirdLevel_Table")))
+      #       ),
+      #       col_widths = c(12)
+      #     )
+      #   ) # End layout_sidebar
+      # ) # End nav_panel
     ), # End Data Explorer nav_menu
     
     # --- mySTRIDE PANEL ---
     nav_panel(
       value = "mystride_nav", # This value is correct
-      title = tags$b("mySTRIDE"),
+      title = tags$b("InsightEd"),
       icon = bs_icon("box-arrow-right"),
       
-      h3("mySTRIDE Access"),
+      h3("InsightEd Access"),
       fluidRow(
         column(
           width = 6, 
           offset = 3, 
           class = "mt-5 mb-5",
-          style = "text-align: center;", 
+          
+          # We remove all centering from the card...
           bslib::card( 
-            tags$h5("Access mySTRIDE here"),
-            div(
-              style = "text-align:center; margin-top: 20px;", 
-              actionButton(
-                inputId = "goto_dashboard_btn", 
-                label = "mySTRIDE",
-                class = "go-dashboard-btn" 
-              )
+            
+            # ...and instead add an explicit card_body with flexbox styles
+            card_body(
+              style = "display: flex; flex-direction: column; align-items: center; justify-content: center;",
+              
+              tags$img(src = "InsightEd.png", 
+                       alt = "InsightEd Logo",
+                       style = "width: 285px; height: auto; margin-bottom: 20px;"),
+              
+              hr(),
+              tags$img(src = "InsightEdQR.png",
+                       alt = "InsightEd QR Code",
+                       style = "width: 250px; height: auto; margin-top: 15px; border: 1px solid #ddd; padding: 5px; border-radius: 8px;"),
+              
+              tags$p("Scan the code then Add to Home Screen to install!",
+                     style = "margin-top: 15px; font-style: italic; color: #555;")
             )
           ) # End bslib::card
         ) # End column
       ) # End fluidRow
-    ) # End mySTRIDE nav_panel
-  ) # End auth-only list
+    )
+  )
   
   
   # --- 5. Combine the lists based on user role ---
