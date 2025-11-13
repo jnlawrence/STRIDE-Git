@@ -48,9 +48,18 @@ observeEvent(input$add_adv_filter_btn, {
         if (is.infinite(min_val) || is.infinite(max_val)) {
           tags$p("No valid numeric data.", style = "color: #dc3545;")
         } else {
-          tagList(
-            numericInput(paste0("adv_num_min_", current_filter_id), "Min:", value = min_val),
-            numericInput(paste0("adv_num_max_", current_filter_id), "Max:", value = max_val)
+          # Use fluidRow to put Min/Max in one row
+          fluidRow(
+            column(6,
+                   numericInput(paste0("adv_num_min_", current_filter_id), 
+                                "Min:", 
+                                value = min_val)
+            ),
+            column(6,
+                   numericInput(paste0("adv_num_max_", current_filter_id), 
+                                "Max:", 
+                                value = max_val)
+            )
           )
         }
       } else if (col_type %in% c("Categorical", "Binary")) {
@@ -58,8 +67,23 @@ observeEvent(input$add_adv_filter_btn, {
         if (length(choices) == 0) {
           tags$p("No valid categories.", style = "color: #dc3545;")
         } else {
-          selectInput(paste0("adv_select_", current_filter_id), "Select Value(s):",
-                      choices = choices, selected = choices, multiple = TRUE)
+          
+          # --- MODIFICATION: Replaced selectInput with pickerInput ---
+          # Make sure you have library(shinyWidgets) loaded!
+          pickerInput(
+            inputId = paste0("adv_select_", current_filter_id),
+            label = "Select Value(s):",
+            choices = choices,
+            selected = choices,
+            multiple = TRUE, # This fulfills your requirement
+            options = list(
+              `actions-box` = TRUE,  # Adds "Select All" and "Deselect All"
+              `live-search` = TRUE,  # Adds a search bar
+              `selected-text-format` = "count > 3" # e.g., "4 selected"
+            )
+          )
+          # --- END OF MODIFICATION ---
+          
         }
       }
     })
@@ -74,21 +98,29 @@ observeEvent(input$add_adv_filter_btn, {
 # --- 3. Filter Data and Manage State ---
 
 # --- 3a. Add state management for the interactive drilldown ---
-adv_drill_state <- reactiveVal(list(level = "Region", filters = list()))
+# --- MODIFIED: Start the level at "Overall" ---
+adv_drill_state <- reactiveVal(list(level = "Overall", filters = list()))
 
-# --- MODIFIED: 3b. Define the drilldown hierarchy (STOPPED at District) ---
-# We REMOVED "School" from this list
-drill_levels <- c("Region", "Division", "Legislative", "District")
+# --- MODIFIED: 3b. Define the FINAL drilldown hierarchy ---
+
+# This vector defines the *exact* order of the drilldown path
+# We've added Municipality and District
+drill_levels <- c("Overall", "Region", "Division", "Municipality", "Legislative.District", "District")
+
+# This map links the "level" name to the *actual column name* in your 'uni' dataframe
+# Make sure the names on the *right* side (e.g., "Legislative.District")
+# exactly match the column names in your data.
 col_name_map <- c(
+  "Overall" = "Overall", 
   "Region" = "Region",
   "Division" = "Division",
-  "Legislative" = "Legislative.District",
+  "Municipality" = "Municipality",
+  "Legislative.District" = "Legislative.District",
   "District" = "District"
-  # "School" = "School.Name" # No longer drilling to school
 )
 
 # --- 3c. 'Apply' button now filters data AND resets the drilldown ---
-# --- MODIFIED: 3c. 'Apply' button now filters data AND resets drilldown to Region ---
+# --- MODIFIED: 3c. 'Apply' button now filters data AND resets drilldown to "Overall" ---
 filtered_data_adv <- eventReactive(input$adv_analytics_run, {
   
   req(global_drill_state())
@@ -97,8 +129,8 @@ filtered_data_adv <- eventReactive(input$adv_analytics_run, {
   data_filtered <- uni 
   drill_state <- global_drill_state()
   
-  # --- MODIFIED: Force the start level to be "Region" ---
-  start_level <- "Region"
+  # --- MODIFIED: Force the start level to be "Overall" ---
+  start_level <- "Overall"
   adv_drill_state(list(level = start_level, filters = list()))
   print(paste("--- ADVANCED ANALYTICS: Drilldown reset to:", start_level, "---"))
   
@@ -183,16 +215,20 @@ drilled_data_and_level <- reactive({
 })
 
 # --- 3e. Create a reactive for the plot data ---
+# --- 3e. Create a reactive for the plot data ---
 plot_data_r <- reactive({
   req(drilled_data_and_level())
   info <- drilled_data_and_level()
   data_to_plot <- info$data
   drill_level <- info$level
   
-  # If we are at the last level ("District"), don't show a plot
-  # just show the schools in the table/map
-  if (drill_level == "District") {
-    # We still need to group by District for the *click* to work
+  # --- MODIFIED: Check if we are at the *actual* last level ---
+  # This is no longer hard-coded to "District"
+  last_level_name <- drill_levels[length(drill_levels)]
+  
+  if (drill_level == last_level_name) {
+    # We are at the end, e.g., "Legislative.District"
+    # We still need to group by this for the *click* to work (though clicks are disabled)
     # but the plot will be updated to say "End of drilldown"
     group_col_name <- col_name_map[drill_level]
   } else {
@@ -201,6 +237,7 @@ plot_data_r <- reactive({
     next_level <- drill_levels[current_index + 1]
     group_col_name <- col_name_map[next_level]
   }
+  # --- END OF MODIFICATION ---
   
   group_col_sym <- sym(group_col_name)
   
@@ -219,15 +256,13 @@ plot_data_r <- reactive({
 
 
 # --- 4. Plot, Controls, and Click Logic ---
-
-# --- MODIFIED: 4a. UI for "Reset" AND "Back" buttons ---
 # --- MODIFIED: 4a. UI for "Reset" AND "Back" buttons ---
 output$adv_drill_controls_ui <- renderUI({
   
   state <- adv_drill_state()
   
-  # --- MODIFIED: The "start level" is always Region ---
-  start_level <- "Region"
+  # --- MODIFIED: The "start level" is always "Overall" ---
+  start_level <- "Overall"
   
   show_reset <- state$level != start_level || length(state$filters) > 0
   show_back <- length(state$filters) > 0 # Show back if any filters are applied
@@ -244,13 +279,12 @@ output$adv_drill_controls_ui <- renderUI({
   )
 })
 
-# --- 4b. Observer for the "Reset" button ---
 # --- MODIFIED: 4b. Observer for the "Reset" button ---
 observeEvent(input$adv_drill_reset_btn, {
   print("--- ADVANCED ANALYTICS: Drilldown reset button clicked. ---")
   
-  # --- MODIFIED: Always reset to Region ---
-  start_level <- "Region"
+  # --- MODIFIED: Always reset to "Overall" ---
+  start_level <- "Overall"
   adv_drill_state(list(level = start_level, filters = list()))
 })
 
@@ -397,43 +431,71 @@ observeEvent(input$adv_plot_click, {
 # --- 5. Data Table and Map ---
 
 # --- 5a. Render the Filtered Data Table ---
+# --- 5. Data Table and Map ---
+
+# --- MODIFIED: 5a. Render the Filtered Data Table ---
+# This version shows ALL columns and freezes School.Name and SchoolID
+# for horizontal scrolling.
 output$advanced_data_table <- DT::renderDataTable({
   
   req(drilled_data_and_level())
   print("--- ADVANCED ANALYTICS: Rendering data table. ---")
   
-  data_to_show <- drilled_data_and_level()$data
+  data_from_drilldown <- drilled_data_and_level()$data
   
-  # Select key columns
-  filter_cols <- col_info_adv_static$Raw_Name
-  data_to_show <- tryCatch({
-    data_to_show %>%
-      select(
-        School.Name, 
-        Region, 
-        Division, 
-        Municipality,
-        all_of(filter_cols) 
-      )
-  }, error = function(e) {
-    print(paste("Error selecting columns for table:", e$message))
-    data_to_show 
-  })
+  # --- NEW: Reorder columns to show all, with frozen columns first ---
+  # We must ensure the columns we want to freeze are the first ones
+  # in the dataframe. We use select() to put them first, followed
+  # by 'everything()' else.
+  #
+  # NOTE: The map code uses 'SchoolID'. I'm assuming that's the
+  # correct column name. If it's 'School.ID', just change it below.
+  if (!"SchoolID" %in% names(data_from_drilldown)) {
+    
+    print("--- TABLE WARNING: 'SchoolID' column not found. Freezing 'School.Name' only. ---")
+    
+    data_to_show <- data_from_drilldown %>%
+      select(School.Name, everything())
+    
+    cols_to_freeze <- 1
+    
+  } else {
+    
+    print("--- TABLE INFO: Reordering columns to freeze 'School.Name' and 'SchoolID'. ---")
+    
+    data_to_show <- data_from_drilldown %>%
+      select(School.Name, SchoolID, everything())
+    
+    cols_to_freeze <- 2
+  }
   
   datatable(
     data_to_show,
     selection = 'single', # Keep single row selection
+    
+    # --- MODIFICATION: Added 'FixedColumns' extension ---
+    extensions = 'FixedColumns', 
+    
     options = list(
       scrollX = TRUE,  
       pageLength = 10, 
-      autoWidth = TRUE
+      
+      # --- MODIFICATION: autoWidth MUST be FALSE for FixedColumns to work ---
+      autoWidth = FALSE, 
+      
+      # --- MODIFICATION: Add FixedColumns options ---
+      # This freezes the first 'cols_to_freeze' (2) columns on the left
+      fixedColumns = list(leftColumns = cols_to_freeze),
+      
+      # scrollCollapse is generally good practice with scrolling tables
+      scrollCollapse = TRUE
     ),
     rownames = FALSE,
     filter = 'top' 
   )
 })
 
-# --- MODIFIED: 5b. Render the Leaflet Map (With Enhanced Debugging) ---
+# --- MODIFIED: 5b. Render the Leaflet Map (Popup is now a Label) ---
 output$advanced_school_map <- renderLeaflet({
   
   print("--- MAP RENDER: Starting... ---")
@@ -448,13 +510,6 @@ output$advanced_school_map <- renderLeaflet({
   lat_col <- "Latitude" 
   lon_col <- "Longitude"
   
-  # --- NEW: Check if you changed the placeholders ---
-  if (lat_col == "Latitude" || lon_col == "Longitude") {
-    print("--- MAP RENDER ERROR: You have not replaced the placeholder lat/lon column names in section 5b. ---")
-    return(leaflet() %>% addTiles() %>% 
-             addControl("MAP ERROR: Latitude/Longitude column names are not set in server.R", 
-                        position = "topright", className = "map-error-box"))
-  }
   
   # Check if columns exist
   if (!all(c(lat_col, lon_col) %in% names(data_for_map))) {
@@ -464,11 +519,15 @@ output$advanced_school_map <- renderLeaflet({
                         position = "topright", className = "map-error-box"))
   }
   
-  # Filter out rows with missing coordinates
+  # Filter out rows with missing coordinates and ensure numeric type
   data_for_map_filtered <- data_for_map %>%
-    filter(!is.na(!!sym(lat_col)) & !is.na(!!sym(lon_col)))
+    mutate(
+      !!sym(lat_col) := as.numeric(!!sym(lat_col)),
+      !!sym(lon_col) := as.numeric(!!sym(lon_col))
+    ) %>%
+    filter(!is.na(!!sym(lat_col)) & !is.na(!!sym(lon_col))) 
   
-  print(paste("--- MAP RENDER: Filtered to", nrow(data_for_map_filtered), "rows with valid coordinates. ---"))
+  print(paste("--- MAP RENDER: Filtered to", nrow(data_for_map_filtered), "rows with valid numeric coordinates. ---"))
   
   if (nrow(data_for_map_filtered) == 0) {
     print("--- MAP RENDER: No schools with valid coordinates to plot. ---")
@@ -477,18 +536,109 @@ output$advanced_school_map <- renderLeaflet({
                         position = "topright"))
   }
   
-  print("--- MAP RENDER: Rendering map with points... ---")
+  # --- Define a rich HTML string for the label ---
+  # This is the same as before
+  data_for_map_filtered <- data_for_map_filtered %>%
+    mutate(
+      map_label_html = paste(
+        "<strong>", School.Name, "</strong><hr>",
+        "<strong>School ID:</strong>", SchoolID, "<br>",
+        "<strong>Region:</strong>", Region, "<br>",
+        "<strong>Division:</strong>", Division, "<br>",
+        "<strong>Municipality:</strong>", Municipality
+      )
+    )
+  
+  # --- NEW: Convert the HTML string to an actual HTML object ---
+  # This tells leaflet to *render* the HTML, not just show the text
+  data_for_map_filtered$map_label_html <- lapply(
+    data_for_map_filtered$map_label_html, 
+    htmltools::HTML
+  )
+  
+  print("--- MAP RENDER: Rendering map with AwesomeMarkers and Tile options... ---")
   
   leaflet(data = data_for_map_filtered) %>%
-    addTiles() %>%
-    addCircleMarkers(
-      lng = ~!!sym(lon_col),
-      lat = ~!!sym(lat_col),
-      radius = 5,
-      stroke = FALSE,
-      fillOpacity = 0.7,
-      popup = ~School.Name # Show school name on click
-    )
+    addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+    addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
+    addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
+    
+    # --- Use addAwesomeMarkers ---
+    addAwesomeMarkers(
+      lng = as.formula(paste0("~", lon_col)),
+      lat = as.formula(paste0("~", lat_col)),
+      
+      # --- THIS IS THE CHANGE ---
+      # 1. We REMOVED the 'popup' argument
+      # 2. We set 'label' to our new HTML-formatted column
+      label = ~map_label_html,
+      # --- END OF CHANGE ---
+      
+      icon = icon("graduation-cap"),
+      clusterOptions = markerClusterOptions()
+    ) %>%
+    
+    # --- Add the control to switch between map layers ---
+    addLayersControl(
+      baseGroups = c("Satellite","Road Map"))
+})
+
+
+# --- MODIFIED: 5c. Observer for table row selection (to control map) ---
+observeEvent(input$advanced_data_table_rows_selected, {
+  
+  req(input$advanced_data_table_rows_selected)
+  
+  selected_row_index <- input$advanced_data_table_rows_selected
+  
+  print("--- TABLE ROW SELECTED! ---")
+  
+  # --- !!! ACTION REQUIRED !!! ---
+  # Replace these with your actual latitude and longitude column names
+  lat_col <- "Latitude" 
+  lon_col <- "Longitude"
+  
+  # --- NOTE: Removed the confusing "if (lat_col == 'Latitude')" check ---
+  
+  # Get the data for the selected row
+  tryCatch({
+    data_from_table <- drilled_data_and_level()$data
+    
+    if (!all(c(lat_col, lon_col) %in% names(data_from_table))) {
+      print("--- MAP SETVIEW ERROR: Lat/Lon columns not found. ---")
+      return()
+    }
+    
+    selected_row_data <- data_from_table[selected_row_index, ]
+    
+    # Explicitly convert to numeric
+    selected_lat <- as.numeric(selected_row_data[[lat_col]])
+    selected_lon <- as.numeric(selected_row_data[[lon_col]])
+    
+    # --- THIS IS THE FIX ---
+    # This check now handles NAs AND length(0) errors (from NULL columns)
+    if (length(selected_lat) == 0 || is.na(selected_lat) || 
+        length(selected_lon) == 0 || is.na(selected_lon)) {
+      # This will now catch both original NAs and conversion failures
+      print("--- MAP SETVIEW: Selected row has NA or non-numeric coordinates. ---")
+      return()
+    }
+    # --- END OF FIX ---
+    
+    print(paste("--- MAP SETVIEW: Zooming to", selected_row_data$School.Name, "---"))
+    
+    leafletProxy("advanced_school_map") %>%
+      clearPopups() %>% 
+      setView(
+        lng = selected_lon,
+        lat = selected_lat,
+        zoom = 15
+      )
+    
+  }, error = function(e) {
+    print(paste("--- MAP SETVIEW ERROR:", e$message, "---"))
+  })
+  
 })
 
 
@@ -523,11 +673,13 @@ observeEvent(input$advanced_data_table_rows_selected, {
     
     selected_row_data <- data_from_table[selected_row_index, ]
     
-    selected_lat <- selected_row_data[[lat_col]]
-    selected_lon <- selected_row_data[[lon_col]]
+    # Explicitly convert to numeric
+    selected_lat <- as.numeric(selected_row_data[[lat_col]])
+    selected_lon <- as.numeric(selected_row_data[[lon_col]])
     
     if (is.na(selected_lat) || is.na(selected_lon)) {
-      print("--- MAP SETVIEW: Selected row has NA coordinates. ---")
+      # This will now catch both original NAs and conversion failures
+      print("--- MAP SETVIEW: Selected row has NA or non-numeric coordinates. ---")
       return()
     }
     
@@ -539,11 +691,6 @@ observeEvent(input$advanced_data_table_rows_selected, {
         lng = selected_lon,
         lat = selected_lat,
         zoom = 15
-      ) %>%
-      addPopups(
-        lng = selected_lon,
-        lat = selected_lat,
-        popup = selected_row_data$School.Name
       )
     
   }, error = function(e) {

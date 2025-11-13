@@ -377,7 +377,7 @@ output$STRIDE2 <- renderUI({
               inputId = "Combined_Infra_Toggles_Build",
               label = strong("Select Infrastructure Metrics"),
               choices = list(
-                `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024", "Classroom Requirement" =  "Classroom.Requirement", "Classroom Shortage" = "Classroom.Shortage", "Shifting" = "Shifting", "Buildings" = "Buildings", "Buildable Space" = "With_Buildable_space", "Major Repairs Needed" = "Major.Repair.2023.2024"),
+                `Classroom` = c("Classrooms" = "Instructional.Rooms.2023.2024", "Classroom Requirement" =  "Classroom.Requirement", "Last Mile School" = "LMS.School", "Classroom Shortage" = "Classroom.Shortage", "Shifting" = "Shifting", "Buildings" = "Buildings", "Buildable Space" = "With_Buildable_space", "Major Repairs Needed" = "Major.Repair.2023.2024"),
                 `Facilities` = c("Seats Inventory" = "Total.Total.Seat", "Seats Shortage" = "Total.Seats.Shortage"),
                 `Resources` = c("Ownership Type" = "OwnershipType", "Electricity Source" = "ElectricitySource", "Water Source" = "WaterSource")
               ),

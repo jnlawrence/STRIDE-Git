@@ -13,6 +13,7 @@ global_drill_state <- reactiveVal(list(
   electricity_filter = NULL,
   water_filter = NULL,
   buildable_filter = NULL, # <-- NEW: Filter for buildable space
+  lms_filter = NULL,
   # --- END NEW FILTERS ---
   
   coc_filter = NULL,      
@@ -63,10 +64,11 @@ hr_metric_choices <- list(
 infra_metric_choices <- list(
   `Classroom` = c("Number of Classrooms" = "Instructional.Rooms.2023.2024",
                   "Classroom Requirement" =  "Classroom.Requirement",
+                  "Last Mile School" = "LMS.School",
                   "Classroom Shortage" = "Classroom.Shortage",
                   "Shifting" = "Shifting",
                   "Number of Buildings" = "Buildings",
-                  "Buildable Space" = "With_Buildable_space", # --- This was your correct change
+                  "Buildable Space" = "Buildable_Space", # --- This was your correct change
                   "Major Repairs Needed" = "Major.Repair.2023.2024"),
   `Facilities` = c("Seats Inventory" = "Total.Total.Seat",
                    "Seats Shortage" = "Total.Seats.Shortage"),
@@ -202,7 +204,7 @@ all_selected_metrics <- reactive({
 # --- Define Metric Groups ---
 teacher_metrics <- c("TotalTeachers", "Total.Shortage", "Total.Excess")
 school_metrics <- c("Total.Schools","School.Size.Typology", "Modified.COC") 
-classroom_metrics <- c("Instructional.Rooms.2023.2024", "Classroom.Requirement", "Shifting")
+classroom_metrics <- c("Instructional.Rooms.2023.2024", "Classroom.Requirement", "Shifting","Classroom_Shortage","Buildable_Space")
 enrolment_metrics <- c("G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10", "G11", "G12")
 buildingcondition_metrics <- c("Building.Count_Condemned...For.Demolition","Building.Count_For.Completion",             
                                "Building.Count_For.Condemnation","Building.Count_Good.Condition",             
@@ -217,114 +219,158 @@ roomcondition_metrics <- c("Number.of.Rooms_Condemned...For.Demolition","Number.
 
 # --- Observers 2-5: Sync Toggles -> Pickers (UPDATED) ---
 
+# --- Observers 2-5: Sync Toggles -> Pickers (UPDATED with Radio-Button Logic) ---
+
 # Preset 1: Teacher Focus Toggle
 observeEvent(input$preset_teacher, {
-  current_selection <- isolate(input$Combined_HR_Toggles_Build)
+  
   if (input$preset_teacher == TRUE) {
-    new_selection <- union(current_selection, teacher_metrics)
+    # --- 1. Turn off all other toggles ---
+    updateAwesomeCheckbox(session, "preset_school", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_enrolment", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_classroom", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_buildingcondition", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_roomcondition", value = FALSE)
+    
+    # --- 2. Update Pickers (Set this one, clear others) ---
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = teacher_metrics)
+    updatePickerInput(session, "Combined_Infra_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Conditions_Toggles_Build", selected = character(0))
+    
   } else {
-    # --- ADDED: This will remove the metrics ---
+    # --- User toggled it OFF: Just remove these metrics ---
+    current_selection <- isolate(input$Combined_HR_Toggles_Build)
     new_selection <- setdiff(current_selection, teacher_metrics)
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = new_selection)
   }
-  shinyWidgets::updatePickerInput(
-    session, 
-    "Combined_HR_Toggles_Build", 
-    selected = new_selection
-  )
+  
 }, ignoreInit = TRUE)
 
 # Preset 2: School Focus Toggle
 observeEvent(input$preset_school, {
-  current_selection <- isolate(input$Combined_HR_Toggles_Build)
+  
   if (input$preset_school == TRUE) {
-    new_selection <- union(current_selection, school_metrics)
+    # --- 1. Turn off all other toggles ---
+    updateAwesomeCheckbox(session, "preset_teacher", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_enrolment", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_classroom", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_buildingcondition", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_roomcondition", value = FALSE)
+    
+    # --- 2. Update Pickers (Set this one, clear others) ---
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = school_metrics)
+    updatePickerInput(session, "Combined_Infra_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Conditions_Toggles_Build", selected = character(0))
+    
   } else {
-    # --- ADDED: This will remove the metrics ---
+    # --- User toggled it OFF: Just remove these metrics ---
+    current_selection <- isolate(input$Combined_HR_Toggles_Build)
     new_selection <- setdiff(current_selection, school_metrics)
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = new_selection)
   }
-  shinyWidgets::updatePickerInput(
-    session, 
-    "Combined_HR_Toggles_Build", 
-    selected = new_selection
-  )
+  
 }, ignoreInit = TRUE)
 
 
 # Preset 3: Infrastructure Focus Toggle
 observeEvent(input$preset_classroom, {
-  current_selection <- isolate(input$Combined_Infra_Toggles_Build)
+  
   if (input$preset_classroom == TRUE) {
-    new_selection <- union(current_selection, classroom_metrics)
+    # --- 1. Turn off all other toggles ---
+    updateAwesomeCheckbox(session, "preset_teacher", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_school", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_enrolment", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_buildingcondition", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_roomcondition", value = FALSE)
+    
+    # --- 2. Update Pickers (Set this one, clear others) ---
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Infra_Toggles_Build", selected = classroom_metrics)
+    updatePickerInput(session, "Combined_Conditions_Toggles_Build", selected = character(0))
+    
   } else {
-    # --- ADDED: This will remove the metrics ---
+    # --- User toggled it OFF: Just remove these metrics ---
+    current_selection <- isolate(input$Combined_Infra_Toggles_Build)
     new_selection <- setdiff(current_selection, classroom_metrics)
+    updatePickerInput(session, "Combined_Infra_Toggles_Build", selected = new_selection)
   }
-  shinyWidgets::updatePickerInput(
-    session, 
-    "Combined_Infra_Toggles_Build", 
-    selected = new_selection
-  )
+  
 }, ignoreInit = TRUE)
 
 # Preset 4: Enrolment Focus Toggle
 observeEvent(input$preset_enrolment, {
-  current_selection <- isolate(input$Combined_HR_Toggles_Build)
+  
   if (input$preset_enrolment == TRUE) {
-    new_selection <- union(current_selection, enrolment_metrics)
+    # --- 1. Turn off all other toggles ---
+    updateAwesomeCheckbox(session, "preset_teacher", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_school", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_classroom", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_buildingcondition", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_roomcondition", value = FALSE)
+    
+    # --- 2. Update Pickers (Set this one, clear others) ---
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = enrolment_metrics)
+    updatePickerInput(session, "Combined_Infra_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Conditions_Toggles_Build", selected = character(0))
+    
   } else {
-    # --- ADDED: This will remove the metrics ---
+    # --- User toggled it OFF: Just remove these metrics ---
+    current_selection <- isolate(input$Combined_HR_Toggles_Build)
     new_selection <- setdiff(current_selection, enrolment_metrics)
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = new_selection)
   }
-  shinyWidgets::updatePickerInput(
-    session, 
-    "Combined_HR_Toggles_Build", 
-    selected = new_selection
-  )
+  
 }, ignoreInit = TRUE)
 
 # Preset 5: Building Condition Focus Toggle
 observeEvent(input$preset_buildingcondition, {
-  # Isolate the selection from the NEW conditions picker
-  current_selection <- isolate(input$Combined_Conditions_Toggles_Build) 
   
   if (input$preset_buildingcondition == TRUE) {
-    # Add the building condition metrics
-    new_selection <- union(current_selection, buildingcondition_metrics) 
+    # --- 1. Turn off all other toggles ---
+    updateAwesomeCheckbox(session, "preset_teacher", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_school", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_enrolment", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_classroom", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_roomcondition", value = FALSE)
+    
+    # --- 2. Update Pickers (Set this one, clear others) ---
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Infra_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Conditions_Toggles_Build", selected = buildingcondition_metrics)
+    
   } else {
-    # Remove the building condition metrics
+    # --- User toggled it OFF: Just remove these metrics ---
+    current_selection <- isolate(input$Combined_Conditions_Toggles_Build) 
     new_selection <- setdiff(current_selection, buildingcondition_metrics)
+    updatePickerInput(session, "Combined_Conditions_Toggles_Toggles_Build", selected = new_selection)
   }
   
-  # Update the NEW conditions picker
-  shinyWidgets::updatePickerInput(
-    session, 
-    "Combined_Conditions_Toggles_Build", 
-    selected = new_selection
-  )
 }, ignoreInit = TRUE)
 
 # Preset 6: Room Condition Focus Toggle
 observeEvent(input$preset_roomcondition, {
-  # Isolate the selection from the NEW conditions picker
-  current_selection <- isolate(input$Combined_Conditions_Toggles_Build) 
   
   if (input$preset_roomcondition == TRUE) {
-    # Add the room condition metrics
-    new_selection <- union(current_selection, roomcondition_metrics) 
+    # --- 1. Turn off all other toggles ---
+    updateAwesomeCheckbox(session, "preset_teacher", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_school", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_enrolment", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_classroom", value = FALSE)
+    updateAwesomeCheckbox(session, "preset_buildingcondition", value = FALSE)
+    
+    # --- 2. Update Pickers (Set this one, clear others) ---
+    updatePickerInput(session, "Combined_HR_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Infra_Toggles_Build", selected = character(0))
+    updatePickerInput(session, "Combined_Conditions_Toggles_Build", selected = roomcondition_metrics)
+    
   } else {
-    # Remove the room condition metrics
+    # --- User toggled it OFF: Just remove these metrics ---
+    current_selection <- isolate(input$Combined_Conditions_Toggles_Build) 
     new_selection <- setdiff(current_selection, roomcondition_metrics)
+    updatePickerInput(session, "Combined_Conditions_Toggles_Build", selected = new_selection)
   }
   
-  # Update the NEW conditions picker
-  shinyWidgets::updatePickerInput(
-    session, 
-    "Combined_Conditions_Toggles_Build", 
-    selected = new_selection
-  )
 }, ignoreInit = TRUE)
-
-# --- *** END: PRESET & PICKER SYNC LOGIC *** ---
 
 # --- *** END: PRESET & PICKER SYNC LOGIC *** ---
 
@@ -410,7 +456,9 @@ output$school_map <- leaflet::renderLeaflet({
     )
   
   leaflet(data_to_map) %>%
-    addProviderTiles(providers$Esri.WorldImagery) %>%
+    addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+    addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
+    addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>%
     fitBounds(
       lng1 = min(data_to_map$Longitude, na.rm = TRUE),
       lat1 = min(data_to_map$Latitude, na.rm = TRUE),
@@ -430,7 +478,9 @@ output$school_map <- leaflet::renderLeaflet({
       labelOptions = labelOptions(noHide = FALSE, direction = 'auto'),
       layerId = ~SchoolID, # --- IMPORTANT: This is the ID we use for clicks ---
       clusterOptions = markerClusterOptions() 
-    )
+    ) %>% 
+    addLayersControl(
+      baseGroups = c("Satellite","Road Map"))
 })
 
 # --- school_table (Unchanged) ---
@@ -557,6 +607,9 @@ output$back_button_ui <- renderUI({
   } else if (!is.null(state$buildable_filter)) { # --- NEW ---
     label_text <- stringr::str_trunc(state$buildable_filter, 20)
     undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
+  } else if (!is.null(state$lms_filter)) { # --- NEW ---
+    label_text <- stringr::str_trunc(state$lms_filter, 20)
+    undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
   } else if (!is.null(state$water_filter)) { 
     label_text <- stringr::str_trunc(state$water_filter, 20)
     undo_button_label <- paste("Undo Filter:", label_text); show_undo_button <- TRUE
@@ -619,6 +672,8 @@ observeEvent(input$back_button, {
     new_state$coc_filter <- NULL      
   } else if (!is.null(state$buildable_filter)) { # --- NEW ---
     new_state$buildable_filter <- NULL
+  } else if (!is.null(state$lms_filter)) { # --- NEW ---
+    new_state$lms_filter <- NULL
   } else if (!is.null(state$water_filter)) { 
     new_state$water_filter <- NULL
   } else if (!is.null(state$electricity_filter)) { 
@@ -656,6 +711,7 @@ observeEvent(input$reset_to_region_button, {
     electricity_filter = NULL,
     water_filter = NULL,
     buildable_filter = NULL, # <-- NEW
+    lms_filter = NULL,
     coc_filter = NULL,      
     typology_filter = NULL, 
     shifting_filter = NULL,
@@ -698,6 +754,7 @@ observe({
   electricity_source <- paste0("electricity_click_", current_trigger_val)
   water_source <- paste0("water_click_", current_trigger_val)
   buildable_source <- paste0("buildable_click_", current_trigger_val) # <-- NEW
+  lms_source <- paste0("lms_click_", current_trigger_val) # <-- NEW
   
   # --- Create a list to hold all new observer handles ---
   new_handles_list <- list()
@@ -756,6 +813,12 @@ observe({
   new_handles_list$buildable_observer <- observeEvent(event_data("plotly_click", source = buildable_source), {
     d <- event_data("plotly_click", source = buildable_source); if (is.null(d$y)) return()
     state <- isolate(global_drill_state()); state$buildable_filter <- d$y
+    global_drill_state(state); global_trigger(global_trigger() + 1)
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
+  
+  new_handles_list$lms_observer <- observeEvent(event_data("plotly_click", source = lms_source), {
+    d <- event_data("plotly_click", source = lms_source); if (is.null(d$y)) return()
+    state <- isolate(global_drill_state()); state$lms_filter <- d$y
     global_drill_state(state); global_trigger(global_trigger() + 1)
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
   
@@ -819,7 +882,7 @@ filtered_data <- reactive({
   if (!is.null(state$ownership_filter)) { temp_data <- temp_data %>% filter(OwnershipType == state$ownership_filter) } 
   if (!is.null(state$electricity_filter)) { temp_data <- temp_data %>% filter(ElectricitySource == state$electricity_filter) } 
   if (!is.null(state$water_filter)) { temp_data <- temp_data %>% filter(WaterSource == state$water_filter) } 
-  if (!is.null(state$buildable_filter)) { temp_data <- temp_data %>% filter(With_Buildable_space == state$buildable_filter) } # <-- NEW
+  if (!is.null(state$buildable_filter)) { temp_data <- temp_data %>% filter(Buildable_Space == state$buildable_filter) } # <-- NEW
   
   temp_data
 })
@@ -1026,7 +1089,7 @@ output$dashboard_grid <- renderUI({
       plot_title <- paste0(plot_title, " (Filtered by: ", paste(filter_parts, collapse = ", "), ")")
     }
     
-    # --- UPDATED IF CONDITION (Added With_Buildable_space) ---
+    # --- UPDATED IF CONDITION (Added Buildable_Space) ---
     if (current_metric %in% c("Modified.COC", "School.Size.Typology", "Shifting", "Total.Schools", "Completion", 
                               "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource")) { # <-- NEW
       
@@ -1067,13 +1130,13 @@ output$dashboard_grid <- renderUI({
             if (!is.null(state$ownership_filter) && current_metric != "OwnershipType") { data_for_this_plot <- data_for_this_plot %>% filter(OwnershipType == state$ownership_filter) }
             if (!is.null(state$electricity_filter) && current_metric != "ElectricitySource") { data_for_this_plot <- data_for_this_plot %>% filter(ElectricitySource == state$electricity_filter) }
             if (!is.null(state$water_filter) && current_metric != "WaterSource") { data_for_this_plot <- data_for_this_plot %>% filter(WaterSource == state$water_filter) }
-            if (!is.null(state$buildable_filter) && current_metric != "With_Buildable_space") { data_for_this_plot <- data_for_this_plot %>% filter(With_Buildable_space == state$buildable_filter) } # <-- NEW
+            if (!is.null(state$buildable_filter) && current_metric != "Buildable_Space") { data_for_this_plot <- data_for_this_plot %>% filter(Buildable_Space == state$buildable_filter) } # <-- NEW
             
             # 5. Now, count based on this *specially filtered* data
             if (nrow(data_for_this_plot) > 0) {
               
               # --- SPECIAL HANDLING for list-column ---
-              if (current_metric == "With_Buildable_space") {
+              if (current_metric == "Buildable_Space") {
                 bar_data <- data_for_this_plot %>%
                   # Unlist the column to make it countable
                   mutate(Category = unlist(!!sym(current_metric))) %>% 
@@ -1093,7 +1156,7 @@ output$dashboard_grid <- renderUI({
             return(plot_ly() %>% layout(title = list(text = plot_title, x = 0.05), annotations = list(x = 0.5, y = 0.5, text = "No data available", showarrow = FALSE)))
           }
           
-          # --- UPDATED CASE_WHEN (Added With_Buildable_space) ---
+          # --- UPDATED CASE_WHEN (Added Buildable_Space) ---
           # <-- BUG FIX (Change 3): Make plot source names dynamic
           plot_source <- dplyr::case_when(
             current_metric == "Modified.COC" ~ paste0("coc_pie_click_", current_trigger_val),
@@ -1104,7 +1167,8 @@ output$dashboard_grid <- renderUI({
             current_metric == "OwnershipType" ~ paste0("ownership_click_", current_trigger_val),
             current_metric == "ElectricitySource" ~ paste0("electricity_click_", current_trigger_val),
             current_metric == "WaterSource" ~ paste0("water_click_", current_trigger_val),
-            current_metric == "With_Buildable_space" ~ paste0("buildable_click_", current_trigger_val), # <-- NEW
+            current_metric == "Buildable_Space" ~ paste0("buildable_click_", current_trigger_val), # <-- NEW
+            current_metric == "LMS.School" ~ paste0("lms_click_", current_trigger_val),
             TRUE ~ paste0("plot_source_", current_metric, "_", current_trigger_val) 
           )
           
@@ -1172,7 +1236,7 @@ output$dashboard_grid <- renderUI({
     current_metric_name <- names(clean_metric_choices)[clean_metric_choices == current_metric]
     summary_card_content <- NULL
     
-    # --- UPDATED IF CONDITION (Added With_Buildable_space) ---
+    # --- UPDATED IF CONDITION (Added Buildable_Space) ---
     if (current_metric %in% c("Modified.COC", "School.Size.Typology", "Shifting", "Total.Schools", "Completion", 
                               "Outlier.Status", "Clustering.Status", "OwnershipType", "ElectricitySource", "WaterSource")) { # <-- NEW
       
@@ -1342,7 +1406,7 @@ output$schooldetails_build3 <- renderTable({
                "Total Seats Shortage"),
     Value = as.character(c(
       data$Buildings, data$Instructional.Rooms.2023.2024,
-      data$Classroom.Requirement, data$Est.CS,
+      data$Classroom.Requirement, data$Classroom.Shortage,
       unlist(data$With_Buildable_space), # <-- *** THIS IS THE FIX for "object object" ***
       data$Major.Repair.2023.2024, 
       data$SBPI, data$Shifting, data$OwnershipType,

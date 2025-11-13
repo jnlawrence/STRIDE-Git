@@ -33,16 +33,33 @@ library(reactablefmtr)
 # HROD Data Upload
 
 school_data <- reactiveVal(NULL)
+uni48k <- read.csv("School-Unique-48k.csv")
 efd2025 <- read.csv("EFD-2025Data1.csv") %>%
   mutate(across(
     .cols = -1,  # Selects all columns EXCEPT the first one
     .fns = ~ as.numeric(as.character(.))
   ))
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
-uni <- read_parquet("School-Unique-v2.parquet") %>% 
+uni45k <- read_parquet("School-Unique-v2.parquet") %>% 
   mutate(Municipality = stringr::str_to_title(Municipality)) %>% # School-level Data
-  mutate(Leg.Mun = sprintf("%s (%s)", Legislative.District, Municipality)) %>%
-  left_join(efd2025, by = "SchoolID")
+  mutate(Leg.Mun = sprintf("%s (%s)", Legislative.District, Municipality))
+
+uni <- left_join(uni48k,uni45k, by = "SchoolID") %>% mutate(
+  # We will modify the column in place
+  Buildable_Space = case_when(
+    # First, clean the text: make it lowercase and trim whitespace
+    # Then, check if the cleaned text is "yes"
+    tolower(trimws(With_Buildable_space)) == "yes" ~ 1,
+    
+    # Check if the cleaned text is "no"
+    tolower(trimws(With_Buildable_space)) == "no" ~ 0,
+    
+    # For any other value (including NA, "MAYBE", etc.),
+    # assign NA. The 'TRUE ~ NA_real_' explicitly does this.
+    # NA_real_ ensures the column type is numeric (double).
+    TRUE ~ NA_real_
+  )
+)
 
 # --- START: One-Time Analysis for Advanced Analytics ---
 # This runs ONCE when the app starts, right after 'uni' is loaded.
