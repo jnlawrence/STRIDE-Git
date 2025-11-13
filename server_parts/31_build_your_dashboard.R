@@ -1120,7 +1120,7 @@ output$dashboard_grid <- renderUI({
               yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
               xaxis = list(title = "Total Count", tickformat = ',.0f'),
               legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.02),
-              margin = list(l = 150) 
+              margin = list(l = 150)
             )
         }, error = function(e) {
           # ... (Error handling) ...

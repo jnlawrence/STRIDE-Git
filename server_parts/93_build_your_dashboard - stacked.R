@@ -26,7 +26,7 @@ reactive_selected_school_id <- reactiveVal(NULL)
 # This must match the 'choices' in your 10_stride2_UI.R pickers
 hr_metric_choices <- list(
   `School Information` = c("Number of Schools" = "Total.Schools",
-    "School Size Typology" = "School.Size.Typology", 
+                           "School Size Typology" = "School.Size.Typology", 
                            "Curricular Offering" = "Modified.COC"),
   `Teaching Data` = c("Number of Teachers" = "TotalTeachers", 
                       "Teacher Excess" = "Total.Excess", 
@@ -759,13 +759,15 @@ output$dashboard_grid <- renderUI({
             cliponaxis = FALSE, textfont = list(color = '#000000', size = 10),
             source = click_source_name 
           ) %>%
-            layout(
-              title = list(text = plot_title, x = 0.05), 
+            p %>% layout(
+              title = list(text = plot_title, x = 0.05),
               yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
-              xaxis = list(title = "Total Count", tickformat = ',.0f'),
-              legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.02),
-              margin = list(l = 150) 
-            )
+              xaxis = list(title = "Total Count", tickformat = ',.0f', range = xaxis_range),
+              margin = list(l = yaxis_margin)
+            ) %>%
+            
+            # --- ADD THIS LINE TO REMOVE THE TOOLBAR ---
+            config(displayModeBar = FALSE)
         }, error = function(e) {
           # ... (Error handling) ...
         })
@@ -846,67 +848,67 @@ output$dashboard_grid <- renderUI({
       })
       
     } else if (current_metric == "Building") {
-    
-    output[[paste0("plot_", current_metric)]] <- renderPlotly({
-      tryCatch({
-        # 1. Get and prepare data
-        plot_data <- summarized_data_long() %>%
-          filter(
-            startsWith(Metric, "Building.Count"), 
-            !is.na(Category)
-          ) %>%
-          mutate(
-            # Clean up names for legend: "Building.Count.TypeA" -> "TypeA"
-            Metric = stringr::str_remove(Metric, "Building.Count.")
-          )
-        
-        if (nrow(plot_data) == 0 || all(is.na(plot_data$Value))) {
-          return(plot_ly() %>% layout(title = list(text = plot_title, x = 0.05), annotations = list(x = 0.5, y = 0.5, text = "No data available", showarrow = FALSE)))
-        }
-        
-        # 2. Create data for the "Total" labels
-        plot_data_totals <- plot_data %>%
-          group_by(Category) %>%
-          summarise(TotalValue = sum(Value, na.rm = TRUE), .groups = "drop")
-        
-        # 3. Set x-axis range
-        xaxis_range <- c(0, max(plot_data_totals$TotalValue, na.rm = TRUE) * 1.3)
-        
-        # 4. Create the stacked bar plot
-        plot_ly(
-          data = plot_data, 
-          y = ~Category, 
-          x = ~Value, 
-          type = "bar",
-          orientation = 'h', 
-          color = ~Metric,      # Color by the cleaned metric name
-          source = paste0("plot_source_", current_metric)
-        ) %>%
-          layout(
-            barmode = 'stack', 
-            yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
-            xaxis = list(title = "Total Value", tickformat = ',.0f', range = xaxis_range),
-            legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.35),
-            margin = list(l = 150)
-          ) %>%
-          # 5. Add the total labels
-          add_text(
-            data = plot_data_totals, 
-            x = ~TotalValue,
+      
+      output[[paste0("plot_", current_metric)]] <- renderPlotly({
+        tryCatch({
+          # 1. Get and prepare data
+          plot_data <- summarized_data_long() %>%
+            filter(
+              startsWith(Metric, "Building.Count"), 
+              !is.na(Category)
+            ) %>%
+            mutate(
+              # Clean up names for legend: "Building.Count.TypeA" -> "TypeA"
+              Metric = stringr::str_remove(Metric, "Building.Count.")
+            )
+          
+          if (nrow(plot_data) == 0 || all(is.na(plot_data$Value))) {
+            return(plot_ly() %>% layout(title = list(text = plot_title, x = 0.05), annotations = list(x = 0.5, y = 0.5, text = "No data available", showarrow = FALSE)))
+          }
+          
+          # 2. Create data for the "Total" labels
+          plot_data_totals <- plot_data %>%
+            group_by(Category) %>%
+            summarise(TotalValue = sum(Value, na.rm = TRUE), .groups = "drop")
+          
+          # 3. Set x-axis range
+          xaxis_range <- c(0, max(plot_data_totals$TotalValue, na.rm = TRUE) * 1.3)
+          
+          # 4. Create the stacked bar plot
+          plot_ly(
+            data = plot_data, 
             y = ~Category, 
-            text = ~scales::comma(TotalValue, 1), 
-            textposition = "middle right",
-            textfont = list(color = '#000000', size = 10),
-            showlegend = FALSE, 
-            inherit = FALSE, 
-            cliponaxis = FALSE
-          )
-        
-      }, error = function(e) {
-        # ... (Error handling) ...
+            x = ~Value, 
+            type = "bar",
+            orientation = 'h', 
+            color = ~Metric,      # Color by the cleaned metric name
+            source = paste0("plot_source_", current_metric)
+          ) %>%
+            layout(
+              barmode = 'stack', 
+              yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
+              xaxis = list(title = "Total Value", tickformat = ',.0f', range = xaxis_range),
+              legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.35),
+              margin = list(l = 150)
+            ) %>%
+            # 5. Add the total labels
+            add_text(
+              data = plot_data_totals, 
+              x = ~TotalValue,
+              y = ~Category, 
+              text = ~scales::comma(TotalValue, 1), 
+              textposition = "middle right",
+              textfont = list(color = '#000000', size = 10),
+              showlegend = FALSE, 
+              inherit = FALSE, 
+              cliponaxis = FALSE
+            )
+          
+        }, error = function(e) {
+          # ... (Error handling) ...
+        })
       })
-    })
-    
+      
     } else if (current_metric == "RoomCondition") {
       
       output[[paste0("plot_", current_metric)]] <- renderPlotly({
@@ -978,8 +980,8 @@ output$dashboard_grid <- renderUI({
         })
       })
     }
-      
-      else {
+    
+    else {
       # --- RENDER DEFAULT DRILLDOWN BAR CHART (Unchanged) ---
       output[[paste0("plot_", current_metric)]] <- renderPlotly({
         tryCatch({
@@ -1004,6 +1006,11 @@ output$dashboard_grid <- renderUI({
               yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
               xaxis = list(title = "Total Value", tickformat = ',.0f', range = xaxis_range),
               legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.02),
+              modebar = list(
+                orientation = 'h',
+                y = 1.1,  # Position it ABOVE the plot
+                x = 1     # Anchor to the right
+              ),
               margin = list(l = 150)
             )
         }, error = function(e) {
