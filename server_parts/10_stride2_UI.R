@@ -164,6 +164,12 @@ output$STRIDE2 <- renderUI({
             overflow: hidden; 
             transition: transform 0.3s ease, box-shadow 0.3s ease;
           }
+          
+          .resource-card-image {
+          width: 100%;
+          height: 180px; /* You can adjust this height */
+          object-fit: cover;
+          }
           .resource-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
@@ -256,9 +262,36 @@ output$STRIDE2 <- renderUI({
           tags$h2("Resources & Toolkits"),
           div(
             class = "resource-row",
-            div(class = "resource-card", div(class = "resource-card-content", tags$h4("SGC Advocacy Materials"), tags$p("Tools and guides for promoting effective School Governance Council operations.")), div(class = "resource-card-footer", tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank"))),
-            div(class = "resource-card", div(class = "resource-card-content", tags$h4("SIIF Toolkit"), tags$p("A comprehensive toolkit for the School-Based Integrated Intervention Framework.")), div(class = "resource-card-footer", tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank"))),
-            div(class = "resource-card", div(class = "resource-card-content", tags$h4("Teacher Workload Toolkit"), tags$p("Resources to help schools analyze and manage teacher workload effectively.")), div(class = "resource-card-footer", tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")))
+            div(class = "resource-card",
+                tags$img(class = "resource-card-image", src = "sgc.png"), # <-- ADDED
+                div(class = "resource-card-content", 
+                    tags$h4("SGC Advocacy Materials"), 
+                    tags$p("Tools and guides for promoting effective School Governance Council operations.")
+                ), 
+                div(class = "resource-card-footer", 
+                    tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                )
+            ),
+            div(class = "resource-card",
+                tags$img(class = "resource-card-image", src = "siif.png"), # <-- ADDED
+                div(class = "resource-card-content", 
+                    tags$h4("SIIF Toolkit"), 
+                    tags$p("A comprehensive toolkit for the School-Based Integrated Intervention Framework.")
+                ), 
+                div(class = "resource-card-footer", 
+                    tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                )
+            ),
+            div(class = "resource-card",
+                tags$img(class = "resource-card-image", src = "teacher.png"), # <-- ADDED
+                div(class = "resource-card-content", 
+                    tags$h4("Teacher Workload Toolkit"), 
+                    tags$p("Resources to help schools analyze and manage teacher workload effectively.")
+                ), 
+                div(class = "resource-card-footer", 
+                    tags$a(href = "#", class = "resource-btn", "Learn More", target = "_blank")
+                )
+            )
           )
         ),
         
