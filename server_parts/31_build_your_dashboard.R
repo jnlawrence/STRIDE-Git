@@ -1223,10 +1223,10 @@ output$dashboard_grid <- renderUI({
           ) %>%
             layout(
               title = list(text = plot_title, x = 0.05), 
-              yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
+              yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed", automargin = TRUE),
               xaxis = list(title = "Total Value", tickformat = ',.0f', range = xaxis_range),
               legend = list(orientation = 'h', xanchor = 'center', x = 0.5, y = 1.02),
-              margin = list(l = 150)
+              margin = list(t = 50, r = 20, b = 50)
             )
         }, error = function(e) {
           # ... (Error handling) ...
