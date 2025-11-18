@@ -1294,7 +1294,7 @@ output$dashboard_grid <- renderUI({
       card_header(current_metric_name),
       card_body(
         tags$div(style = "text-align: center; padding-bottom: 10px;", summary_card_content),
-        plotlyOutput(paste0("plot_", .x))
+        plotlyOutput(paste0("plot_", .x), width = "100%", height = "100%") # <-- ADD THIS
       )
     )
   })
