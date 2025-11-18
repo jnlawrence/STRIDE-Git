@@ -83,6 +83,7 @@ output$STRIDE2 <- renderUI({
             position: relative; width: 100%; max-width: 1000px;
             margin: 60px auto; overflow: hidden; border-radius: 15px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: #fff;
+            isolation: isolate;
           }
           .home-slide { display: none; text-align: center; position: relative; }
           .home-slide img { width: 100%; height: 500px; object-fit: cover; border-radius: 15px; }
