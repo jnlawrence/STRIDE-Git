@@ -372,17 +372,17 @@ output$STRIDE2 <- renderUI({
             hr(), 
             h4(strong("Dashboard Presets")),
             tags$div(
-              style = "margin-left: -10px;",
+              style = "margin-left: -10px; text-align: left; padding-left: 15px;",
               shinyWidgets::awesomeCheckbox(inputId = "preset_teacher", label = tags$div(style = "display: flex; align-items: center;", tags$span("Teacher Focus", style = "margin-left: 10px; font-size: 1.1rem;")), value = FALSE),
-              tags$div(style = "margin-top: 5px;"),
+              tags$div(style = "margin-top: 5px;text-align: left;"),
               shinyWidgets::awesomeCheckbox(inputId = "preset_school", label = tags$div(style = "display: flex; align-items: center;", tags$span("School Focus", style = "margin-left: 10px; font-size: 1.1rem;")), value = FALSE),
-              tags$div(style = "margin-top: 5px;"),
+              tags$div(style = "margin-top: 5px; text-align: left;"),
               shinyWidgets::awesomeCheckbox(inputId = "preset_classroom", label = tags$div(style = "display: flex; align-items: center;", tags$span("Infrastructure Focus", style = "margin-left: 10px; font-size: 1.1rem;")), value = FALSE),
-              tags$div(style = "margin-top: 5px;"),
+              tags$div(style = "margin-top: 5px; text-align: left;"),
               shinyWidgets::awesomeCheckbox(inputId = "preset_enrolment", label = tags$div(style = "display: flex; align-items: center;", tags$span("Enrolment Focus", style = "margin-left: 10px; font-size: 1.1rem;")), value = FALSE),
-              tags$div(style = "margin-top: 5px;"), 
+              tags$div(style = "margin-top: 5px; text-align: left;"), 
               shinyWidgets::awesomeCheckbox(inputId = "preset_buildingcondition", label = tags$div(style = "display: flex; align-items: center;", tags$span("Building Condition", style = "margin-left: 10px; font-size: 1.1rem;")), value = FALSE),
-              tags$div(style = "margin-top: 5px;"), 
+              tags$div(style = "margin-top: 5px; text-align: left;"), 
               shinyWidgets::awesomeCheckbox(inputId = "preset_roomcondition", label = tags$div(style = "display: flex; align-items: center;", tags$span("Classroom Condition", style = "margin-left: 10px; font-size: 1.1rem;")), value = FALSE)
             ),
             hr(),
@@ -569,7 +569,7 @@ output$STRIDE2 <- renderUI({
           sidebar = sidebar(
             width = 300,
             class = "bg-secondary text-white",
-            tags$div(class = "preset-filters", tags$h5("Position Presets"), awesomeCheckboxGroup(inputId = "plantilla_presets", label = "Click to filter positions:", choices = c("Teacher", "Master Teacher", "School Principal", "Head Teacher", "Guidance Coordinator", "Guidance Counselor", "Engineer", "Administrative Officer", "Administrative Assistant"), inline = FALSE, status = "primary")),
+            tags$div(class = "preset-filters", style = "text-align: left; padding-left: 20px;", tags$h5("Position Presets"), awesomeCheckboxGroup(inputId = "plantilla_presets", label = "Click to filter positions:", choices = c("Teacher", "Master Teacher", "School Principal", "Head Teacher", "Guidance Coordinator", "Guidance Counselor", "Engineer", "Administrative Officer", "Administrative Assistant"), inline = FALSE, status = "primary")),
             hr(), 
             h5("Select Positions"),
             pickerInput(inputId = "selected_positions", label = NULL, choices = sort(unique(dfGMIS$Position)), selected = head(sort(unique(dfGMIS$Position)), 1), multiple = TRUE, options = list(`actions-box` = TRUE, `dropup-auto` = FALSE, `live-search` = TRUE, `live-search-style` = 'contains')),
@@ -669,12 +669,18 @@ output$STRIDE2 <- renderUI({
           hr(),
           card(
             card_header(tags$b("Resource Types")),
-            radioButtons(
-              inputId = "resource_type_selection",
-              label = NULL,
-              choices = c("Teaching Deployment", "Non-teaching Deployment", "Classroom Inventory", "Learner Congestion", "Industries", "Last Mile School"),
-              selected = "Teaching Deployment"
-            )
+            
+            # --- ADDED THIS WRAPPER ---
+            div(
+              style = "text-align: left; padding-left: 15px;", 
+              
+              radioButtons(
+                inputId = "resource_type_selection",
+                label = NULL,
+                choices = c("Teaching Deployment", "Non-teaching Deployment", "Classroom Inventory", "Learner Congestion", "Industries", "Facilities", "Last Mile School"),
+                selected = "Teaching Deployment"
+              )
+            ) # --- END OF WRAPPER ---
           )
         ), # End sidebar
         mainPanel(
