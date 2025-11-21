@@ -785,7 +785,6 @@ output$STRIDE2 <- renderUI({
     ), # End Dashboard nav_menu
     
     # --- QUICK SCHOOL SEARCH ---
-    # --- QUICK SCHOOL SEARCH (UPDATED UI) ---
     nav_panel(
       title = tags$b("Quick Search"),
       icon = bs_icon("search"),
@@ -811,51 +810,22 @@ output$STRIDE2 <- renderUI({
           ),
           input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")
         ), 
-        
         layout_columns(
-          # Column 1: Search Results Table
           card(card_header(strong("Search Output")), dataTableOutput("TextTable")),
-          
-          # Column 2: Map
           card(full_screen = TRUE, card_header(strong("School Mapping")), leafletOutput("TextMapping", height = 500, width = "100%")),
-          
-          # Column 3: Detailed Breakdown (Full Width)
-          card(
-            full_screen = TRUE,
-            card_header(div(strong("School Details"), tags$span(em("(Select a school from the table above)"), style = "font-size: 0.7em; color: grey;"))),
-            
-            tagList(
-              # Row 1: Basic Info
-              card(card_header(strong("Basic Information")), tableOutput("schooldetails")),
-              
-              # Row 2: Enrolment & Teachers
-              layout_columns(
-                col_widths = c(4, 4, 4),
-                card(card_header(strong("Enrolment Profile")), tableOutput("qs_enrolment")),
-                card(card_header(strong("Teacher Inventory")), tableOutput("qs_teachers")),
-                card(card_header(strong("Teacher Needs")), tableOutput("qs_teacher_needs"))
-              ),
-              
-              # Row 3: Infrastructure
-              layout_columns(
-                col_widths = c(4, 4, 4),
-                card(card_header(strong("Classroom Inventory")), tableOutput("qs_classrooms")),
-                card(card_header(strong("Classroom Needs")), tableOutput("qs_classroom_needs")),
-                card(card_header(strong("Utilities & Facilities")), tableOutput("qs_utilities"))
-              ),
-              
-              # Row 4: Others
-              layout_columns(
-                col_widths = c(6, 6),
-                card(card_header(strong("Non-Teaching Personnel")), tableOutput("qs_ntp")),
-                card(card_header(strong("Specialization Data")), tableOutput("qs_specialization"))
-              )
-            )
+          card(full_screen = TRUE, card_header(div(strong("School Details"), tags$span(em("(Select a school from the table above)"), style = "font-size: 0.7em; color: grey;"))),
+               layout_columns(
+                 card(full_screen = TRUE, card_header(strong("Basic Information")), tableOutput("schooldetails")),
+                 card(full_screen = TRUE, card_header(strong("HR Data")), tableOutput("schooldetails2")),
+                 card(full_screen = TRUE, card_header(strong("Classroom Data")), tableOutput("schooldetails3")),
+                 card(full_screen = TRUE, card_header(div(strong("Specialization Data"), tags$span(em("(based on eSF7 for SY 2023-2024)"), style = "font-size: 0.7em; color: grey;"))), tableOutput("schooldetails5")),
+                 col_widths = c(6,6,6,6)
+               )
           ),
-          col_widths = c(6, 6, 12)
+          col_widths = c(6,6,12)
         ) 
       ) # End layout_sidebar
-    ), # End Quick Search nav_panel # End Quick Search nav_panel
+    ), # End Quick Search nav_panel
     
     # --- RESOURCE MAPPING ---
     nav_panel(

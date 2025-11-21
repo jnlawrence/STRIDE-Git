@@ -188,22 +188,11 @@ authentication_server <- function(input, output, session, user_status,
     } else NULL
   })
   
-  # --- 4️⃣ DYNAMIC POSITION DROPDOWN (UPDATED) ---
+  # --- 4️⃣ DYNAMIC POSITION DROPDOWN ---
   output$position_ui <- renderUI({
-    # Read the existing file
     dfGMISPosCat <- read.csv("GMIS-Apr2025-PosCat.csv")
     req(input$govlev)
-    
-    # Get existing positions from file
-    file_positions <- unique(dfGMISPosCat$Position)
-    
-    # --- MANUALLY ADD NEW POSITIONS HERE ---
-    # Add your missing position inside this c() vector
-    all_positions <- c(file_positions, "Others (COS)", "Technical Assistant")
-    
-    # Sort the combined list
-    positions <- sort(unique(all_positions))
-    
+    positions <- sort(unique(dfGMISPosCat$Position))
     selectInput(ns("position"), "Position:", choices = positions)
   })
   
