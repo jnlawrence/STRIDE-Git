@@ -23,15 +23,18 @@ ui_footer <- shinyjs::hidden(
         tags$span(
           bsicons::bs_icon("envelope-fill", size = "0.9em"), 
           " support.stride@deped.gov.ph" # <-- Replace with actual email
-        # ),
-        # 
-        # # Vertical Separator
-        # tags$span("|", style = "color: #ccc;"),
-        # 
-        # # Phone
-        # tags$span(
-        #   bsicons::bs_icon("telephone-fill", size = "0.9em"), 
-        #   " (02) 8633-7248" # <-- Replace with actual number
+        ),
+
+        # Vertical Separator
+        tags$span("|", style = "color: #ccc;"),
+
+        # Phone
+        tags$a(
+          href = "https://docs.google.com/forms/d/e/1FAIpQLSeMF0ovtg7LlrcRTBRiSszknestVcIPiGx7eXVNPV8_7HYFlQ/viewform?usp=dialog",
+          target = "_blank",
+          style = "color: inherit; text-decoration: none; cursor: pointer;", # Optional: keeps text styling consistent
+          bsicons::bs_icon("file-earmark-text", size = "0.9em"), # Icon for form/report
+          " User Concern Form"
         )
       )
     )
