@@ -12,15 +12,12 @@ output$TextMapping <- renderLeaflet({
 
 # --- 2. Update Picker Choices Dynamically ---
 
-# This new observer clears pickers when switching to "Simple Search"
 observeEvent(input$search_mode, {
   
-  # Wait for the input to exist
   req(!is.null(input$search_mode)) 
   
   if (input$search_mode == FALSE) {
     # --- Switched TO "Simple" ---
-    # Clear all advanced inputs
     updateTextInput(session, "text_advanced", value = "")
     updatePickerInput(session, "qss_region", selected = character(0))
     updatePickerInput(session, "qss_division", selected = character(0))
@@ -31,8 +28,15 @@ observeEvent(input$search_mode, {
     # --- Switched TO "Advanced" ---
     # Clear the simple input
     updateTextInput(session, "text_simple", value = "")
+    
+    # --- ADD THIS: Force clear the pickers on entry to Advanced Mode ---
+    # This ensures "ABRA" or other defaults are removed immediately
+    updatePickerInput(session, "qss_region", selected = character(0))
+    updatePickerInput(session, "qss_division", selected = character(0))
+    updatePickerInput(session, "qss_legdist", selected = character(0))
+    updatePickerInput(session, "qss_municipality", selected = character(0))
   }
-}, ignoreNULL = TRUE, ignoreInit = TRUE) # ignoreInit is important!
+}, ignoreNULL = TRUE, ignoreInit = TRUE)
 
 # This creates a 'filtered_data' reactive that changes based on selections
 filtered_data_react <- reactive({
@@ -54,66 +58,65 @@ filtered_data_react <- reactive({
 
 # Observe Region input
 observeEvent(input$qss_region, {
-  data <- uni # Start from full data
+  data <- uni 
   
-  # Filter choices for Division
   if (!is.null(input$qss_region)) {
     data <- data %>% filter(Region %in% input$qss_region)
   }
   
-  # Update Division, LegDist, and Municipality choices
+  # Update Division - FORCE CLEAR SELECTION
   updatePickerInput(
     session, "qss_division",
     choices = sort(unique(data$Division)),
-    selected = input$qss_division # Keep existing selection if still valid
+    selected = character(0) # <--- CHANGED: Forces "Nothing Selected"
   )
   
+  # Update LegDist - FORCE CLEAR SELECTION
   updatePickerInput(
     session, "qss_legdist",
     choices = sort(unique(data$Legislative.District)),
-    selected = input$qss_legdist 
+    selected = character(0) # <--- CHANGED
   )
   
+  # Update Municipality - FORCE CLEAR SELECTION
   updatePickerInput(
     session, "qss_municipality",
     choices = sort(unique(data$Municipality)),
-    selected = input$qss_municipality
+    selected = character(0) # <--- CHANGED
   )
-}, ignoreNULL = FALSE, ignoreInit = TRUE) # `ignoreNULL = FALSE` is key!
+}, ignoreNULL = FALSE, ignoreInit = TRUE)
 
 # Observe Division input
 observeEvent(input$qss_division, {
-  data <- uni # Start from full data
+  data <- uni 
   
-  # Apply upstream filters
   if (!is.null(input$qss_region)) {
     data <- data %>% filter(Region %in% input$qss_region)
   }
   
-  # Filter choices for LegDist
   if (!is.null(input$qss_division)) {
     data <- data %>% filter(Division %in% input$qss_division)
   }
   
-  # Update LegDist and Municipality choices
+  # Update LegDist - FORCE CLEAR SELECTION
   updatePickerInput(
     session, "qss_legdist",
     choices = sort(unique(data$Legislative.District)),
-    selected = input$qss_legdist 
+    selected = character(0) # <--- CHANGED
   )
   
+  # Update Municipality - FORCE CLEAR SELECTION
   updatePickerInput(
     session, "qss_municipality",
     choices = sort(unique(data$Municipality)),
-    selected = input$qss_municipality
+    selected = character(0) # <--- CHANGED
   )
 }, ignoreNULL = FALSE, ignoreInit = TRUE)
 
 # Observe Legislative District input
 observeEvent(input$qss_legdist, {
-  data <- uni # Start from full data
+  data <- uni 
   
-  # Apply all upstream filters
   if (!is.null(input$qss_region)) {
     data <- data %>% filter(Region %in% input$qss_region)
   }
@@ -121,16 +124,15 @@ observeEvent(input$qss_legdist, {
     data <- data %>% filter(Division %in% input$qss_division)
   }
   
-  # Filter choices for Municipality
   if (!is.null(input$qss_legdist)) {
     data <- data %>% filter(Legislative.District %in% input$qss_legdist)
   }
   
-  # Update Municipality choices
+  # Update Municipality - FORCE CLEAR SELECTION
   updatePickerInput(
     session, "qss_municipality",
     choices = sort(unique(data$Municipality)),
-    selected = input$qss_municipality
+    selected = character(0) # <--- CHANGED
   )
 }, ignoreNULL = FALSE, ignoreInit = TRUE)
 

@@ -20,18 +20,213 @@ output$STRIDE2 <- renderUI({
       tags$small("Strategic Inventory for Deployment Efficiency", style = "font-size: 17px; color: #3d3232; display: block; line-height: 1; margin-block: -21px")
     ),
     tags$head(
+      # --- INJECT JAVASCRIPT FOR DRAWER (NEW) ---
+      tags$script(HTML("
+        function toggleHelpDrawer() {
+          var drawer = document.getElementById('strideHelpDrawer');
+          var overlay = document.getElementById('strideHelpOverlay');
+          if (drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            overlay.style.display = 'none';
+          } else {
+            drawer.classList.add('open');
+            overlay.style.display = 'block';
+          }
+        }
+        function switchTab(tabId) {
+          document.querySelectorAll('.drawer-tab-pane').forEach(el => el.style.display = 'none');
+          document.querySelectorAll('.drawer-tab-btn').forEach(el => el.classList.remove('active'));
+          document.getElementById(tabId).style.display = 'block';
+          event.target.classList.add('active');
+        }
+      ")),
+      
       tags$style(HTML("
+     /* --- YOUR EXISTING NAVBAR CSS --- */
+      .navbar {
+        position: fixed; 
+        top: 0;          
+        width: 100%;     
+        z-index: 1030;   
+        background: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      
+      body {
+        padding-top: 100px; 
+        background-color: #f4f6f9;
+      }
+
+     /* --- FINAL SIDEBAR FIX --- */
+      .sticky-sidebar {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: 0px !important; 
+        align-self: flex-start !important;
+        height: calc(100vh - 120px) !important;
+        max-height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
+        z-index: 1001 !important;
+      }
+      
+      /* --- DEPED THEMED DRAWER CSS (NEW) --- */
+      .help-drawer-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 51, 102, 0.3); /* Slight Blue Tint Overlay */
+        backdrop-filter: blur(2px);
+        z-index: 1040; display: none;
+      }
+      
+      .help-drawer {
+        position: fixed; top: 0; right: -600px; /* Wider drawer for manual */
+        width: 550px; height: 100vh;
+        background: white; 
+        box-shadow: -5px 0 25px rgba(0,0,0,0.2);
+        border-top: 8px solid #CE1126; /* DepEd RED Top Border */
+        z-index: 1050; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto; display: flex; flex-direction: column;
+      }
+      
+      .help-drawer.open { right: 0; }
+      
+      /* Header Styling */
+      .drawer-header { 
+        padding: 20px 25px; 
+        background: #003366; /* DepEd Blue */
+        color: white;
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
+      
+      .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+        opacity: 0.8;
+      }
+      .btn-close-white:hover { opacity: 1; }
+      
+      /* Tab Styling */
+      .drawer-tabs {
+        padding: 0; background: #fff; border-bottom: 1px solid #eee;
+        display: flex; justify-content: space-around;
+      }
+      
+      .drawer-tab-btn { 
+        border: none; background: none; padding: 15px 20px; 
+        font-weight: 600; color: #6c757d; 
+        border-bottom: 4px solid transparent;
+        flex-grow: 1; transition: all 0.2s ease;
+        font-size: 0.95rem;
+      }
+      
+      .drawer-tab-btn:hover { color: #003366; background: #f8f9fa; }
+      
+      .drawer-tab-btn.active { 
+        color: #CE1126; /* DepEd RED Active Text */
+        border-bottom: 4px solid #CE1126; /* DepEd RED Active Line */
+        background-color: rgba(206, 17, 38, 0.03);
+      }
+      
+      /* Content Area */
+      .drawer-content { padding: 25px; flex-grow: 1; font-size: 0.95rem; background-color: #fcfcfc; }
+      
+      /* Introduction Box */
+      .drawer-intro {
+        background-color: #fff; border-left: 5px solid #FFB81C; /* Gold Accent */
+        padding: 15px; margin-bottom: 20px; border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+      
+      /* Accordion Styling (DepEd Theme) */
+      .accordion-item { border: 1px solid #e0e0e0; margin-bottom: 8px; border-radius: 6px !important; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+      
+      .accordion-button { 
+        font-weight: 600; color: #003366; background-color: #ffffff; 
+        padding: 15px 20px; transition: all 0.2s;
+      }
+      
+      .accordion-button:hover { background-color: #f0f4f8; }
+      
+      .accordion-button:not(.collapsed) { 
+        color: #ffffff; 
+        background-color: #003366; /* Active Header becomes Blue */
+        box-shadow: inset 0 -1px 0 rgba(0,0,0,.125); 
+      }
+      
+      .accordion-button:not(.collapsed)::after {
+        filter: brightness(0) invert(1); /* Make arrow white */
+      }
+      
+      .accordion-body { 
+        font-size: 0.9rem; line-height: 1.6; color: #333; 
+        padding: 20px; background: #fff;
+      }
+      
+      /* Manual Content Styles */
+      .manual-section-title { 
+        color: #003366; font-weight: 700; 
+        margin-top: 20px; margin-bottom: 8px; 
+        font-size: 1rem; border-left: 4px solid #FFB81C; 
+        padding-left: 10px; 
+      }
+      .manual-ul { padding-left: 20px; margin-bottom: 15px; }
+      .manual-li { margin-bottom: 8px; }
+      .manual-img { 
+        width: 100%; border: 1px solid #ddd; border-radius: 8px; 
+        margin: 15px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.05); 
+      }
+      
+      /* FAQ & Glossary Cards */
+      .faq-item, .glossary-item { 
+        background: white; padding: 15px; 
+        border-radius: 8px; border: 1px solid #eee; 
+        margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        transition: transform 0.2s;
+      }
+      .faq-item:hover, .glossary-item:hover {
+        transform: translateX(5px); border-left: 3px solid #CE1126; /* Red Hover */
+      }
+      
+      .glossary-term { font-weight: 700; color: #003366; display: block; font-size: 1rem; margin-bottom: 5px;}
+      .faq-q { font-weight: 700; color: #003366; display: block; margin-bottom: 8px; }
+      .faq-a { color: #444; margin-bottom: 0; font-size: 0.9rem; }
+      
+      /* Responsive fix for mobile */
+      @media (max-width: 600px) {
+        .help-drawer { width: 100%; right: -100%; }
+      }
+      
+      .navbar-nav { align-items: center; } /* Fix for vertical divider */
+
+      /* --- OTHER CSS --- */
       .js-plotly-plot .plotly .modebar {
          top: -30px !important;
       }
     "))
     ),
-  ) # End of navbar_title_ui tags$a
+  ) # End navbar_title_ui
   
   
   # --- 3. Define the list of nav items ALL users can see ---
   nav_list_base <- list(
     nav_spacer(),
+    
+    # --- QUICK START BUTTON (Styled) ---
+    nav_item(
+      tags$a(
+        href = "javascript:void(0);",
+        onclick = "toggleHelpDrawer()", 
+        class = "nav-link",
+        style = "cursor: pointer; font-weight: 600; color: #003366; display: flex; align-items: center; transition: color 0.2s;",
+        onmouseover = "this.style.color='#CE1126'", # Red on hover
+        onmouseout = "this.style.color='#003366'",
+        bs_icon("journal-bookmark"), tags$span("Quick Start", style="margin-left: 5px;")
+      )
+    ),
+    
+    # --- VERTICAL DIVIDER LINE ---
+    nav_item(
+      tags$div(style = "border-left: 2px solid #e0e0e0; height: 25px; margin: 0 15px; align-self: center;")
+    ),
     
     # --- HOME PANEL ---
     nav_panel(
@@ -271,7 +466,7 @@ output$STRIDE2 <- renderUI({
           div(
             class = "resource-row",
             div(class = "resource-card",
-                tags$img(class = "resource-card-image", src = "ecp.png"), # <-- ADDED
+                tags$img(class = "resource-card-image", src = "ecp.png"), 
                 div(class = "resource-card-content", 
                     tags$h4("ECP System Toolkit"), 
                     tags$p("An implementation guide for teachers on The expanded career progression system.")
@@ -281,7 +476,7 @@ output$STRIDE2 <- renderUI({
                 )
             ),
             div(class = "resource-card",
-                tags$img(class = "resource-card-image", src = "siif.png"), # <-- ADDED
+                tags$img(class = "resource-card-image", src = "siif.png"), 
                 div(class = "resource-card-content", 
                     tags$h4("SIIF Toolkit"), 
                     tags$p("A comprehensive toolkit for the School-Based Integrated Intervention Framework.")
@@ -291,7 +486,7 @@ output$STRIDE2 <- renderUI({
                 )
             ),
             div(class = "resource-card",
-                tags$img(class = "resource-card-image", src = "teacher.png"), # <-- ADDED
+                tags$img(class = "resource-card-image", src = "teacher.png"), 
                 div(class = "resource-card-content", 
                     tags$h4("Teacher Workload Toolkit"), 
                     tags$p("Resources to help schools analyze and manage teacher workload effectively.")
@@ -303,7 +498,6 @@ output$STRIDE2 <- renderUI({
           )
         ),
         
-        # ---!!!--- IMPORTANT SCRIPT (FIXES CAROUSEL & MODALS) ---!!!---
         tags$script(HTML("
           // ... (Your Javascript from the file) ...
           try {
@@ -366,6 +560,7 @@ output$STRIDE2 <- renderUI({
         value = "build_dashboard_tab",  
         layout_sidebar(
           sidebar = sidebar(
+            class = "sticky-sidebar",
             width = 350,
             title = "Dashboard Controls",
             uiOutput("back_button_ui"),
@@ -501,36 +696,21 @@ output$STRIDE2 <- renderUI({
         title = "Advanced Analytics",
         icon = icon("chart-line"),
         layout_sidebar(
-          sidebar = sidebar(width = 350,
-            title = "Advanced Filters",
-            
-            # 1. Container for dynamic filters
-            # New filters will be added here by the server
-            div(id = "adv_filter_container"),
-            
-            # 2. "Add Filter" Button
-            actionButton("add_adv_filter_btn", "Add Variable Filter", 
-                         icon = icon("plus"), class = "btn-default w-100 mb-3"),
-            
-            hr(),
-            
-            # 3. "Apply" Button
-            actionButton("adv_analytics_run", "Apply Filters & Plot", 
-                         icon = icon("play"), class = "btn-primary w-100")
+          sidebar = sidebar(class = "sticky-sidebar",width = 350,
+                            title = "Advanced Filters",
+                            div(id = "adv_filter_container"),
+                            actionButton("add_adv_filter_btn", "Add Variable Filter", 
+                                         icon = icon("plus"), class = "btn-default w-100 mb-3"),
+                            hr(),
+                            actionButton("adv_analytics_run", "Apply Filters & Plot", 
+                                         icon = icon("play"), class = "btn-primary w-100")
           ),
-          
-          # --- Main Panel for Plot and Description ---
-          # --- Main Panel for Plot and Description (UPDATED) ---
           fluidRow(
             column(12,
-                   # This card will hold the plot
                    card(
                      card_header("Drilldown Plot"),
                      card_body(
-                       # The Reset and Back buttons
                        uiOutput("adv_drill_controls_ui"),
-                       
-                       # The plot (with the click ID)
                        plotOutput("advanced_drilldown_plot", click = "adv_plot_click")
                      )
                    )
@@ -538,37 +718,32 @@ output$STRIDE2 <- renderUI({
           ),
           fluidRow(
             column(6,
-                   # This card will hold the data table
                    card(
                      card_header("Filtered Data"),
                      card_body(
                        DT::dataTableOutput("advanced_data_table")
                      ),
-                     # Set a fixed height for better alignment
                      style = "height: 700px;" 
                    )
             ),
             column(6,
-                   # This card will hold the map
                    card(
                      card_header("School Map"),
                      card_body(
-                       # The map
                        leafletOutput("advanced_school_map", height = "600px") 
                      ),
-                     # Set a fixed height for better alignment
                      style = "height: 700px;" 
                    )
             )
           )
-        ) # End layout_sidebar
-      ), # End nav_panel("Advanced Analytics") 
+        ) 
+      ), 
       nav_panel(
         "Plantilla Positions",
         layout_sidebar(
           sidebar = sidebar(
+            class = "sticky-sidebar bg-secondary text-white",
             width = 300,
-            class = "bg-secondary text-white",
             tags$div(class = "preset-filters", style = "text-align: left; padding-left: 20px;", tags$h5("Position Presets"), awesomeCheckboxGroup(inputId = "plantilla_presets", label = "Click to filter positions:", choices = c("Teacher", "Master Teacher", "School Principal", "Head Teacher", "Guidance Coordinator", "Guidance Counselor", "Engineer", "Administrative Officer", "Administrative Assistant"), inline = FALSE, status = "primary")),
             hr(), 
             h5("Select Positions"),
@@ -583,6 +758,7 @@ output$STRIDE2 <- renderUI({
         title = "Infrastructure and Education Facilities",
         layout_sidebar(
           sidebar = sidebar(
+            class = "sticky-sidebar",
             width = 350,
             div( 
               card(card_header("Filter by Category"), height = 400, card_body(pickerInput(inputId = "selected_category", label = NULL, choices = all_categories, selected = all_categories, multiple = TRUE, options = pickerOptions(actionsBox = TRUE, liveSearch = TRUE, header = "Select Categories", title = "No Category Selected", selectedTextFormat = "count > 3", dropupAuto = FALSE, dropup = FALSE), choicesOpt = list()))),
@@ -614,6 +790,7 @@ output$STRIDE2 <- renderUI({
       icon = bs_icon("search"),
       layout_sidebar(
         sidebar = sidebar(
+          class = "sticky-sidebar",
           shinyWidgets::switchInput(inputId = "search_mode", label = "Advanced Search", value = FALSE, onLabel = "On", offLabel = "Off", size = "small"),
           conditionalPanel(
             condition = "input.search_mode == false",
@@ -656,6 +833,7 @@ output$STRIDE2 <- renderUI({
       icon = bs_icon("map"),
       layout_sidebar(
         sidebar = sidebar(
+          class = "sticky-sidebar",
           width = 375,
           title = "Resource Mapping Filters",
           card(
@@ -705,6 +883,7 @@ output$STRIDE2 <- renderUI({
         title = "CLOUD (SDO Breakdown)",
         layout_sidebar(
           sidebar = sidebar(
+            class = "sticky-sidebar",
             width = 350,
             title = "Dashboard Navigation",
             card(height = 400, card_header(tags$b("Select Category")), card_body(pickerInput(inputId = "cloud_main_category_picker", label = NULL, choices = c("Enrolment Data" = "cloud_enrolment", "SNED Learners" = "cloud_sned", "IP Learners" = "cloud_ip", "Muslim Learners" = "cloud_muslim", "Displaced Learners" = "cloud_displaced", "ALS Learners" = "cloud_als", "Dropout Data" = "cloud_dropout", "Teacher Inventory" = "cloud_teacherinventory", "Years in Service" = "cloud_years", "Classroom Inventory" = "cloud_classroom", "Multigrade" = "cloud_multigrade", "Organized Class" = "cloud_organizedclass", "JHS Teacher Deployment" = "cloud_jhsdeployment", "Shifting" = "cloud_shifting", "Learning Delivery Modality" = "cloud_LDM", "ARAL" = "cloud_ARAL", "CRLA" = "cloud_crla", "PhilIRI" = "cloud_philiri", "Alternative Delivery Modality" = "cloud_adm", "Reading Proficiency" = "cloud_rf", "Electricity Source" = "cloud_elec", "Water Source" = "cloud_water", "Internet Source" = "cloud_internet", "Internet Usage" = "cloud_internet_usage", "Bullying Incidence" = "cloud_bully", "Overload Pay" = "cloud_overload", "School Resources" = "cloud_resources", "NAT" = "cloud_nat", "NAT Sufficiency" = "cloud_nat_sufficiency", "LAC" = "cloud_lac", "Feeding Program" = "cloud_feeding", "SHA" = "cloud_sha"), selected = "general_school_count", multiple = FALSE, options = pickerOptions(actionsBox = FALSE, liveSearch = TRUE, header = "Select a Category", title = "Select Category", dropupAuto = FALSE, dropup = FALSE), choicesOpt = list()))),
@@ -742,6 +921,7 @@ output$STRIDE2 <- renderUI({
         title = tags$b("Information Database"),
         layout_sidebar(
           sidebar = sidebar(
+            class = "sticky-sidebar",
             width = 350,
             h6("Data Toggles:"),
             pickerInput(inputId = "DataBuilder_HROD_Region", label = "Select a Region:", choices = sort(unique(uni$Region)), selected = sort(unique(uni$Region)), multiple = FALSE, options = pickerOptions(actionsBox = TRUE, liveSearch = TRUE, header = "Select Categories", title = "No Category Selected", selectedTextFormat = "count > 3", dropupAuto = FALSE, dropup = FALSE)),
@@ -758,27 +938,7 @@ output$STRIDE2 <- renderUI({
             col_widths = c(12, 12)
           )
         ) # End layout_sidebar
-      ), # End nav_panel
-      
-      # nav_panel(
-      #   title = tags$b("DepEd Officials"),
-      #   layout_sidebar(
-      #     sidebar = sidebar(
-      #       width = 350,
-      #       h6("Strand Filter:"),
-      #       pickerInput(inputId = "ThirdLevel_Strands", label = "Select Strand(s):", width = "100%", choices = c("Administration", "Deped Attached Agencies", "Finance", "Human Resource And Organizational Development", "Learning System", "Legal And Legislative Affairs", "Office Of The Secretary", "Operations", "Procurement", "Strategic Management", "Teachers And Education Council Secretariat"), selected = c("Administration", "Deped Attached Agencies", "Finance", "Human Resource And Organizational Development", "Learning System", "Legal And Legislative Affairs", "Office Of The Secretary", "Operations", "Procurement", "Strategic Management", "Teachers And Education Council Secretariat"), multiple = TRUE, options = pickerOptions(container = "body", width = "350px", actionsBox = TRUE, liveSearch = TRUE, header = "Select Strand(s)", title = "No Strand Selected", selectedTextFormat = "count > 3", dropupAuto = FALSE, dropup = FALSE), choicesOpt = list(style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"))
-      #     ), # End sidebar
-      #     layout_columns(
-      #       card(
-      #         full_screen = TRUE,
-      #         style = "width: 100%; max-height: 85vh; overflow-y: auto; margin-bottom: 20px;",
-      #         card_header(strong("HROD Data Panel"), style = "font-size: 22px; padding: 15px 20px; text-align: center; background-color: #00234d; border-bottom: 2px solid #dee2e6;"),
-      #         card_body(div(style = "padding: 10px; overflow-x: auto; height: calc(85vh - 80px);", dataTableOutput("ThirdLevel_Table")))
-      #       ),
-      #       col_widths = c(12)
-      #     )
-      #   ) # End layout_sidebar
-      # ) # End nav_panel
+      ) # End nav_panel
     ), # End Data Explorer nav_menu
     
     # --- mySTRIDE PANEL ---
@@ -794,10 +954,7 @@ output$STRIDE2 <- renderUI({
           offset = 3, 
           class = "mt-5 mb-5",
           
-          # We remove all centering from the card...
           bslib::card( 
-            
-            # ...and instead add an explicit card_body with flexbox styles
             card_body(
               style = "display: flex; flex-direction: column; align-items: center; justify-content: center;",
               
@@ -831,7 +988,7 @@ output$STRIDE2 <- renderUI({
   
   # --- 6. Build the page_navbar dynamically ---
   # We pass the final list of nav items to do.call
-  do.call(
+  navbar_ui <- do.call(
     page_navbar, 
     c(
       list(
@@ -845,6 +1002,239 @@ output$STRIDE2 <- renderUI({
         )
       ),
       final_nav_list # Add the list of nav panels/menus
+    )
+  )
+  
+  # --- 7. Return Navbar wrapped with Drawer HTML ---
+  tagList(
+    navbar_ui,
+    
+    # --- DRAWER OVERLAY ---
+    tags$div(
+      id = "strideHelpOverlay", 
+      class = "help-drawer-overlay", 
+      onclick = "toggleHelpDrawer()" # Click outside to close
+    ),
+    
+    # --- DRAWER CONTAINER ---
+    tags$div(
+      id = "strideHelpDrawer",
+      class = "help-drawer",
+      
+      # HEADER (DepEd Blue + Gold)
+      tags$div(class = "drawer-header", 
+               tags$h4("STRIDE User Guide", style = "margin: 0; font-weight: 700;"), 
+               tags$button(class = "btn-close btn-close-white", onclick = "toggleHelpDrawer()")
+      ),
+      
+      # TABS (DepEd Styled)
+      tags$div(class = "drawer-tabs",
+               tags$button(class = "drawer-tab-btn active", onclick = "switchTab('tab-guide')", "Manual"),
+               tags$button(class = "drawer-tab-btn", onclick = "switchTab('tab-glossary')", "Glossary"),
+               tags$button(class = "drawer-tab-btn", onclick = "switchTab('tab-faq')", "FAQs")
+      ),
+      
+      # CONTENT AREA
+      tags$div(class = "drawer-content",
+               
+               # --- MANUAL TAB (Detailed + Introduction) ---
+               tags$div(id = "tab-guide", class = "drawer-tab-pane", style = "display: block;",
+                        
+                        # 1. INTRODUCTION (Restored as requested)
+                        tags$div(class = "drawer-intro",
+                                 tags$h5("1. Introduction", style="color:#003366; margin-top:0; font-weight:bold;"),
+                                 tags$p("Welcome to STRIDE!"),
+                                 tags$p("STRIDE is your central hub for viewing and analyzing comprehensive data, including school information, human resources, infrastructure, and much more."),
+                                 tags$p("This manual is designed to guide you through every feature, from creating your account to exploring complex data dashboards.")
+                        ),
+                        
+                        tags$div(class = "accordion", id = "manualAccordion",
+                                 
+                                 # 2. GETTING STARTED
+                                 tags$div(class = "accordion-item", tags$h2(class = "accordion-header", id = "h2", tags$button(class = "accordion-button", type = "button", `data-bs-toggle` = "collapse", `data-bs-target` = "#c2", "2. Getting Started: Accessing STRIDE")),
+                                          tags$div(id = "c2", class = "accordion-collapse collapse show", `data-bs-parent` = "#manualAccordion", tags$div(class = "accordion-body",
+                                                                                                                                                          tags$div(class = "manual-section-title", "2.1. Creating a New Account"),
+                                                                                                                                                          tags$ul(class="manual-ul",
+                                                                                                                                                                  tags$li(class="manual-li", "From the login page, click the 'Create an Account' text."),
+                                                                                                                                                                  tags$li(class="manual-li", "Fill out all the necessary information as requested (Station, DepEd Email, and Password)."),
+                                                                                                                                                                  tags$li(class="manual-li", "Click the 'Register' button to submit your request."),
+                                                                                                                                                                 
+                                                                                                                                                          ),
+                                                                                                                                                          tags$div(class = "manual-section-title", "2.2. Logging In"),
+                                                                                                                                                          tags$ul(class="manual-ul",
+                                                                                                                                                                  tags$li(class="manual-li", "Enter your registered DepEd Email Address."),
+                                                                                                                                                                  tags$li(class="manual-li", "Enter your Password."),
+                                                                                                                                                                  tags$li(class="manual-li", "Click the 'Login' button to access the dashboard.")
+                                                                                                                                                          ),
+                                                                                                                                                          tags$div(class = "manual-section-title", "2.3. Using Guest Mode"),
+                                                                                                                                                          tags$ul(class="manual-ul",
+                                                                                                                                                                  tags$li(class="manual-li", "On the login page, click the 'Guest Mode' button."),
+                                                                                                                                                                  tags$li(class="manual-li", "Note: Guest Mode collects basic analytics and has limited access compared to registered users.")
+                                                                                                                                                          ),
+                                                                                                                      
+                                          ))
+                                 ),
+                                 
+                                 # 3. HOME PAGE (Separated per request)
+                                 tags$div(class = "accordion-item", tags$h2(class = "accordion-header", id = "h3", tags$button(class = "accordion-button collapsed", type = "button", `data-bs-toggle` = "collapse", `data-bs-target` = "#c3", "3. Home Page")),
+                                          tags$div(id = "c3", class = "accordion-collapse collapse", `data-bs-parent` = "#manualAccordion", tags$div(class = "accordion-body",
+                                                                                                                                                     tags$p("After logging in, you will land on the Home Page. This page provides a brief introduction to the STRIDE platform's purpose, serving as your starting point for all data exploration.")
+                                          ))
+                                 ),
+                                 
+                                 # 4. DASHBOARD (With Sub-categories)
+                                 tags$div(class = "accordion-item", tags$h2(class = "accordion-header", id = "h4", tags$button(class = "accordion-button collapsed", type = "button", `data-bs-toggle` = "collapse", `data-bs-target` = "#c4", "4. Dashboard")),
+                                          tags$div(id = "c4", class = "accordion-collapse collapse", `data-bs-parent` = "#manualAccordion", tags$div(class = "accordion-body",
+                                                                                                                                                     
+                                                                                                                                                     tags$div(class = "manual-section-title", "Education Resource Dashboard"),
+                                                                                                                                                     tags$p("This powerful dashboard allows you to generate graphs and locate specific schools."),
+                                                                                                                                                     tags$ul(class="manual-ul",
+                                                                                                                                                             tags$li(class="manual-li", tags$strong("Sidebar Controls:"), " Use the Presets (Teacher, School, Infrastructure, and more) to automatically select data."),
+                                                                                                                                                             tags$li(class="manual-li", tags$strong("Main Content:"), " Shows Teacher Surplus (Blue) and Shortage (Red)."),
+                                                                                                                                                             tags$li(class="manual-li", tags$strong("Drill Down:"), " Click on a Region bar to view Division-level data.")
+                                                                                                                                                     ),
+                                                                                                                                                    
+                                                                                                                                                     
+                                                                                                                                                     tags$div(class = "manual-section-title", "Advanced Analytics"),
+                                                                                                                                                     tags$p("Designed for advanced users to compare relationships between multiple data categories."),
+                                                                                                                                                     tags$ul(class="manual-ul",
+                                                                                                                                                             tags$li(class="manual-li", "Select your variables (e.g., Enrolment vs Classroom Shortage)."),
+                                                                                                                                                             tags$li(class="manual-li", "Click 'Apply Filters' to generate a graph.")
+                                                                                                                                                     ),
+                                                                                                                                                     
+                                                                                                                                                     tags$div(class = "manual-section-title", "Plantilla Position"),
+                                                                                                                                                     tags$p("Provides insights into filled and unfilled personnel positions. Use Presets to select positions like 'Teacher I'."),
+                                                                                                                                                     
+                                                                                                                                                     tags$div(class = "manual-section-title", "Infrastructure & Education Facilities"),
+                                                                                                                                                     tags$p("Detailed data on planning, allocation, and completion of physical resources.")
+                                          ))
+                                 ),
+                                 
+                                 # 5. QUICK SEARCH
+                                 tags$div(class = "accordion-item", tags$h2(class = "accordion-header", id = "h5", tags$button(class = "accordion-button collapsed", type = "button", `data-bs-toggle` = "collapse", `data-bs-target` = "#c5", "5. Quick Search")),
+                                          tags$div(id = "c5", class = "accordion-collapse collapse", `data-bs-parent` = "#manualAccordion", tags$div(class = "accordion-body",
+                                                                                                                                                     tags$p("Designed to help you find, locate, and get information on a specific school instantly."),
+                                                                                                                                                     tags$ul(class="manual-ul",
+                                                                                                                                                             tags$li(class="manual-li", tags$strong("Basic Search:"), " Type a school name in the sidebar input field."),
+                                                                                                                                                             tags$li(class="manual-li", tags$strong("Advanced Search:"), " Toggle 'ON' to filter by Region, Division, or Municipality.")
+                                                                                                                                                     )
+                                          ))
+                                 ),
+                                 
+                                 # 6. RESOURCE MAPPING
+                                 tags$div(class = "accordion-item", tags$h2(class = "accordion-header", id = "h6", tags$button(class = "accordion-button collapsed", type = "button", `data-bs-toggle` = "collapse", `data-bs-target` = "#c6", "6. Resource Mapping")),
+                                          tags$div(id = "c6", class = "accordion-collapse collapse", `data-bs-parent` = "#manualAccordion", tags$div(class = "accordion-body",
+                                                                                                                                                     tags$p("A dynamic page for geographic analysis. Data changes based on filters applied."),
+                                                                                                                                                     tags$ol(class="manual-ul",
+                                                                                                                                                             tags$li(class="manual-li", "Set Data Filters: Region, Division, Legislative District."),
+                                                                                                                                                             tags$li(class="manual-li", "Set Resource Types: Select from Teaching Deployment, Classroom Inventory, etc."),
+                                                                                                                                                             tags$li(class="manual-li", "Click 'Show Selection' to populate the map.")
+                                                                                                                                                     ),
+                                                                                                                                             
+                                          ))
+                                 ),
+                                 
+                                 # 7. CLOUD
+                                 tags$div(class = "accordion-item", tags$h2(class = "accordion-header", id = "h7", tags$button(class = "accordion-button collapsed", type = "button", `data-bs-toggle` = "collapse", `data-bs-target` = "#c7", "7. Cloud")),
+                                          tags$div(id = "c7", class = "accordion-collapse collapse", `data-bs-parent` = "#manualAccordion", tags$div(class = "accordion-body",
+                                                                                                                                                     tags$div(class = "manual-section-title", "Cloud (Regional Profile)"),
+                                                                                                                                                     tags$p("Provides a high-level summary of key metrics for a selected region."),
+                                                                                                                                                     
+                                                                                                                                                     tags$div(class = "manual-section-title", "Cloud (SDO Breakdown)"),
+                                                                                                                                                     tags$p("Detailed comparison of SDOs. Select a category (e.g., IP Learners) to see bar charts."),
+                                                                                                                                                     
+                                                                                                                                                     tags$div(class = "manual-section-title", "Cloud (Multivariable)"),
+                                                                                                                                                     tags$p("A grid view designed for comparing up to 6 different data categories simultaneously.")
+                                          ))
+                                 ),
+                                 
+                                 # 8. DATA EXPLORER
+                                 tags$div(class = "accordion-item", tags$h2(class = "accordion-header", id = "h8", tags$button(class = "accordion-button collapsed", type = "button", `data-bs-toggle` = "collapse", `data-bs-target` = "#c8", "8. Data Explorer")),
+                                          tags$div(id = "c8", class = "accordion-collapse collapse", `data-bs-parent` = "#manualAccordion", tags$div(class = "accordion-body",
+                                                                                                                                                     tags$div(class = "manual-section-title", "Information Database"),
+                                                                                                                                                     tags$p("The central repository for viewing raw data tables."),
+                                                                                                                                                     tags$ul(class="manual-ul",
+                                                                                                                                                             tags$li(class="manual-li", "Use sidebar checkboxes to show/hide columns."),
+                                                                                                                                                             tags$li(class="manual-li", "Click 'CSV' or 'Excel' buttons to export data.")
+                                                                                                                                                     ),
+                                                                                                                                                     
+                                          ))
+                                 )
+                        )
+               ),
+               
+               # --- GLOSSARY TAB ---
+               tags$div(id = "tab-glossary", class = "drawer-tab-pane", style = "display: none;",
+                        tags$input(type="text", class="form-control mb-3", placeholder="Search glossary...", onkeyup="var val=this.value.toLowerCase(); document.querySelectorAll('.glossary-item').forEach(el => { el.style.display = el.innerText.toLowerCase().includes(val) ? 'block' : 'none'; });"),
+                        
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Allocation"), "The planned or budgeted amount for an infrastructure or resource project before implementation."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Buildable Space"), "The portion of a school site that can still be used for construction or expansion."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Classroom Shortage"), "The deficit between the required number of classrooms and the existing classrooms in a school."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Completion"), "The actual progress or percentage of accomplishment of an infrastructure project."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Data Hierarchy"), "The fixed organizational structure used in STRIDE: Region > SDO/Division > Municipality > Legislative District > District > School."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Data Toggle"), "An option (checkbox or picker) used to show or hide entire columns in a data table."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Drill Down"), "The interactive action of clicking on a graph or table element to view more detailed data according to the Data Hierarchy."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Enrolment (Enrollment)"), "The total number of learners officially registered in a school for a given school year."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Facilities"), "Physical school resources such as classrooms, laboratories, water systems, electricity, and other infrastructure."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Guest Mode"), "A restricted access mode for users without an account. Limited features are available."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Implementing Unit (IU)"), "Schools with financial autonomy to manage their own funds."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Last Mile School"), "Schools considered geographically isolated, underserved, or lacking essential facilities, connectivity, and infrastructure."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Learner Congestion"), "The measure of overcrowding in classrooms, often shown as learners per room or per usable classroom."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Multivariable Analysis"), "A comparative method that displays the relationships between multiple selected data categories in a single visual output."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Picker"), "A dropdown menu used to select specific categories, variables, or criteria. Located primarily in sidebars."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Plantilla Position"), "The list of official, approved, filled, and unfilled personnel positions in DepEd."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Preset / Checkbox"), "A quick-select option that automatically checks or loads predefined related data points in a picker."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Reactive"), "A system behavior where tables, maps, or graphs instantly update when the user changes a filter."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Region"), "The highest geographic and administrative level in the STRIDE data structure."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Resource Types"), "Categories of data used in mapping: Teaching Deployment, Non-Teaching Deployment, Facilities, Classroom Inventory, etc."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "SDO / Division"), "Schools Division Office. The administrative level under the Regional Office."),
+                        tags$div(class="glossary-item", tags$span(class="glossary-term", "Sidebar"), "The control panel on the left side of most STRIDE pages containing pickers, toggles, and filters.")
+               ),
+               
+               # --- FAQ TAB ---
+               tags$div(id = "tab-faq", class = "drawer-tab-pane", style = "display: none;",
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: I clicked a bar in the Interactive Dashboard, but nothing happened. Why can't I Drill Down?"),
+                                 tags$p(class="faq-a", "A: The next hierarchical level (e.g., SDO/Division) may have no data for the selected region, or the Drill Down only supports up to District level in that dashboard.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: My graph disappeared after I deselected an item in the Picker."),
+                                 tags$p(class="faq-a", "A: The system requires at least one data variable to be selected. Ensure you have not deselected all available items.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: How do I find a specific school's location?"),
+                                 tags$p(class="faq-a", "A: Use the School Locator Tab in the Dashboard (after filtering by location) or, for a direct search, use the Quick School Search navigation menu.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: How do I save the table data I'm viewing?"),
+                                 tags$p(class="faq-a", "A: In the Data Explorer, look for the export options (CSV, Excel, Print) to save the data.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: If I use the export feature, does it save all data in the database?"),
+                                 tags$p(class="faq-a", "A: No. The export function saves the exact, filtered, and visible data you see on your screen.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: How do I reorganize the table data from highest to lowest?"),
+                                 tags$p(class="faq-a", "A: Simply click the column header (e.g., 'Enrolment'). Clicking once sorts ascending, twice sorts descending.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: The map is blank or not showing any school pins. What should I do?"),
+                                 tags$p(class="faq-a", "A: This happens when no results match your filters. Recheck your Region, Division, or Resource Type selections.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: Why does the Data Table say 'No data found'?"),
+                                 tags$p(class="faq-a", "A: Your filters might be too specific. Clear or adjust your pickers to widen the results.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: Can I update or correct data in STRIDE?"),
+                                 tags$p(class="faq-a", "A: Only authorized personnel can update STRIDE. Contact STRIDE support if you see errors.")
+                        ),
+                        tags$div(class="faq-item",
+                                 tags$span(class="faq-q", "Q: Why can't I log in even with correct credentials?"),
+                                 tags$p(class="faq-a", "A: Your account may not be verified, inactive, or your DepEd email may have issues. Try resetting your password or contact support.")
+                        )
+               )
+      )
     )
   )
   
