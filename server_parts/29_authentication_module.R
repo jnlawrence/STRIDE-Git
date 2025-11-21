@@ -199,7 +199,7 @@ authentication_server <- function(input, output, session, user_status,
     
     # --- MANUALLY ADD NEW POSITIONS HERE ---
     # Add your missing position inside this c() vector
-    all_positions <- c(file_positions, "Others (COS)")
+    all_positions <- c(file_positions, "Others (COS)", "Technical Assistant")
     
     # Sort the combined list
     positions <- sort(unique(all_positions))
