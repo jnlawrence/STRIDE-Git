@@ -369,6 +369,63 @@ output$TextTable <- DT::renderDT(server = TRUE, {
   )
 })
 
+# --- 6. Handle Row Selection (Link Table to Map & Details) ---
+
+# A. Create a Reactive Object for the selected row
+# This defines 'qs_data()' which your detail tables below are waiting for.
+# --- A. Reactive for Detail Tables (Data Source) ---
+# This serves the detail tables (schooldetails_basic, etc.)
+qs_data <- reactive({
+  
+  selected_row_index <- input$TextTable_rows_selected
+  req(selected_row_index)
+  
+  # Get the data that was used to render the table
+  table_data <- data_snapshot()
+  req(nrow(table_data) > 0)
+  
+  # Return the specific row data
+  return(table_data[selected_row_index, , drop = FALSE])
+})
+
+# B. Observe the Selection to Zoom the Map
+# --- B. Observe the Selection to Zoom the Map ---
+# --- B. Map Zoom Logic (Based on your working code) ---
+observeEvent(input$TextTable_rows_selected, {
+  
+  selected_row_index <- input$TextTable_rows_selected
+  req(selected_row_index)
+  
+  # Get the data that was used to render the table (your current source)
+  table_data <- data_snapshot()
+  
+  # Robustness Check 1: Data exists
+  req(nrow(table_data) >= selected_row_index)
+  
+  selected_row_data <- table_data[selected_row_index, ]
+  
+  # --- Data Type Conversion (Crucial Step) ---
+  current_lat <- as.numeric(selected_row_data$Latitude)
+  current_lng <- as.numeric(selected_row_data$Longitude)
+  
+  # Robustness Check 2: Coordinates are valid
+  if (is.na(current_lng) || is.na(current_lat)) {
+    # If using shinyjs, you can show a notification
+    # showNotification("Selected school has no map coordinates.", type = "warning")
+    return() 
+  }
+  
+  # --- *** The Working Leaflet Command *** ---
+  leafletProxy("TextMapping") %>% # Changed from "school_map"
+    flyTo(
+      lng = current_lng,
+      lat = current_lat,
+      zoom = 15, # Zoom level 15 is a good close-up
+      options = leafletOptions(duration = 1)
+    )
+  
+}, ignoreNULL = TRUE, ignoreInit = TRUE)
+
 # --- 3. RENDER THE GRANULAR DETAIL TABLES (NO HEADERS) ---
 
 # Helper function to bold content
@@ -378,26 +435,36 @@ make_bold <- function(df) {
 }
 
 # 1. Basic Information
-output$schooldetails_basic <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_basic <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("School Name", "School ID", "Region", "Division", "District", "Municipality", 
-               "Barangay", "School Head", "Position", "Curricular Offering", "Typology"),
+    Metric = c("School Name", "School ID", "School Head", "Position", "Curricular Offering", "Typology"),
     Value = as.character(c(
-      data$School.Name, data$SchoolID, data$Region, data$Division, data$District, data$Municipality,
-      data$Barangay, data$School.Head.Name, data$SH.Position, data$Modified.COC, data$School.Size.Typology
+      data$School.Name, data$SchoolID, data$School.Head.Name, data$SH.Position, data$Modified.COC, data$School.Size.Typology
     ))
   )
   make_bold(df)
 }, striped = TRUE, hover = TRUE, bordered = TRUE, width = "100%", 
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x) # <-- Added colnames = FALSE
 
+output$qs_location <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
+  df <- data.frame(
+    Metric = c("Region", "Division", "District", "Municipality","Barangay","Latitude","Longitude"),
+    Value = as.character(c(
+     data$Region, data$Division, data$District, data$Municipality,
+      data$Barangay, data$Latitude, data$Longitude))
+  )
+  make_bold(df)
+}, striped = TRUE, hover = TRUE, bordered = TRUE, width = "100%", 
+align = 'c', colnames = FALSE, sanitize.text.function = function(x) x) # <-- Added colnames = FALSE
+
 # 2. Enrolment Profile
-output$schooldetails_enrolment <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_enrolment <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   df <- data.frame(
     Level = c("Kinder", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-              "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "TOTAL"),
+              "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Total Enrolment"),
     Count = as.character(c(
       data$Kinder, data$G1, data$G2, data$G3, data$G4, data$G5, data$G6,
       data$G7, data$G8, data$G9, data$G10, data$G11, data$G12, data$TotalEnrolment
@@ -409,10 +476,10 @@ output$schooldetails_enrolment <- renderTable({
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 
 # 3. Teacher Inventory
-output$schooldetails_teachers <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_teachers <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("Elementary Teachers", "JHS Teachers", "SHS Teachers", "TOTAL Teachers"),
+    Metric = c("Elementary Teachers", "JHS Teachers", "SHS Teachers", "Total Teachers"),
     Value = as.character(c(
       data$ES.Teachers, data$JHS.Teachers, data$SHS.Teachers, data$TotalTeachers
     ))
@@ -422,11 +489,11 @@ output$schooldetails_teachers <- renderTable({
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 
 # 4. Teacher Needs (Shortage/Excess)
-output$schooldetails_teacher_needs <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_teacher_needs <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("ES Shortage", "JHS Shortage", "SHS Shortage", "TOTAL Shortage",
-               "ES Excess", "JHS Excess", "SHS Excess", "TOTAL Excess"),
+    Metric = c("ES Shortage", "JHS Shortage", "SHS Shortage", "Total Shortage",
+               "ES Excess", "JHS Excess", "SHS Excess", "Total Excess"),
     Value = as.character(c(
       data$ES.Shortage, data$JHS.Shortage, data$SHS.Shortage, data$Total.Shortage,
       data$ES.Excess, data$JHS.Excess, data$SHS.Excess, data$Total.Excess
@@ -437,10 +504,10 @@ output$schooldetails_teacher_needs <- renderTable({
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 
 # 5. Classroom Inventory
-output$schooldetails_classrooms <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_classrooms <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("Total Buildings", "Total Instructional Rooms"),
+    Metric = c("Total Buildings", "Total Classrooms"),
     Value = as.character(c(
       data$Buildings, data$Instructional.Rooms.2023.2024
     ))
@@ -450,8 +517,8 @@ output$schooldetails_classrooms <- renderTable({
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 
 # 6. Classroom Needs
-output$schooldetails_classroom_needs <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_classroom_needs <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   buildable_val <- if(is.list(data$With_Buildable_space)) unlist(data$With_Buildable_space) else data$With_Buildable_space
   
   df <- data.frame(
@@ -467,8 +534,8 @@ output$schooldetails_classroom_needs <- renderTable({
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 
 # 7. Utilities & Facilities
-output$schooldetails_utilities <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_utilities <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   df <- data.frame(
     Metric = c("Electricity Source", "Water Source", "Ownership Type", 
                "Total Seats", "Seats Shortage"),
@@ -482,8 +549,8 @@ output$schooldetails_utilities <- renderTable({
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 
 # 8. Non-Teaching Personnel
-output$schooldetails_ntp <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_ntp <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   df <- data.frame(
     Metric = c("AO II Deployment Status", "PDO I Deployment", "COS Status"),
     Value = as.character(c(
@@ -495,8 +562,8 @@ output$schooldetails_ntp <- renderTable({
 align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 
 # 9. Specialization (JHS/SHS)
-output$schooldetails_specialization <- renderTable({
-  data <- selected_school_data(); req(nrow(data) > 0)
+output$qs_specialization <- renderTable({
+  data <- qs_data(); req(nrow(data) > 0)
   metric_labels <- c("English", "Mathematics", "Science", "Biological Sciences", 
                      "Physical Sciences", "General Education", "Araling Panlipunan", 
                      "TLE", "MAPEH", "Filipino", "ESP", "Agriculture", "ECE", "SPED")

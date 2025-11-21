@@ -825,8 +825,12 @@ output$STRIDE2 <- renderUI({
             card_header(div(strong("School Details"), tags$span(em("(Select a school from the table above)"), style = "font-size: 0.7em; color: grey;"))),
             
             tagList(
+              layout_columns(
+                col_widths = c(6,6),
               # Row 1: Basic Info
-              card(card_header(strong("Basic Information")), tableOutput("schooldetails")),
+              card(card_header(strong("Basic Information")), tableOutput("qs_basic")),
+              card(card_header(strong("Location")), tableOutput("qs_location"))),
+              
               
               # Row 2: Enrolment & Teachers
               layout_columns(
@@ -872,6 +876,17 @@ output$STRIDE2 <- renderUI({
             pickerInput(inputId = "resource_map_region", label = "Region:", choices = c("Region I" = "Region I","Region II" = "Region II","Region III" = "Region III", "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V", "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII", "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X", "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA", "CAR" = "CAR","NCR" = "NCR"), selected = "Region I", multiple = FALSE, options = list(`actions-box` = FALSE, `none-selected-text` = "Select a region", dropupAuto = FALSE, dropup = FALSE)),
             pickerInput(inputId = "Resource_SDO", label = "Select a Division:", choices = NULL, selected = NULL, multiple = FALSE, options = list(`actions-box` = FALSE, `none-selected-text` = "Select a division", dropupAuto = FALSE, dropup = FALSE)),
             pickerInput(inputId = "Resource_LegDist", label = "Select Legislative District(s):", choices = NULL, selected = NULL, multiple = TRUE, options = list(`actions-box` = TRUE, `none-selected-text` = "Select one or more districts", dropupAuto = FALSE, dropup = FALSE)),
+            conditionalPanel(
+              condition = "input.resource_type_selection == 'Teaching Deployment'",
+              pickerInput(
+                inputId = "resource_map_level",
+                label = "Select Level:",
+                choices = unique(df$Level), # Update these choices as needed
+                selected = NULL,
+                multiple = FALSE,
+                options = list(`actions-box` = FALSE, `none-selected-text` = "Select level", dropupAuto = FALSE, dropup = FALSE)
+              )
+            ),
             input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
           ),
           hr(),
@@ -969,41 +984,41 @@ output$STRIDE2 <- renderUI({
           )
         ) # End layout_sidebar
       ) # End nav_panel
-    ), # End Data Explorer nav_menu
-    
-    # --- mySTRIDE PANEL ---
-    nav_panel(
-      value = "mystride_nav", # This value is correct
-      title = tags$b("InsightEd"),
-      icon = bs_icon("box-arrow-right"),
-      
-      h3("InsightEd Access"),
-      fluidRow(
-        column(
-          width = 6, 
-          offset = 3, 
-          class = "mt-5 mb-5",
-          
-          bslib::card( 
-            card_body(
-              style = "display: flex; flex-direction: column; align-items: center; justify-content: center;",
-              
-              tags$img(src = "InsightEd.png", 
-                       alt = "InsightEd Logo",
-                       style = "width: 285px; height: auto; margin-bottom: 20px;"),
-              
-              hr(),
-              tags$img(src = "InsightEdQR.png",
-                       alt = "InsightEd QR Code",
-                       style = "width: 250px; height: auto; margin-top: 15px; border: 1px solid #ddd; padding: 5px; border-radius: 8px;"),
-              
-              tags$p("Scan the code then Add to Home Screen to install!",
-                     style = "margin-top: 15px; font-style: italic; color: #555;")
-            )
-          ) # End bslib::card
-        ) # End column
-      ) # End fluidRow
-    )
+    ) # End Data Explorer nav_menu
+    # 
+    # # --- mySTRIDE PANEL ---
+    # nav_panel(
+    #   value = "mystride_nav", # This value is correct
+    #   title = tags$b("InsightEd"),
+    #   icon = bs_icon("box-arrow-right"),
+    #   
+    #   h3("InsightEd Access"),
+    #   fluidRow(
+    #     column(
+    #       width = 6, 
+    #       offset = 3, 
+    #       class = "mt-5 mb-5",
+    #       
+    #       bslib::card( 
+    #         card_body(
+    #           style = "display: flex; flex-direction: column; align-items: center; justify-content: center;",
+    #           
+    #           tags$img(src = "InsightEd.png", 
+    #                    alt = "InsightEd Logo",
+    #                    style = "width: 285px; height: auto; margin-bottom: 20px;"),
+    #           
+    #           hr(),
+    #           tags$img(src = "InsightEdQR.png",
+    #                    alt = "InsightEd QR Code",
+    #                    style = "width: 250px; height: auto; margin-top: 15px; border: 1px solid #ddd; padding: 5px; border-radius: 8px;"),
+    #           
+    #           tags$p("Scan the code then Add to Home Screen to install!",
+    #                  style = "margin-top: 15px; font-style: italic; color: #555;")
+    #         )
+    #       ) # End bslib::card
+    #     ) # End column
+    #   ) # End fluidRow
+    # )
   )
   
   

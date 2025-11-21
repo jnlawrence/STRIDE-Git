@@ -28,8 +28,15 @@ observeEvent(input$LMSTable_rows_selected, {
   })
   
   row_selected = df1()[input$LMSTable_rows_selected,]
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("LMSMapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
   
 })
 
@@ -56,8 +63,15 @@ observeEvent(input$TextTable_rows_selected, {
   })
   
   row_selected = df1()[input$TextTable_rows_selected,]
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("TextMapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
   
   rowselected_table1 <- row_selected %>% select(Region,Province,Municipality,Division,District,Barangay,Street.Address,SchoolID,School.Name,School.Head.Name,SH.Position,Implementing.Unit,Modified.COC,Latitude,Longitude) %>% rename("Modified Curricular Offering" = Modified.COC, "School ID" = SchoolID, "School Name" = School.Name, "Street Address" = Street.Address, "Implementing Unit" = Implementing.Unit, "School Head" = School.Head.Name,"School Head Position" = SH.Position) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
     cols = everything(),    # Pivot all columns selected in details_to_pivot
@@ -172,8 +186,16 @@ observeEvent(input$CongestTable_rows_selected, {
   })
   
   row_selected = dfreact_cong()[input$CongestTable_rows_selected,]
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("CongestMapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)})
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
+})
 
 observeEvent(input$CLTable_rows_selected, {
   
@@ -198,8 +220,16 @@ observeEvent(input$CLTable_rows_selected, {
   })
   
   row_selected = CL1()[input$CLTable_rows_selected,]
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("CLMapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)})
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
+})
 
 observeEvent(input$FacTable_rows_selected, {
   
@@ -242,8 +272,16 @@ observeEvent(input$FacTable_rows_selected, {
   })
   
   row_selected = dfreact_fac()[input$FacTable_rows_selected,]
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("FacMapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)})
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
+})
 
 observeEvent(input$AO2Table_rows_selected, {
   
@@ -271,8 +309,15 @@ observeEvent(input$AO2Table_rows_selected, {
   })
   
   row_selected = xy1()[input$AO2Table_rows_selected,]
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("AO2Mapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
 })
 
 observeEvent(input$TeacherShortage_Table_rows_selected, {
@@ -308,8 +353,15 @@ observeEvent(input$TeacherShortage_Table_rows_selected, {
   })
   
   row_selected = df1()[input$TeacherShortage_Table_rows_selected,]
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("TeacherShortage_Mapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
   
   output$d <- renderValueBox({
     valueBox(tags$p(strong(row_selected$TeacherShortage), style = "font-size: 65%;"), subtitle = tags$p(strong("School Teacher Shortage"), style = "font-size: 60%;"), color = "red")})
@@ -364,8 +416,15 @@ observeEvent(input$SHSListTable_rows_selected, {
   
   row_selected = df1()[input$SHSListTable_rows_selected,]
   rowschool = row_selected$School.Name
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("SHSMapping") %>%
-    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
+    flyTo(
+      lng = row_selected$Longitude, 
+      lat = row_selected$Latitude, 
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
+    )
   
   SHSIndustries <- region_selected %>% filter(School.Name %in% rowschool) %>% select("Company","Sector","Distance") %>% rename("Distance in KM" = Distance)
   

@@ -9,18 +9,18 @@ output$dynamic_resource_panel <- renderUI({
     tagList(
       h3("Teaching Deployment Overview"),
       hr(),
-      
-      layout_columns(
-        # selectInput("resource_map_level", "Filter Curricular Level:",
-        #             choices = c("Elementary School"="ES",
-        #                         "Junior High School"="JHS",
-        #                         "Senior High School"="SHS"),
-        #             selected = "ES"),
-        input_task_button("Teaching_Deployment_Refresh", strong("Refresh"), class = "btn-warning"),
-        col_widths = c(4, -8, 2)
-      ),
-      
-      hr(),
+      # 
+      # layout_columns(
+      #   selectInput("resource_map_level", "Filter Curricular Level:",
+      #               choices = c("Elementary School"="ES",
+      #                           "Junior High School"="JHS",
+      #                           "Senior High School"="SHS"),
+      #               selected = "ES"),
+      #   input_task_button("Teaching_Deployment_Refresh", strong("Refresh"), class = "btn-warning"),
+      #   col_widths = c(4, -8, 2)
+      # ),
+      # 
+      # hr(),
       
       # --- Accordion only for summary cards ---
       accordion(
@@ -673,7 +673,7 @@ observeEvent(input$Teaching_Deployment_Refresh, {
   RegRCT <- input$resource_map_region
   SDORCT1 <- input$Resource_SDO
   DistRCT1 <- input$Resource_LegDist
-  # Lev <- input$resource_map_level
+  Lev <- input$resource_map_level
   
   mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% arrange(desc(TeacherShortage))
   

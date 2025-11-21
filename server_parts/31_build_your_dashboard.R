@@ -564,7 +564,7 @@ observeEvent(input$school_table_rows_selected, {
       lng = current_lng,
       lat = current_lat,
       zoom = 15,
-      options = leafletOptions(duration = 0.5) # Fly animation in 0.5 sec
+      options = leafletOptions(duration = 1) # Fly animation in 0.5 sec
     )
   
 }, ignoreNULL = TRUE, ignoreInit = TRUE)
@@ -1342,11 +1342,18 @@ output$build_dashboard_school_details_ui <- renderUI({
   # If a school IS selected, show the granular layout
   tagList(
     # Row 1: Basic Info (Full Width)
-    card(
-      full_screen = TRUE,
-      card_header(strong("Basic Information")),
-      tableOutput("schooldetails_basic")
-    ),
+    layout_columns(
+      col_widths = c(6,6),
+      card(
+        full_screen = TRUE,
+        card_header(strong("Basic Information")),
+        tableOutput("schooldetails_basic")),
+      card(
+        full_screen = TRUE,
+        card_header(strong("Location")),
+        tableOutput("schooldetails_location"))),
+      
+    
     
     # Row 2: Learners & Teachers
     layout_columns(
@@ -1410,11 +1417,22 @@ make_bold <- function(df) {
 output$schooldetails_basic <- renderTable({
   data <- selected_school_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("School Name", "School ID", "Region", "Division", "District", "Municipality", 
-               "Barangay", "School Head", "Position", "Curricular Offering", "Typology"),
+    Metric = c("School Name", "School ID", "School Head", "Position", "Curricular Offering", "Typology"),
     Value = as.character(c(
-      data$School.Name, data$SchoolID, data$Region, data$Division, data$District, data$Municipality,
-      data$Barangay, data$School.Head.Name, data$SH.Position, data$Modified.COC, data$School.Size.Typology
+      data$School.Name, data$SchoolID, data$School.Head.Name, data$SH.Position, data$Modified.COC, data$School.Size.Typology
+    ))
+  )
+  make_bold(df)
+}, striped = TRUE, hover = TRUE, bordered = TRUE, width = "100%", 
+align = 'c', colnames = FALSE, sanitize.text.function = function(x) x) # <-- Added colnames = FALSE
+
+output$schooldetails_location <- renderTable({
+  data <- selected_school_data(); req(nrow(data) > 0)
+  df <- data.frame(
+    Metric = c("Region", "Division", "District", "Municipality", 
+               "Barangay"),
+    Value = as.character(c(
+     data$Region, data$Division, data$District, data$Municipality, data$Barangay
     ))
   )
   make_bold(df)
@@ -1426,7 +1444,7 @@ output$schooldetails_enrolment <- renderTable({
   data <- selected_school_data(); req(nrow(data) > 0)
   df <- data.frame(
     Level = c("Kinder", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-              "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "TOTAL"),
+              "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Total Enrolment"),
     Count = as.character(c(
       data$Kinder, data$G1, data$G2, data$G3, data$G4, data$G5, data$G6,
       data$G7, data$G8, data$G9, data$G10, data$G11, data$G12, data$TotalEnrolment
@@ -1441,7 +1459,7 @@ align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 output$schooldetails_teachers <- renderTable({
   data <- selected_school_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("Elementary Teachers", "JHS Teachers", "SHS Teachers", "TOTAL Teachers"),
+    Metric = c("Elementary Teachers", "JHS Teachers", "SHS Teachers", "Total Teachers"),
     Value = as.character(c(
       data$ES.Teachers, data$JHS.Teachers, data$SHS.Teachers, data$TotalTeachers
     ))
@@ -1454,8 +1472,8 @@ align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 output$schooldetails_teacher_needs <- renderTable({
   data <- selected_school_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("ES Shortage", "JHS Shortage", "SHS Shortage", "TOTAL Shortage",
-               "ES Excess", "JHS Excess", "SHS Excess", "TOTAL Excess"),
+    Metric = c("ES Shortage", "JHS Shortage", "SHS Shortage", "Total Shortage",
+               "ES Excess", "JHS Excess", "SHS Excess", "Total Excess"),
     Value = as.character(c(
       data$ES.Shortage, data$JHS.Shortage, data$SHS.Shortage, data$Total.Shortage,
       data$ES.Excess, data$JHS.Excess, data$SHS.Excess, data$Total.Excess
@@ -1469,7 +1487,7 @@ align = 'c', colnames = FALSE, sanitize.text.function = function(x) x)
 output$schooldetails_classrooms <- renderTable({
   data <- selected_school_data(); req(nrow(data) > 0)
   df <- data.frame(
-    Metric = c("Total Buildings", "Total Instructional Rooms"),
+    Metric = c("Total Buildings", "Total Classrooms"),
     Value = as.character(c(
       data$Buildings, data$Instructional.Rooms.2023.2024
     ))

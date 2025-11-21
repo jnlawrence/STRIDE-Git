@@ -51,13 +51,22 @@ data_LMS_div <- eventReactive(input$Mapping_Run, {
 
 
 # ----- Data for Teacher Shortage Map & Table (mainreact1) -----
+# ----- Data for Teacher Shortage Map & Table (mainreact1) -----
 data_TS <- eventReactive(input$Mapping_Run, {
   cat("DATAGEN: data_TS\n")
   inputs <- gated_Inputs()
+  
+  # FIX 1: Safety check. If 'Lev' is NULL (because the input is hidden or empty), 
+  # return an empty dataframe so the app doesn't crash.
+  if (is.null(inputs$Lev) || length(inputs$Lev) == 0) {
+    return(df[0, ]) # Returns an empty slice of your main dataframe
+  }
+  
   df %>% 
     filter(Region == inputs$RegRCT) %>% 
     filter(Division == inputs$SDORCT1) %>% 
     filter(Legislative.District == inputs$DistRCT1) %>% 
+    filter(Level == inputs$Lev) %>%  # FIX 2: Changed 'input$Lev' to 'inputs$Lev'
     arrange(desc(TeacherShortage))
 })
 
@@ -80,9 +89,16 @@ data_NetShortage <- eventReactive(input$Mapping_Run, {
 data_SDONetShortage <- eventReactive(input$Mapping_Run, {
   cat("DATAGEN: data_SDONetShortage\n")
   inputs <- gated_Inputs()
+  
+  # Safety check for this one too
+  if (is.null(inputs$Lev) || length(inputs$Lev) == 0) {
+    return(data.frame(NetShortage = numeric(0))) 
+  }
+  
   data_NetShortage() %>% 
     filter(Region == inputs$RegRCT) %>% 
-    filter(Division == inputs$SDORCT1) #%>% filter(Level == Lev)
+    filter(Division == inputs$SDORCT1) %>% 
+    filter(Level == inputs$Lev) # FIX: Changed 'Lev' to 'inputs$Lev'
 })
 
 data_SDO_VB <- eventReactive(input$Mapping_Run, {
@@ -670,7 +686,7 @@ data_Cong_filtered <- reactive({
 # These are all at the top level. They use the *filtered*
 # reactive data (e.g., data_LMS_filtered())
 # The `dplyr::select` here *removes* Lat/Lon for display,
-# but the click-to-zoom observer will use the filtered reactive,
+# but the click-to-zoom observers will use the filtered reactive,
 # which *still has* Lat/Lon.
 
 # ----- LMS Table -----
@@ -770,7 +786,7 @@ output$CongestTable <- DT::renderDT(server = FALSE, {
 # These are the new blocks to add the zoom functionality.
 # They listen for `input$TableName_rows_selected`.
 # They use the *filtered data reactive* to find the Lat/Lon
-# for the selected row and then command the map to `setView`.
+# for the selected row and then command the map to `flyTo`.
 
 # ----- Zoom for LMS Table -----
 observeEvent(input$LMSTable_rows_selected, {
@@ -791,11 +807,14 @@ observeEvent(input$LMSTable_rows_selected, {
   )
   
   cat("ZOOM: LMSTable row", input$LMSTable_rows_selected, "\n")
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("LMSMapping") %>%
-    setView(
+    flyTo(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15 # High zoom level
+      zoom = 15, # High zoom level
+      options = leafletOptions(duration = 0.5)
     )
 })
 
@@ -808,11 +827,14 @@ observeEvent(input$TeacherShortage_Table_rows_selected, {
   validate(need("Longitude" %in% colnames(selected_row_data) && "Latitude" %in% colnames(selected_row_data), "Zoom Error."))
   
   cat("ZOOM: TeacherShortage_Table row", input$TeacherShortage_Table_rows_selected, "\n")
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("TeacherShortage_Mapping") %>%
-    setView(
+    flyTo(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
     )
 })
 
@@ -825,11 +847,14 @@ observeEvent(input$AO2Table_rows_selected, {
   validate(need("Longitude" %in% colnames(selected_row_data) && "Latitude" %in% colnames(selected_row_data), "Zoom Error."))
   
   cat("ZOOM: AO2Table row", input$AO2Table_rows_selected, "\n")
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("AO2Mapping") %>%
-    setView(
+    flyTo(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
     )
 })
 
@@ -842,11 +867,14 @@ observeEvent(input$CLTable_rows_selected, {
   validate(need("Longitude" %in% colnames(selected_row_data) && "Latitude" %in% colnames(selected_row_data), "Zoom Error."))
   
   cat("ZOOM: CLTable row", input$CLTable_rows_selected, "\n")
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("CLMapping") %>%
-    setView(
+    flyTo(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
     )
 })
 
@@ -859,11 +887,14 @@ observeEvent(input$SHSListTable_rows_selected, {
   validate(need("Longitude" %in% colnames(selected_row_data) && "Latitude" %in% colnames(selected_row_data), "Zoom Error."))
   
   cat("ZOOM: SHSListTable row", input$SHSListTable_rows_selected, "\n")
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("SHSMapping") %>%
-    setView(
+    flyTo(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
     )
 })
 
@@ -876,11 +907,14 @@ observeEvent(input$FacTable_rows_selected, {
   validate(need("Longitude" %in% colnames(selected_row_data) && "Latitude" %in% colnames(selected_row_data), "Zoom Error."))
   
   cat("ZOOM: FacTable row", input$FacTable_rows_selected, "\n")
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("FacMapping") %>%
-    setView(
+    flyTo(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
     )
 })
 
@@ -893,11 +927,14 @@ observeEvent(input$CongestTable_rows_selected, {
   validate(need("Longitude" %in% colnames(selected_row_data) && "Latitude" %in% colnames(selected_row_data), "Zoom Error."))
   
   cat("ZOOM: CongestTable row", input$CongestTable_rows_selected, "\n")
+  
+  # --- UPDATED: flyTo ---
   leafletProxy("CongestMapping") %>%
-    setView(
+    flyTo(
       lng = selected_row_data$Longitude,
       lat = selected_row_data$Latitude,
-      zoom = 15
+      zoom = 15,
+      options = leafletOptions(duration = 0.5)
     )
 })
 
